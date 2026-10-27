@@ -160,28 +160,52 @@ def can_print_previous_vehicle_travel_order_report(user, order, previous_order):
 
 
 def vehicle_travel_order_form_manual():
+    dana = VehicleTravelOrderForm.NAJVISE_DANA_UNAZAD
     return mark_safe(
-        """
-        <h5 class="mb-3">Uputstvo za zaduzenje vozila</h5>
-        <ol class="mb-3">
-          <li><strong>PN broj</strong> sistem dodeljuje automatski. Polje se ne popunjava rucno.</li>
-          <li><strong>Datum otvaranja</strong> je datum od kada zaposleni preuzima auto.</li>
-          <li><strong>Zaposleni</strong> je lice na koje se otvara zaduzenje. Mozete izabrati bilo kog aktivnog zaposlenog.</li>
-          <li><strong>Vozilo</strong> je auto koji se zaduzuje. Izaberite tacno vozilo iz liste.</li>
-          <li><strong>Pocetna kilometraza</strong> je stanje kilometraze na dan preuzimanja vozila.</li>
+        f"""
+        <h5 class="mb-2">Uputstvo za zaduženje vozila</h5>
+        <div class="alert alert-warning py-2 px-3 mb-3">
+          <strong>Važno:</strong> novo zaduženje <strong>zatvara</strong> prethodno otvoreno zaduženje
+          istog vozila — datumom i kilometražom koje sada upišete. Zato datum i kilometraža moraju biti tačni.
+        </div>
+
+        <h6 class="mb-2">Kada otvarate zaduženje</h6>
+        <ol class="mb-3 ps-3">
+          <li class="mb-1"><strong>Preuzimate vozilo</strong> — otvorite zaduženje na sebe.</li>
+          <li class="mb-1"><strong>Predajete vozilo kolegi</strong> — zaduženje se otvara na kolegu
+            (može on, može i vi). Vaše se zatvara samo.</li>
+          <li class="mb-1"><strong>Zatvarate period za obračun goriva</strong>, a vozilo ostaje kod vas —
+            otvorite novo zaduženje na sebe, sa <strong>današnjim</strong> datumom i <strong>današnjom</strong>
+            kilometražom. Prethodno se zatvara i za njega se štampa obračun.</li>
         </ol>
-        <h6 class="mb-2">Pravila pri cuvanju</h6>
-        <ul class="mb-3">
-          <li>Zaposleni moze imati vise otvorenih zaduzenja ako su za razlicita vozila.</li>
-          <li>Za isto vozilo ne moze postojati vise od jednog otvorenog zaduzenja.</li>
-          <li>Isto vozilo ne moze imati dva zaduzenja na isti datum.</li>
+
+        <h6 class="mb-2">Kako se popunjava</h6>
+        <ul class="mb-3 ps-3">
+          <li class="mb-1"><strong>Datum otvaranja</strong> — dan kada ste očitali kilometražu na brojilu.
+            Ne datum sa računa za gorivo i ne datum „od kada bi trebalo“.</li>
+          <li class="mb-1"><strong>Početna kilometraža</strong> — tačno stanje sa brojila tog dana, ne procena.
+            Ispod polja piše poslednja poznata kilometraža vozila; ako je vaša manja, proverite.
+            Ne ostavljajte prazno — bez nje prethodno zaduženje ostaje bez krajnje kilometraže.</li>
+          <li class="mb-1"><strong>Vozilo</strong> — proverite registarsku oznaku.</li>
+          <li class="mb-1"><strong>PN broj</strong> dodeljuje sistem.</li>
         </ul>
-        <h6 class="mb-2">Sta sistem radi automatski</h6>
-        <ul class="mb-0">
-          <li>Kada se otvori novo zaduzenje za auto koji ima ranije otvoreno zaduzenje, prethodno zaduzenje za taj auto se zatvara datumom novog naloga.</li>
-          <li>Ako unesete pocetnu kilometrazu na novom nalogu, ona se upisuje kao krajnja kilometraza prethodnog zaduzenja za isti auto.</li>
-          <li>Posle cuvanja otvara se detalj zaduzenja, gde mogu da se stampaju nalog i obracun.</li>
+
+        <h6 class="mb-2 text-danger">Ne radite</h6>
+        <ul class="mb-3 ps-3">
+          <li class="mb-1">Ne otvarajte zaduženje sa ranijim datumom da biste naknadno „presekli“ period —
+            time skraćujete svoje otvoreno zaduženje i obračun goriva postaje pogrešan.</li>
+          <li class="mb-1">Ne upisujte kilometražu napamet ili preračunatu iz goriva.</li>
         </ul>
+
+        <h6 class="mb-2">Šta sistem ne dozvoljava</h6>
+        <ul class="mb-3 ps-3">
+          <li class="mb-1">Datum stariji od {dana} dana ili u budućnosti.</li>
+          <li class="mb-1">Dva otvorena zaduženja za isto vozilo, ni dva zaduženja istog vozila na isti dan.</li>
+          <li class="mb-1">Izmenu ili brisanje zaduženja posle čuvanja.</li>
+        </ul>
+
+        <p class="mb-0 text-muted small">Pogrešili ste ili treba stariji datum? Ne otvarajte novo zaduženje
+          da biste ispravili staro — javite se voznom parku, oni ispravljaju.</p>
         """
     )
 
@@ -292,7 +316,12 @@ class VehicleTravelOrderDetailView(VehicleTravelOrderEmployeeAccessMixin, LoginR
         center_code = get_vehicle_center_code(order.vehicle)
         period_start = order.created_at
         period_end = order.closed_at or timezone.localdate()
-        start_dt = datetime.datetime.combine(period_start, datetime.time.min)
+        # Tocenje na dan smene ide samo u nalog koji se tog dana zatvara, da se isto
+        # tocenje ne bi pojavilo na dva obracuna (od 27.10.2026., V-23).
+        fuel_start = period_start
+        if VehicleTravelOrder.objects.filter(vehicle_id=order.vehicle_id, closed_at=period_start).exclude(pk=order.pk).exists():
+            fuel_start = period_start + datetime.timedelta(days=1)
+        start_dt = datetime.datetime.combine(fuel_start, datetime.time.min)
         end_dt = datetime.datetime.combine(period_end, datetime.time.max)
         if timezone.is_naive(start_dt):
             start_dt = timezone.make_aware(start_dt)
@@ -358,6 +387,7 @@ class VehicleTravelOrderDetailView(VehicleTravelOrderEmployeeAccessMixin, LoginR
             {
                 "period_start": period_start,
                 "period_end": period_end,
+                "fuel_start": fuel_start,
                 "previous_order": previous_order,
                 "registration_number": registration_number,
                 "center_code": center_code,
@@ -430,9 +460,10 @@ class VehicleTravelOrderCreateView(VehicleTravelOrderEmployeeAccessMixin, LoginR
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["title"] = "Novi putni nalog (vozilo)"
-        ctx["submit_button_label"] = "Sacuvaj"
+        ctx["title"] = "Novo zaduženje vozila"
+        ctx["submit_button_label"] = "Sačuvaj zaduženje"
         ctx["manual"] = vehicle_travel_order_form_manual()
+        ctx["manual_side"] = True
         return ctx
 
     def get_form_kwargs(self):
@@ -442,6 +473,7 @@ class VehicleTravelOrderCreateView(VehicleTravelOrderEmployeeAccessMixin, LoginR
             _is_vehicle_travel_order_employee_self_service(self.request.user)
             or _has_vehicle_travel_order_broad_access(self.request.user)
         )
+        kwargs["ogranici_datum"] = not _has_vehicle_travel_order_broad_access(self.request.user)
         return kwargs
 
     def form_valid(self, form):
@@ -478,9 +510,10 @@ class VehicleTravelOrderUpdateView(VehicleTravelOrderEmployeeAccessMixin, LoginR
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["title"] = "Izmena putnog naloga (vozilo)"
-        ctx["submit_button_label"] = "Sacuvaj izmene"
+        ctx["title"] = "Izmena zaduženja vozila"
+        ctx["submit_button_label"] = "Sačuvaj izmene"
         ctx["manual"] = vehicle_travel_order_form_manual()
+        ctx["manual_side"] = True
         return ctx
 
     def get_form_kwargs(self):

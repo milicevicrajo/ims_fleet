@@ -1085,7 +1085,8 @@ Garaža, služba voznog parka, sam zaposleni koji je zadužio vozilo.
 ### 5. Poreklo podataka
 
 ```
- Zaduženje vozila (period: created_at → closed_at ili danas)
+ Zaduženje vozila (period: created_at → closed_at ili danas;
+                  dan smene pripada nalogu koji se tog dana zatvara)
             │
             ├─► OMV transakcije u periodu  (bez AdBlue, prečišćene V-06)
             └─► NIS transakcije u periodu  (bez AdBlue)
@@ -1106,6 +1107,12 @@ Garaža, služba voznog parka, sam zaposleni koji je zadužio vozilo.
 > od = `created_at` (00:00:00) · do = `closed_at` ili **današnji dan** (23:59:59.999999)
 
 Otvoren nalog se obračunava **do danas**. [P]
+
+> **[P] Dan smene (od 27.10.2026.):** ako se istog dana za isto vozilo **zatvorio prethodni
+> nalog** (`closed_at` = `created_at` ovog naloga), gorivo se broji **od sledećeg dana**.
+> Točenje sa dana smene ide **samo u nalog koji se tog dana zatvara**. Ranije su obe granice
+> bile uključene, pa se isto točenje pojavljivalo na dva obračuna. Datum perioda na ekranu i
+> na štampi ostaje datum otvaranja, uz napomenu „gorivo od …“. Odobreno pisano 27.10.2026.
 
 **Korak 2 — pronalaženje transakcija.** Vozilo se traži na **dva načina istovremeno** [P]:
 
@@ -1170,6 +1177,11 @@ dopunjava praznim redovima do 30, druga obuhvata redove 31–60.
 svi raniji otvoreni nalozi se **automatski zatvaraju** na datum novog naloga, a njihova
 krajnja kilometraža se postavlja na **početnu kilometražu novog naloga**
 (`VehicleTravelOrderCreateView.form_valid`).
+
+**Datum otvaranja kod zaposlenog [P] (od 27.10.2026.):** korisnik bez širih prava nad
+nalozima vozila (uloga „Zaposleni“) ne može da otvori nalog sa datumom starijim od 7 dana
+ni u budućnosti (`VehicleTravelOrderForm.NAJVISE_DANA_UNAZAD`). Razlog: nalog otvoren
+unazad naknadno skraćuje već otvoren nalog istog vozila i kvari njegov obračun.
 
 ### 8. Primer obračuna
 

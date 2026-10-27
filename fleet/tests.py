@@ -2060,13 +2060,17 @@ class VehicleTravelOrderEmployeePermissionTests(TestCase):
 
 		form_response = self.client.get(reverse("vehicle_travel_order_create"))
 		self.assertEqual(form_response.status_code, 200)
-		self.assertContains(form_response, "Uputstvo za zaduzenje vozila")
-		self.assertContains(form_response, "Sta sistem radi automatski")
+		self.assertContains(form_response, "Uputstvo za zaduženje vozila")
+		self.assertContains(form_response, "fleet-form-manual-side")
+		self.assertNotContains(form_response, 'id="formManualModal"')
+		form = form_response.context["form"]
+		self.assertEqual(form.initial["employee"], self.employee.pk)
+		self.assertEqual(form.initial["created_at"], timezone.localdate())
 
 		response = self.client.post(
 			reverse("vehicle_travel_order_create"),
 			{
-				"created_at": "24.04.2026",
+				"created_at": timezone.localdate().strftime("%d.%m.%Y"),
 				"employee": self.other_employee.pk,
 				"vehicle": self.vehicle.pk,
 				"start_mileage": 1000,
@@ -2076,6 +2080,63 @@ class VehicleTravelOrderEmployeePermissionTests(TestCase):
 		order = VehicleTravelOrder.objects.get()
 		self.assertRedirects(response, reverse("vehicle_travel_order_detail", args=[order.pk]))
 		self.assertEqual(order.employee, self.other_employee)
+
+	def test_employee_cannot_backdate_and_shorten_open_vehicle_order(self):
+		danas = timezone.localdate()
+		open_order = VehicleTravelOrder.objects.create(
+			created_at=danas - datetime.timedelta(days=60),
+			start_mileage=104088,
+			employee=self.employee,
+			vehicle=self.vehicle,
+		)
+		self.client.force_login(self.user)
+
+		for created_at in (danas - datetime.timedelta(days=8), danas + datetime.timedelta(days=1)):
+			response = self.client.post(
+				reverse("vehicle_travel_order_create"),
+				{
+					"created_at": created_at.strftime("%d.%m.%Y"),
+					"employee": self.employee.pk,
+					"vehicle": self.vehicle.pk,
+					"start_mileage": 104308,
+				},
+			)
+			self.assertEqual(response.status_code, 200)
+			self.assertIn("created_at", response.context["form"].errors)
+
+		open_order.refresh_from_db()
+		self.assertIsNone(open_order.closed_at)
+		self.assertEqual(VehicleTravelOrder.objects.count(), 1)
+
+		response = self.client.post(
+			reverse("vehicle_travel_order_create"),
+			{
+				"created_at": (danas - datetime.timedelta(days=7)).strftime("%d.%m.%Y"),
+				"employee": self.employee.pk,
+				"vehicle": self.vehicle.pk,
+				"start_mileage": 104308,
+			},
+		)
+		self.assertEqual(response.status_code, 302)
+		open_order.refresh_from_db()
+		self.assertEqual(open_order.closed_at, danas - datetime.timedelta(days=7))
+
+	def test_superuser_can_backdate_vehicle_order(self):
+		admin = get_user_model().objects.create_superuser("vozni-park", password="test")
+		self.client.force_login(admin)
+
+		response = self.client.post(
+			reverse("vehicle_travel_order_create"),
+			{
+				"created_at": "24.04.2026",
+				"employee": self.employee.pk,
+				"vehicle": self.vehicle.pk,
+				"start_mileage": 1000,
+			},
+		)
+
+		self.assertEqual(response.status_code, 302)
+		self.assertEqual(VehicleTravelOrder.objects.get().created_at, datetime.date(2026, 4, 24))
 
 	def test_employee_can_open_any_detail_and_print_pages_but_not_update(self):
 		own_order = VehicleTravelOrder.objects.create(
@@ -2436,6 +2497,56 @@ class VehicleTravelOrderConsumptionTests(TestCase):
 		self.assertEqual(context["total_amount"], Decimal("10000.00"))
 		self.assertEqual(context["consumption"], Decimal("50"))
 		self.assertEqual([row["invoice"] for row in context["fuel_rows"]], ["8916372386 / R1", "R2"])
+
+	def test_fueling_on_handover_day_counts_only_on_closing_order(self):
+		old_order = VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 8, 27),
+			closed_at=datetime.date(2026, 9, 14),
+			start_mileage=104088,
+			end_mileage=104700,
+			employee=self.employee,
+			vehicle=self.vehicle,
+		)
+		new_order = VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 9, 14),
+			closed_at=datetime.date(2026, 10, 26),
+			start_mileage=104700,
+			end_mileage=105812,
+			employee=self.employee,
+			vehicle=self.vehicle,
+		)
+		for voucher, day, liters in (("R1", datetime.date(2026, 9, 14), "45.24"), ("R2", datetime.date(2026, 10, 14), "45.01")):
+			TransactionOMV.objects.create(
+				vehicle=self.vehicle,
+				issuer="OMV",
+				customer="IMS",
+				card="123",
+				license_plate_no="BG000-AA",
+				transaction_date=timezone.make_aware(datetime.datetime.combine(day, datetime.time(19, 49))),
+				product_inv="OMV EVRO DIZEL",
+				quantity=Decimal(liters),
+				gross_cc=Decimal("9000.00"),
+				voucher=voucher,
+				unit_price=Decimal("200.00"),
+				amount=Decimal("9000.00"),
+			)
+
+		def context_for(order):
+			request = self.factory.get("/")
+			request.user = AnonymousUser()
+			view = VehicleTravelOrderDetailView()
+			view.request = request
+			view.object = order
+			return view.get_context_data()
+
+		old_context = context_for(old_order)
+		new_context = context_for(new_order)
+
+		self.assertEqual(old_context["total_liters"], Decimal("45.24"))
+		self.assertEqual(new_context["total_liters"], Decimal("45.01"))
+		self.assertEqual(new_context["period_start"], datetime.date(2026, 9, 14))
+		self.assertEqual(new_context["fuel_start"], datetime.date(2026, 9, 15))
+		self.assertEqual(old_context["fuel_start"], datetime.date(2026, 8, 27))
 
 	def test_detail_context_includes_previous_closed_order_for_same_vehicle(self):
 		previous_order = VehicleTravelOrder.objects.create(

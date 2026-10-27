@@ -225,7 +225,7 @@
     <div class="card shadow-sm">
       <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
         <h4 class="mb-0">Potrosnja goriva</h4>
-        <span class="text-muted small">{{ period_start|date:"d.m.Y" }} - {{ period_end|date:"d.m.Y" }}</span>
+        <span class="text-muted small">{{ period_start|date:"d.m.Y" }} - {{ period_end|date:"d.m.Y" }}{% if fuel_start != period_start %} · gorivo od {{ fuel_start|date:"d.m.Y" }} (točenje {{ period_start|date:"d.m.Y" }} je na prethodnom nalogu){% endif %}</span>
       </div>
       <div class="card-body">
         {% if fuel_rows %}

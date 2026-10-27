@@ -1,10 +1,12 @@
 from django import forms
+from django.utils import timezone
 from django_select2.forms import Select2Widget
 
 from core.form_fields import localized_date_field
 from hr.models import Employee
 
 from .kilometraza import oznaci_kilometrazu
+from .layout import FieldsetMixin
 
 from ..models import (
     Kvar,
@@ -14,9 +16,13 @@ from ..models import (
 )
 
 
-class VehicleTravelOrderForm(forms.ModelForm):
+class VehicleTravelOrderForm(FieldsetMixin, forms.ModelForm):
     STATUS_OPEN = "open"
     STATUS_CLOSED = "closed"
+    # Zaposleni bez sireg prava ne sme da otvara zaduzenje daleko unazad: novi nalog
+    # zatvara prethodni svojim datumom i kilometrazom, pa datum unazad naknadno skracuje
+    # vec otvoren nalog (PN 312 unet 26.10.2026. sa datumom 14.09.).
+    NAJVISE_DANA_UNAZAD = 7
 
     status = forms.ChoiceField(
         choices=(
@@ -30,6 +36,7 @@ class VehicleTravelOrderForm(forms.ModelForm):
     created_at = localized_date_field(
         required=True,
         label="Datum otvaranja",
+        help_text="Dan kada ste očitali kilometražu na brojilu. Ovim datumom se zatvara prethodno zaduženje vozila.",
     )
     pn_number = forms.IntegerField(
         label="PN broj",
@@ -50,6 +57,13 @@ class VehicleTravelOrderForm(forms.ModelForm):
         required=False,
         label="Početna kilometraža",
         widget=forms.NumberInput(attrs={"class": "form-control", "placeholder": "km"}),
+        help_text="Tačno stanje sa brojila tog dana. Upisuje se i kao krajnja kilometraža prethodnog zaduženja.",
+    )
+
+    fieldsets = (
+        ("Ko preuzima vozilo", None, ("employee", "vehicle")),
+        ("Stanje pri preuzimanju", "Prepišite sa brojila na dan preuzimanja.", ("created_at", "start_mileage")),
+        ("Podaci naloga", None, ("job_code", "pn_number", "status")),
     )
 
     class Meta:
@@ -61,6 +75,7 @@ class VehicleTravelOrderForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
         self.limit_to_user_employee = kwargs.pop("limit_to_user_employee", False)
+        self.ogranici_datum = kwargs.pop("ogranici_datum", False)
         super().__init__(*args, **kwargs)
         oznaci_kilometrazu(self.fields["start_mileage"], vozilo_polje="vehicle", datum_polje="created_at")
         if self.user:
@@ -94,6 +109,11 @@ class VehicleTravelOrderForm(forms.ModelForm):
                 VehicleTravelOrder.objects.order_by("-pn_number").values_list("pn_number", flat=True).first() or 0
             )
             self.initial.setdefault("pn_number", last_number + 1)
+            # Najcesce zaposleni zaduzuje vozilo na sebe, danas; oba se mogu promeniti.
+            self.initial.setdefault("created_at", timezone.localdate())
+            own_employee_id = getattr(self.user, "employee_id", None)
+            if own_employee_id and self.fields["employee"].queryset.filter(pk=own_employee_id).exists():
+                self.initial.setdefault("employee", own_employee_id)
         if self.instance.pk and getattr(self.user, "is_superuser", False):
             self.initial["status"] = self.STATUS_CLOSED if self.instance.closed_at else self.STATUS_OPEN
         else:
@@ -109,6 +129,17 @@ class VehicleTravelOrderForm(forms.ModelForm):
         if self.limit_to_user_employee and getattr(self.user, "employee_id", None):
             employee = self.user.employee
             cleaned_data["employee"] = employee
+
+        if created_at and self.ogranici_datum:
+            danas = timezone.localdate()
+            if created_at > danas:
+                self.add_error("created_at", "Datum otvaranja ne moze biti u buducnosti.")
+            elif (danas - created_at).days > self.NAJVISE_DANA_UNAZAD:
+                self.add_error(
+                    "created_at",
+                    f"Zaduzenje se ne moze otvoriti vise od {self.NAJVISE_DANA_UNAZAD} dana unazad. "
+                    "Za stariji datum obratite se voznom parku.",
+                )
 
         if not created_at or not vehicle or not employee:
             return cleaned_data

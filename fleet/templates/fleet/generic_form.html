@@ -39,8 +39,23 @@
     line-height: 1.55;
   }
   .fleet-form-manual-modal h5,
-  .fleet-form-manual-modal h6 {
+  .fleet-form-manual-modal h6,
+  .fleet-form-manual-side h5,
+  .fleet-form-manual-side h6 {
     letter-spacing: 0;
+  }
+  .fleet-form-manual-side .card-body {
+    padding: 18px;
+    line-height: 1.5;
+    font-size: 0.92rem;
+  }
+  @media (min-width: 992px) {
+    .fleet-form-manual-side {
+      position: sticky;
+      top: 80px;
+      max-height: calc(100vh - 100px);
+      overflow-y: auto;
+    }
   }
 </style>
 
@@ -48,7 +63,7 @@
   <div class="fleet-form-header">
     <h1>{{ title|default:"Forma" }}</h1>
     <div class="d-flex flex-wrap gap-2">
-      {% if manual %}
+      {% if manual and not manual_side %}
         <button type="button" class="btn btn-outline-primary btn-sm fleet-form-manual-trigger" data-bs-toggle="modal" data-bs-target="#formManualModal">
           <i class="mdi mdi-help-circle-outline"></i> Uputstvo
         </button>
@@ -62,7 +77,7 @@
   </div>
 
   <div class="row">
-    <div class="col-12 col-xl-8">
+    <div class="col-12 {% if manual and manual_side %}col-lg-6{% else %}col-xl-8{% endif %}">
       <div class="card shadow-sm fleet-form-card">
         <div class="card-body">
           <h5 class="card-title">Podaci</h5>
@@ -123,10 +138,21 @@
         </div>
       </div>
     </div>
+    {% if manual and manual_side %}
+      {% comment %}Uputstvo stalno vidljivo: pored forme na sirokom ekranu, iznad nje na uskom.
+      Tema je Bootstrap 4 sa xl od 1600px, zato lg (992px).{% endcomment %}
+      <div class="col-12 col-lg-6 order-first order-lg-last mb-3">
+        <div class="card shadow-sm fleet-form-manual-side">
+          <div class="card-body">
+            {{ manual }}
+          </div>
+        </div>
+      </div>
+    {% endif %}
   </div>
 </div>
 
-{% if manual %}
+{% if manual and not manual_side %}
   <div class="modal fade fleet-form-manual-modal" id="formManualModal" tabindex="-1" aria-labelledby="formManualModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
       <div class="modal-content">
