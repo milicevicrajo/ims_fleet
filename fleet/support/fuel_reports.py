@@ -1,3 +1,4 @@
+from datetime import date, datetime, time
 from decimal import Decimal
 
 from django.db.models import Case, IntegerField, OuterRef, Q, Subquery, Value, When
@@ -273,6 +274,74 @@ def _omv_po_fakturi(faktura):
     return qs.annotate(**_common_annotations("transaction_date")).annotate(polovina=_half_month_case("transaction_date"))
 
 
+OMV_KARTICA = {VEHICLE_TYPE_PASSENGER: "107248", VEHICLE_TYPE_TRUCK: "107258"}
+
+
+def _omv_polovina(godina, mesec, polovina):
+    """OMV period polovine: do 13. i od 14. do kraja meseca (datumi točenja)."""
+    from calendar import monthrange
+
+    if polovina == 1:
+        return date(godina, mesec, 1), date(godina, mesec, 13)
+    return date(godina, mesec, 14), date(godina, mesec, monthrange(godina, mesec)[1])
+
+
+def omv_periodi(form, vehicle_type):
+    """Izabrani period OMV izveštaja kao fakture (od 27.10.2026.): [(godina, mesec, polovina, broj fakture ili None)].
+
+    Za svaku izabranu polovinu — OMV faktura kartice (putnička 107248 / teretna 107258) sa datumom fakture u toj
+    polovini; ako je još nema, None (nefakturisana točenja kartice). None umesto liste kad godina nije izabrana."""
+    from django.utils import timezone
+
+    if not form.is_valid() or not form.cleaned_data.get("godina"):
+        return None
+    godina = int(form.cleaned_data["godina"])
+    meseci = [int(form.cleaned_data["mesec"])] if form.cleaned_data.get("mesec") else range(1, 13)
+    polovine = [int(form.cleaned_data["polovina"])] if form.cleaned_data.get("polovina") else (1, 2)
+    danas = timezone.localdate()
+    periodi = []
+    for mesec in meseci:
+        for polovina in polovine:
+            od, _ = _omv_polovina(godina, mesec, polovina)
+            if od > danas:
+                continue
+            dani = {"invoice_date__day__lte": 15} if polovina == 1 else {"invoice_date__day__gt": 15}
+            brojevi = (TransactionOMV.objects.filter(customer=OMV_KARTICA[vehicle_type], invoiced=True,
+                                                     invoice_date__year=godina, invoice_date__month=mesec, **dani)
+                       .exclude(invoice_no__isnull=True).exclude(invoice_no="").order_by("invoice_no")
+                       .values_list("invoice_no", flat=True).distinct())
+            periodi += [(godina, mesec, polovina, broj) for broj in brojevi] or [(godina, mesec, polovina, None)]
+    return periodi
+
+
+def _omv_nefakturisano(vehicle_type, godina, mesec, polovina):
+    # Polovina koju OMV još nije fakturisao: sve stavke kartice u OMV periodu, kao što će biti na fakturi.
+    from django.utils import timezone
+
+    od, do = _omv_polovina(godina, mesec, polovina)
+    tz = timezone.get_current_timezone()
+    qs = TransactionOMV.objects.select_related("vehicle").filter(
+        customer=OMV_KARTICA[vehicle_type],
+        transaction_date__range=(timezone.make_aware(datetime.combine(od, time.min), tz),
+                                 timezone.make_aware(datetime.combine(do, time.max), tz)),
+    ).filter(Q(invoice_no__isnull=True) | Q(invoice_no=""))
+    qs = deduplicate_omv_transactions(qs)
+    return qs.annotate(**_common_annotations("transaction_date")).annotate(polovina=_half_month_case("transaction_date"))
+
+
+def _omv_po_periodima(periodi, supplier, vehicle_type):
+    """Pregled i detalj za izabrani period: svaka faktura (ili nefakturisana polovina) zasebno, kao na fakturi."""
+    summary, detail = [], []
+    for godina, mesec, polovina, broj in periodi:
+        redovi = _detail_from_omv(_omv_po_fakturi(broj) if broj else _omv_nefakturisano(vehicle_type, godina, mesec, polovina),
+                                  None)
+        for red in _po_sifri(_summary_from_detail_rows(redovi, supplier, vehicle_type)):
+            red.update(godina=godina, mesec=mesec, polovina=polovina, faktura=broj)
+            summary.append(red)
+        detail += redovi
+    return summary, detail
+
+
 def _po_sifri(redovi):
     """Zbir po šifri posla, bez podele na mesece i polovine (cela faktura)."""
     grupe = {}
@@ -296,12 +365,19 @@ def fuel_job_code_report(form, *, supplier, vehicle_type, sifpos=None):
         all_detail = _detail_from_omv(_omv_po_fakturi(faktura), None)
         summary = _po_sifri(_summary_from_detail_rows(all_detail, supplier, vehicle_type))
         period = period_fakture(faktura)
-        if period:  # cela faktura u redu, ali sa mesecom i polovinom fakturisanog perioda
-            for red in summary:
+        for red in summary:
+            red["faktura"] = faktura
+            if period:  # cela faktura u redu, ali sa mesecom i polovinom fakturisanog perioda
                 red.update(godina=int(period["godina"]), mesec=int(period["mesec"]), polovina=int(period["polovina"]))
         detail = [row for row in all_detail if row["sifpos"] == sifpos] if sifpos else []
         return summary, detail
-    if supplier == SUPPLIER_OMV:
+    periodi = omv_periodi(form, vehicle_type) if supplier == SUPPLIER_OMV else None
+    if periodi is not None:
+        # Izabran period: fakture tog perioda (od 27.10.2026.) — ranije podela po kategoriji vozila i 1–15 / 16–kraj,
+        # samo gorivo, što se nije slagalo ni sa jednom OMV fakturom.
+        summary, all_detail = _omv_po_periodima(periodi, supplier, vehicle_type)
+        detail = [row for row in all_detail if row["sifpos"] == sifpos] if sifpos else []
+    elif supplier == SUPPLIER_OMV:
         qs = _annotate_omv_queryset(form, vehicle_type)
         all_detail = _detail_from_omv(qs, None)
         summary = _summary_from_detail_rows(all_detail, supplier, vehicle_type)

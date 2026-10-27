@@ -54,6 +54,37 @@ class OMVFakturaTests(TestCase):
         self.assertEqual(excel.status_code, 200)
 
 
+class OMVPeriodKaoFakturaTests(TestCase):
+    """27.10.2026.: izbor godine, meseca i polovine sam nalazi OMV fakturu tog perioda i kartice — bez biranja fakture."""
+
+    def setUp(self):
+        stavka("8916409357", "OMV EVRO DIZEL", "40.00", "9360.00", (9, 14))  # 14.09. je u OMV drugoj polovini
+        stavka("8916409357", "AdBlue Kanister", "1.00", "1499.00", (9, 20))
+        stavka("8916409357", "PUTARINA", "4700.00", "4700.00", (8, 31))
+        stavka("8916406404", "OMV EVRO DIZEL", "10.00", "2340.00", (9, 2))
+        TransactionOMV.objects.filter(invoice_no="8916406404").update(invoice_date=datetime.date(2026, 9, 13))
+        teretna = stavka("8916409360", "OMV EVRO DIZEL", "50.00", "11700.00", (9, 20))
+        TransactionOMV.objects.filter(pk=teretna.pk).update(customer="107258")
+
+    def test_polovina_prikazuje_fakturu_te_polovine_i_kartice(self):
+        form = PutnickaFilterForm({"godina": "2026", "mesec": "9", "polovina": "2"})
+        self.assertTrue(form.is_valid(), form.errors)
+        summary, _ = fuel_job_code_report(form, supplier=SUPPLIER_OMV, vehicle_type=VEHICLE_TYPE_PASSENGER)
+        self.assertEqual({r["faktura"] for r in summary}, {"8916409357"})
+        self.assertEqual(ukupno(summary)["bruto"], Decimal("15559.00"))  # sve stavke, bez teretne kartice
+
+    def test_ceo_mesec_prikazuje_obe_fakture_i_svaku_poredi_sa_sef_om(self):
+        SefFaktura.objects.create(smer="ulazna", sef_id=1, broj="8916409357", partner_naziv="OMV SRBIJA DOO",
+                                  iznos=Decimal("15559.00"), sinhronizovano=timezone.now())
+        SefFaktura.objects.create(smer="ulazna", sef_id=2, broj="8916406404", partner_naziv="OMV SRBIJA DOO",
+                                  iznos=Decimal("2000.00"), sinhronizovano=timezone.now())
+        self.client.force_login(get_user_model().objects.create_superuser("omv-period", password="x"))
+        odgovor = self.client.get(reverse("fuel_job_code_omv_putnicka"), {"godina": "2026", "mesec": "9"})
+        poredjenje = {p["broj"]: p["poklapa"] for p in odgovor.context["omv_poredjenje"]}
+        self.assertEqual(poredjenje, {"8916406404": False, "8916409357": True})
+        self.assertContains(odgovor, "Ne poklapa se")
+
+
 class OMVUvozStavkiIstogRacunaTests(TestCase):
     """Dve stavke istog računa sa istim ključem ne smeju da se prepišu (faktura 8916409357, 07.10.2026.)."""
 

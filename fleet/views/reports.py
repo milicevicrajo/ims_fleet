@@ -153,6 +153,21 @@ def _fuel_job_code_export_data(rows):
         ]
 
 
+def _omv_poredjenje(redovi):
+    """OMV: zbir izveštaja po fakturi i iznos iste fakture na SEF-u (od 27.10.2026. i za izabrani period)."""
+    from decimal import Decimal
+
+    zbirovi = {}
+    for red in redovi:
+        zbirovi[red.get("faktura")] = zbirovi.get(red.get("faktura"), Decimal("0.00")) + red["bruto"]
+    poredjenje = []
+    for broj, bruto in zbirovi.items():
+        sef = omv_faktura_sef(broj) if broj else None
+        poredjenje.append({"broj": broj, "bruto": bruto, "sef": sef,
+                           "poklapa": bool(sef and sef.iznos is not None and abs(sef.iznos - bruto) < Decimal("0.01"))})
+    return poredjenje
+
+
 def _render_fuel_job_code_report(request, *, supplier, vehicle_type):
     # Bez izabranih filtera: poslednji period za koji je izdata faktura (od 07.10.2026.).
     filteri = request.GET if any(request.GET.get(k) for k in ("godina", "mesec", "polovina", "faktura")) else         {**request.GET.dict(), **poslednji_fakturisani_period(supplier, vehicle_type)}
@@ -182,6 +197,7 @@ def _render_fuel_job_code_report(request, *, supplier, vehicle_type):
                                    int(form.cleaned_data["polovina"]))
     if faktura:
         title = f"OMV faktura {faktura} - raspodela po sifri posla"
+    omv_poredjenje = _omv_poredjenje(data) if supplier == SUPPLIER_OMV else []
 
     if request.GET.get("export") == "pdf":
         from core.izvoz_pdf import tabela_pdf_response
@@ -216,7 +232,7 @@ def _render_fuel_job_code_report(request, *, supplier, vehicle_type):
             "podrazumevani_period": not any(request.GET.get(k) for k in ("godina", "mesec", "polovina", "faktura")),
             "period_fakture": period,
             "faktura": faktura,
-            "faktura_sef": omv_faktura_sef(faktura) if faktura else None,
+            "omv_poredjenje": omv_poredjenje,
             "nis_kontrola": nis_kontrola,
         },
     )

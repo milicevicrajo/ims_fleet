@@ -863,6 +863,12 @@ Knjiženje dosadašnjih OMV faktura: putnička — **bruto** na 51300 po šifri 
 teretna — **neto** na 51300 po šifri posla i PDV na 27000; ukupno na 43500.
 NIS fakturiše po polovinama meseca (1–15, 16–kraj), pa za NIS važi filter po polovini.
 
+**OMV — izbor perioda = fakture perioda** (od 27.10.2026.; `fuel_reports.omv_periodi`): kad se izabere godina,
+mesec i polovina (bez fakture), izveštaj sam nalazi OMV fakturu te kartice (107248 / 107258) sa datumom fakture u
+toj polovini i prikazuje je cela, kao da je izabrana; za ceo mesec — obe fakture, svaka sa svojim poređenjem sa SEF-om.
+Polovina koju OMV još nije fakturisao prikazuje nefakturisane stavke kartice u OMV periodu (1–13, 14–kraj).
+Ranije je izbor perioda delio po kategoriji vozila i 1–15 / 16–kraj, samo gorivo, i nije se slagao ni sa jednom fakturom.
+
 **NIS putnička / teretna = vrsta kartice** (od 27.10.2026.; `fleet/support/nis_kartice.py`): NIS za svaku polovinu
 izdaje dve fakture, „Putničko“ i „Teretno“, i deli ih **po kartici**, ne po kategoriji vozila u Floti. Koja je
 kartica na kojoj fakturi piše u PDF specifikaciji uz fakturu na SEF-u (`…-specifikacija_uz_fakturu.pdf`, zaglavlje
