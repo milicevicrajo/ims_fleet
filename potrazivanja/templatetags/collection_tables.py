@@ -21,6 +21,7 @@ def collection_columns(columns, kind, partner=None, presentation=None):
         title = columns[index]
         if partner and title in ('Partner', 'Šifra partnera', 'Naziv'):
             continue
-        # Call and note text is read in full, so it wraps instead of being cut.
-        result.append({'index': index, 'title': title, 'wrap': title == 'Sadržaj'})
+        # Contact details and call/note text are read in full, so they wrap instead of being cut.
+        wrap = title == 'Sadržaj' or (kind == 'contacts' and title in ('Telefon', 'E-pošta', 'Napomena'))
+        result.append({'index': index, 'title': title, 'wrap': wrap})
     return result
