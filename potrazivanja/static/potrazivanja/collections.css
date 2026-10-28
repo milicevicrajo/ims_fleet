@@ -29,6 +29,11 @@
 .collections-page .collections-partner-tabs .nav-link:focus-visible{outline:2px solid #235b83;outline-offset:3px}
 .collections-partner-content{padding:24px}
 .collections-cell-text{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+/* Calls and notes size columns to their content instead of the shared fixed layout. */
+.collections-page table.collections-simple-table[data-kind=calls],.collections-page table.collections-simple-table[data-kind=notes]{table-layout:auto!important}
+.collections-page table.collections-simple-table[data-kind=calls] th,.collections-page table.collections-simple-table[data-kind=calls] td,
+.collections-page table.collections-simple-table[data-kind=notes] th,.collections-page table.collections-simple-table[data-kind=notes] td{width:auto!important}
+.collections-page .collections-wrap .collections-cell-text{white-space:pre-line;overflow-wrap:anywhere}
 .collections-simple-review{display:flex;align-items:center;gap:6px;margin:4px 0 0;font-weight:normal}
 .collections-pane-heading{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:18px}
 .collections-pane-heading h2{font-size:1.05rem;font-weight:700;color:#235b83;margin:0}

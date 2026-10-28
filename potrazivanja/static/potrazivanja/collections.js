@@ -53,6 +53,7 @@
     $('.collections-table').each(function () {
       var table = $(this), simple = table.hasClass('collections-simple-table');
       var columns = table.find('thead th').map(function () {return {data:Number(this.getAttribute('data-column')),render:simple ? renderSimpleCell : renderCell,
+        className:this.classList.contains('collections-wrap') ? 'collections-wrap' : '',
         createdCell:function(td, cell){
           if(cell.kind === 'money') $(td).addClass('collections-money');
           td.title = cell.actions ? cell.actions.map(function(action){return action.label;}).join(' · ') : String(cell.display == null ? '' : cell.display);

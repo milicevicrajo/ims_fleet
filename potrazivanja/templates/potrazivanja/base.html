@@ -1,7 +1,7 @@
 {% extends "base.html" %}{% load static %}
 {% block content %}
 {% include "fleet/includes/list_styles.html" %}
-<link rel="stylesheet" href="{% static 'potrazivanja/collections.css' %}?v=20260922-shared-debt">
+<link rel="stylesheet" href="{% static 'potrazivanja/collections.css' %}?v=20261028-pozivi-auto">
 <link rel="stylesheet" href="{% static 'potrazivanja/amounts.css' %}?v=20260918-red">
 <div class="collections-page {% block collections_page_class %}{% endblock %}">
   <header class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
@@ -19,4 +19,4 @@
   {% block collections_content %}{% endblock %}
 </div>
 {% endblock %}
-{% block extra_js %}{{ block.super }}<script src="{% static 'potrazivanja/collections.js' %}?v=20260922-shared-debt"></script>{% endblock %}
+{% block extra_js %}{{ block.super }}<script src="{% static 'potrazivanja/collections.js' %}?v=20261028-pozivi"></script>{% endblock %}

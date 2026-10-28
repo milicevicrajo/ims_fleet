@@ -30,7 +30,7 @@ TABLES = {
     "sef": ("Partner", "Godina", "Faktura", "Datum", "Status", "Vreme statusa", "Komentar"),
     "cases": ("Partner", "Godina", "Konto", "Naziv konta", "Datum", "Duguju", "Platili", "Saldo · RSD"),
     "contacts": ("Partner", "Ime i prezime / odeljenje", "Telefon", "E-pošta", "Napomena", "Stanje", "Radnje"),
-    "activities": ("Partner", "Vrsta", "Datum", "Sadržaj", "Ishod", "Sledeći kontakt", "Stanje", "Radnje"),
+    "activities": ("Partner", "Vrsta", "Datum", "Sadržaj", "Stanje", "Radnje"),
     "notices": ("Partner", "Vrsta", "Godina", "Broj", "Datum", "Iznos", "Valuta", "Fakture", "Napomena", "Stanje", "Radnje"),
     "legal": ("Partner", "Vrsta postupka", "Predmet", "Sud", "Osnovni dug", "Valuta", "Stanje", "Radnje"),
     "directory": ("Partner", "Šifra", "PIB", "Mesto"),

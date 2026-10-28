@@ -71,14 +71,14 @@ class IndependentOperationsTests(TestCase):
         self.assertEqual(response.status_code,200)
         self.assertFalse(CollectionContact.objects.filter(first_name='Ana').exists())
 
-    def test_call_with_followup_and_cross_partner_contact_validation(self):
+    def test_call_and_cross_partner_contact_validation(self):
         contact=CollectionContact.objects.get(import_parent=None)
-        data={'identity':self.partner.pk,'kind':'phone','contact':contact.pk,'occurred_at':'2026-09-18T11:30','text':'Poziv','outcome':'Dogovor','next_action_date':'2026-09-21'}
+        data={'identity':self.partner.pk,'kind':'phone','contact':contact.pk,'occurred_at':'2026-09-18T11:30','text':'Dogovor o plaćanju'}
         self.assertEqual(self.client.post(self.url('activity'),data).status_code,302)
-        self.assertTrue(CollectionActivity.objects.filter(outcome='Dogovor').exists())
+        self.assertTrue(CollectionActivity.objects.filter(text='Dogovor o plaćanju').exists())
         contact.identity=FinancePartnerIdentity.objects.get(partner_code=43);contact.save()
         self.assertEqual(self.client.post(self.url('activity'),data).status_code,200)
-        self.assertEqual(CollectionActivity.objects.filter(outcome='Dogovor').count(),1)
+        self.assertEqual(CollectionActivity.objects.filter(text='Dogovor o plaćanju').count(),1)
 
     def notice_data(self):
         return {'identity':self.partner.pk,'kind':'letter','year':'2026','number':'P-1','issued_on':'2026-09-18','currency':'RSD',

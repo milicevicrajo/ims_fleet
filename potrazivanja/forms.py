@@ -97,8 +97,8 @@ ContactPointFormSet = inlineformset_factory(CollectionContact, ContactPoint, for
 class ActivityForm(CollectionForm):
     class Meta:
         model = CollectionActivity
-        fields = ['identity', 'kind', 'contact', 'occurred_at', 'text', 'outcome', 'next_action_date']
-        labels = {'kind': 'Vrsta', 'contact': 'Kontakt osoba', 'occurred_at': 'Datum i vreme', 'text': 'Napomena / sadržaj razgovora', 'outcome': 'Ishod', 'next_action_date': 'Sledeći kontakt'}
+        fields = ['identity', 'kind', 'contact', 'occurred_at', 'text']
+        labels = {'kind': 'Vrsta', 'contact': 'Kontakt osoba', 'occurred_at': 'Datum i vreme', 'text': 'Napomena / sadržaj razgovora'}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

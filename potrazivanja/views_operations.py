@@ -325,7 +325,7 @@ def operational_rows(request, snapshot, kind):
             status=('Aktivan' if obj.active else 'Arhiva')+(' · Proveriti kontakt' if obj.needs_review else '')
             row=[label,cell(name),cell(phones),cell(emails),cell(obj.note),cell(status)]
         elif kind=='activities':
-            row=[label,cell(obj.get_kind_display()),cell(obj.occurred_at,'date'),cell(obj.text),cell(obj.outcome),cell(obj.next_action_date,'date'),cell('Arhiva' if obj.archived else 'Aktivno')]
+            row=[label,cell(obj.get_kind_display()),cell(obj.occurred_at,'date'),cell(obj.text),cell('Arhiva' if obj.archived else 'Aktivno')]
         elif kind=='notices':
             row=[label,cell(obj.get_kind_display()),cell(obj.year),cell(obj.number),cell(obj.issued_on,'date'),cell(obj.total_amount,'money'),cell(obj.currency),cell(obj.original_invoice_text),cell(obj.note),cell('Arhiva' if obj.archived else 'Aktivno')]
         else:
