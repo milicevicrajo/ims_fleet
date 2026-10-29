@@ -5,12 +5,44 @@
 {% block hero_period %}{% endblock %}
 {% block hero_actions %}<a class="btn btn-light" href="{% url 'finansije:bank_list' %}">Banke</a>{% endblock %}
 {% block finance_content %}
+<form method="post" class="fleet-list-filter finance-filter mb-3 bank-account-form" aria-label="Veza konta i banke">{% csrf_token %}
+  {% if edit_form.errors %}<div class="alert alert-danger" role="alert">Veza nije sačuvana. {{ edit_form.non_field_errors }}</div>{% endif %}
+  <div class="finance-filter-grid">
+    <div class="bank-link-account"><label class="form-label" for="{{ edit_form.account.id_for_label }}">{{ edit_form.account.label }}</label>{{ edit_form.account }}{{ edit_form.account.errors }}</div>
+    <div class="bank-link-bank"><label class="form-label" for="{{ edit_form.bank_code.id_for_label }}">{{ edit_form.bank_code.label }}</label>{{ edit_form.bank_code }}{{ edit_form.bank_code.errors }}</div>
+    <div class="bank-link-segment"><label class="form-label" for="{{ edit_form.segment.id_for_label }}">{{ edit_form.segment.label }}</label>{{ edit_form.segment }}{{ edit_form.segment.errors }}</div>
+    <div class="bank-link-note"><label class="form-label" for="{{ edit_form.note.id_for_label }}">{{ edit_form.note.label }}</label>{{ edit_form.note }}{{ edit_form.note.errors }}</div>
+    <div class="finance-filter-actions"><button type="submit" class="btn btn-primary"><i class="mdi mdi-link-variant me-1" aria-hidden="true"></i>Sačuvaj vezu</button></div>
+  </div>
+  <p class="finance-accounting-note mt-2 mb-0"><span id="BankAccountState" class="fw-semibold" aria-live="polite"></span> Veza važi samo za knjiženja bez partnera; partner grupe 11 na stavci uvek ima prednost. Izborom konta popunjava se sačuvana veza ili predlog po nazivu konta — predlog važi tek kad ga sačuvate. Zajedničko konto 24100 i prelazni računi ne pripisuju se jednoj banci.</p>
+</form>
 <div class="card"><div class="card-body">
-  <p>Veza se koristi samo kada knjiženje nema partnera. Partner grupe 11 ima prednost. Predlog banke nije primenjen dok ga ne sačuvate; zajedničko konto 24100 i prelazni računi ne pripisuju se jednoj banci.</p>
-  <form method="post">{% csrf_token %}<div class="text-danger">{{ edit_form.non_field_errors }}</div><div class="row">{% for field in edit_form %}<div class="col-md-6 mb-3"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}</div><button type="submit" class="btn btn-primary">Sačuvaj vezu</button></form>
+  <h2 class="finance-job-heading">Konta 23 i 24 <small class="text-muted">· potvrđeno {{ linked_count }} od {{ catalog|length }}{% if suggested_count %} · predlog za još {{ suggested_count }}{% endif %}</small></h2>
+  <div class="table-responsive"><table class="table table-striped finance-datatable" data-page-length="100">
+    <thead><tr><th>Konto</th><th>Naziv u knjiženjima</th><th>Banka</th><th>Vrsta posla</th></tr></thead>
+    <tbody>{% for row in catalog %}<tr>
+      <td>{{ row.code }}</td><td>{{ row.name }}</td>
+      <td>{% if row.rule %}{{ row.bank }}{% elif row.suggestion %}<span class="text-muted">Nije potvrđeno · predlog: {{ row.suggestion_code }} {{ row.suggestion }}</span>{% else %}<span class="text-muted">Nije potvrđeno</span>{% endif %}</td>
+      <td>{% if row.rule %}{{ row.segment_label }}{% else %}<span class="text-muted">{{ row.segment_label }} (po nazivu konta)</span>{% endif %}</td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
 </div></div>
-<div class="card"><div class="card-body"><div class="table-responsive"><table class="table table-striped finance-datatable">
-<thead><tr><th>Konto</th><th>Naziv u knjiženjima</th><th>Banka</th><th>Vrsta posla</th><th></th></tr></thead>
-<tbody>{% for row in catalog %}<tr><td>{{ row.code }}</td><td>{{ row.name }}</td><td>{{ row.bank }}</td><td>{{ row.rule.get_segment_display|default:"Prema nazivu konta" }}</td><td><a href="?account={{ row.code }}">Uredi vezu</a></td></tr>{% endfor %}</tbody>
-</table></div></div></div>
+{{ account_values|json_script:"BankAccountValues" }}
+<script>
+(function () {
+  var values = JSON.parse(document.getElementById('BankAccountValues').textContent);
+  var form = document.querySelector('.bank-account-form');
+  var account = form.querySelector('[name=account]'), state = document.getElementById('BankAccountState');
+  function fill() {
+    var item = values[account.value];
+    if (!item) { state.textContent = ''; return; }
+    form.querySelector('[name=bank_code]').value = item.bank_code == null ? '' : String(item.bank_code);
+    form.querySelector('[name=segment]').value = item.segment;
+    form.querySelector('[name=note]').value = item.note;
+    state.textContent = item.saved ? 'Veza je već sačuvana — izmena menja postojeću.' : 'Predlog po nazivu konta — proverite pa sačuvajte.';
+  }
+  account.addEventListener('change', fill);
+  if (account.value && !form.querySelector('.errorlist')) fill();
+})();
+</script>
 {% endblock %}

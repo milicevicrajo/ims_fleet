@@ -1,0 +1,31 @@
+{% load finance %}
+{% if not bank.grupa %}
+  <div class="alert alert-info">Banka nije u spisku bankarskih grupa{% if bank.van_nbs %} (nije na spisku banaka NBS){% endif %}. Grupe i povezana lica vode se po spisku direktora; banka se u grupu svrstava po PIB-u.</div>
+{% else %}
+<div class="card"><div class="card-body">
+  <h2 class="finance-job-heading">{{ bank.grupa.naziv }}{% if bank.grupa.maticna_grupa %} <small class="text-muted">· {{ bank.grupa.maticna_grupa }}</small>{% endif %}</h2>
+  <p class="text-muted">Povezana lica daju povoljnije uslove kada se koristi više proizvoda grupe i olakšavaju dogovor o kreditnim linijama. Naš partner se nalazi po PIB-u u šifarniku partnera (sve grupe partnera).</p>
+  {% if group_banks|length > 1 %}<p>Šifre partnera grupe 11 u ovoj grupi: {% for b in group_banks %}<a href="{% url 'finansije:bank_detail' b.code %}?tab=group&amp;{{ period_params }}">{{ b.code }} {{ b.name }}</a>{% if not forloop.last %} · {% endif %}{% endfor %}</p>{% endif %}
+</div></div>
+{% include "finansije/banks/_period.html" with tab="group" %}
+{% if valid and group_members is not None %}
+<div class="card"><div class="card-body">
+  <h2 class="finance-job-heading">Članovi grupe i naš promet u periodu</h2>
+  <p class="finance-accounting-note">Promet su sva knjiženja partnera u periodu, bez naloga POC i ZAT, u vašem obuhvatu. Saldo je duguje − potražuje u periodu, ne stanje duga.</p>
+  <div class="table-responsive"><table class="table table-hover table-sm">
+    <thead><tr><th>Vrsta</th><th>Pravno lice</th><th>MB · PIB</th><th>Pripadnost grupi</th><th>Kod nas (grupa / šifra partnera)</th><th class="text-end">Stavki</th><th class="text-end">Duguje</th><th class="text-end">Potražuje</th><th>Poslednje knjiženje</th></tr></thead>
+    <tbody>{% for m in group_members %}<tr>
+      <td>{{ m.lice.vrsta }}</td>
+      <td>{{ m.lice.naziv }}{% if m.lice.vlasnistvo %}<small class="d-block text-muted">{{ m.lice.vlasnistvo }}</small>{% endif %}</td>
+      <td class="text-nowrap">{{ m.lice.maticni_broj }} · {{ m.lice.pib }}</td>
+      <td>{% if m.lice.potvrdjeno %}<span class="text-success">{{ m.lice.potvrda }}</span>{% else %}<span class="text-warning-emphasis">{{ m.lice.potvrda|default:"—" }}</span>{% endif %}</td>
+      <td>{% for p in m.partneri %}{{ p.grupa }} / {{ p.sifra }} {{ p.naziv }}{% if not forloop.last %}<br>{% endif %}{% empty %}<span class="text-muted">nije u šifarniku</span>{% endfor %}</td>
+      <td class="text-end">{{ m.promet.stavki|default_if_none:"—" }}</td>
+      <td class="text-end">{% if m.promet.duguje is not None %}{{ m.promet.duguje|amount_badge }}{% else %}—{% endif %}</td>
+      <td class="text-end">{% if m.promet.potrazuje is not None %}{{ m.promet.potrazuje|amount_badge }}{% else %}—{% endif %}</td>
+      <td>{{ m.promet.poslednje|date:"d.m.Y."|default:"—" }}</td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
+</div></div>
+{% endif %}
+{% endif %}

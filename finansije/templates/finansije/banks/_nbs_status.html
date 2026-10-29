@@ -1,0 +1,12 @@
+<p class="finance-accounting-note">
+  {% for run in last_runs %}{{ run.get_izvor_display }}: poslednje preuzimanje {{ run.kraj|date:"d.m.Y. H:i" }} · {{ run.get_status_display|lower }}{% if run.status == "failed" %} — {{ run.greska|truncatechars:160 }}{% endif %}.
+  {% empty %}Podaci banaka još nisu preuzeti u aplikaciju; šifarnik se čita neposredno iz Stankovog programa.{% endfor %}
+  Šifarnik partnera se preuzima svake noći, a podaci sa NBS (webappcenter.nbs.rs) prvog u mesecu.
+</p>
+{% for run in change_runs %}<details class="card mb-3"><summary class="card-header">{{ run.get_izvor_display }} · promene pri preuzimanju {{ run.kraj|date:"d.m.Y. H:i" }} · {{ run.promene|length }} — za proveru</summary><div class="card-body">
+  <div class="table-responsive"><table class="table table-sm table-striped finance-datatable" data-order-column="0">
+    <thead><tr><th>Banka</th><th>Podatak</th><th>Bilo</th><th>Sada</th></tr></thead>
+    <tbody>{% for p in run.promene %}<tr><td>{{ p.banka }}</td><td>{{ p.polje }}</td><td class="text-muted">{{ p.staro|default:"—" }}</td><td>{{ p.novo|default:"—" }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% if run.izvor == "nbs" %}<p class="text-muted mb-0">Šifarnik partnera se ne menja automatski; promene naziva, adrese ili kontakata ispravljaju se u Stankovom programu.</p>{% endif %}
+</div></details>{% endfor %}

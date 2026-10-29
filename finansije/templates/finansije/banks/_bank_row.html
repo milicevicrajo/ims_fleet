@@ -1,0 +1,17 @@
+{% load finance l10n %}<tr>
+  <td>{% if row.glavna_code %}<span class="text-muted" title="Dodatna šifra uz glavnu šifru {{ row.glavna_code }}">↳ </span>{% endif %}{{ row.code }}</td>
+  <td>{% if finansije_permissions.bank_detail %}<a href="{% url 'finansije:bank_detail' row.code %}?{{ period_params }}">{{ row.name }}</a>{% else %}{{ row.name }}{% endif %}
+    {% if row.namena %}<span class="badge bg-light text-dark border">{{ row.namena }}</span>{% endif %}
+    {% if row.istorijska %}<span class="badge bg-secondary">Istorijska</span>{% elif row.nije_banka %}<span class="badge bg-light text-dark border">Nije banka</span>{% elif row.van_nbs and not row.status %}<span class="badge bg-light text-dark border">Nije banka sa spiska NBS</span>{% endif %}
+    {% if not row.u_izvoru %}<small class="d-block text-muted">Obrisana u šifarniku partnera</small>
+    {% elif row.nbs and row.nbs.aktivna and not row.glavna_code %}<small class="d-block text-muted">NBS: {{ row.nbs.naziv }}</small>
+    {% elif row.nbs and not row.nbs.aktivna %}<small class="d-block text-muted">Nije na spisku NBS od {{ row.nbs.nestala|date:"d.m.Y." }}</small>{% endif %}
+    {% if row.napomena %}<small class="d-block text-muted">{{ row.napomena }}</small>{% endif %}</td>
+  {% if period_missing %}<td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>{% else %}
+  <td class="text-end">{{ row.totals.opening|amount_badge }}</td>
+  <td class="text-end">{{ row.totals.inflow|amount_badge }}</td>
+  <td class="text-end">{{ row.totals.outflow|amount_badge }}</td>
+  <td class="text-end">{{ row.totals.turnover|amount_badge }}</td>
+  <td class="text-end">{{ row.totals.balance|amount_badge }}</td>
+  {% endif %}
+</tr>

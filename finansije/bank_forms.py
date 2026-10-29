@@ -3,7 +3,7 @@ from django import forms
 from django.core.validators import validate_email
 from django.utils import timezone
 from .forms import ReportDateField
-from .models import BankContact, BankAccountRule, BankBillPlacement
+from .models import BankaPartner, BankContact, BankAccountRule, BankBillPlacement
 
 
 class BankPeriodForm(forms.Form):
@@ -65,8 +65,15 @@ class BankAccountRuleForm(StyledModelForm):
 
     def __init__(self, *args, banks, accounts, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["bank_code"].choices = [("", "Bez veze sa jednom bankom")] + [(b["code"], f'{b["code"]} — {b["name"]}') for b in banks]
-        self.fields["account"].choices = [(code, f"{code} — {name}") for code, name in accounts]
+        # Banke sa spiska NBS prvo; istorijske i ostale šifre grupe 11 na kraju, uz oznaku.
+        def label(b):
+            oznaka = " (istorijska)" if b.get("status") == "istorijska" or not b.get("u_izvoru", True) else \
+                " (nije banka)" if b.get("status") == "nije_banka" else " (nije na spisku NBS)" if b.get("van_nbs") else ""
+            return f'{b["code"]} — {b["name"]}{oznaka}'
+        ordered = sorted(banks, key=lambda b: (bool(b.get("van_nbs") or b.get("status") in ("istorijska", "nije_banka")), b["name"].lower(), b["code"]))
+        self.fields["bank_code"].choices = [("", "Bez veze sa jednom bankom")] + [(b["code"], label(b)) for b in ordered]
+        self.fields["account"].choices = [("", "— izaberite konto —")] + [(code, f"{code} — {name}") for code, name in accounts]
+        self.fields["note"].widget.attrs["placeholder"] = "npr. broj računa ili namena"
 
     def clean(self):
         values = super().clean()
@@ -94,4 +101,22 @@ class BankBillPlacementForm(StyledModelForm):
         start, end = values.get("delivered_on"), values.get("returned_on")
         if start and end and end < start:
             raise forms.ValidationError("Datum vraćanja ne može biti pre predaje.")
+        return values
+
+
+class BankaPartnerForm(StyledModelForm):
+    class Meta:
+        model = BankaPartner
+        fields = ["status", "namena", "glavna", "napomena"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Glavna šifra je druga šifra iz šifarnika koja i sama nije dodatna (bez lanaca).
+        self.fields["glavna"].queryset = BankaPartner.objects.filter(company=self.instance.company, glavna__isnull=True).exclude(pk=self.instance.pk)
+        self.fields["glavna"].empty_label = "Ovo je glavna šifra"
+
+    def clean(self):
+        values = super().clean()
+        if values.get("glavna") and self.instance.dodatne.exists():
+            raise forms.ValidationError("Ova šifra je glavna za druge šifre; ne može biti i dodatna.")
         return values

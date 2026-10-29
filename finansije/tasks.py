@@ -57,3 +57,35 @@ def refresh_nalog_z_task(self):
         return "Task skipped: osvežavanje nalog_z je već pokrenuto."
     return (f"nalog_z {run.year_from}–{run.year_to}: "
             f"ažurirano={run.updated_rows}, dodato={run.inserted_rows}.")
+
+
+@shared_task(name="finansije.tasks.osvezi_banke_nbs_task")
+def osvezi_banke_nbs_task():
+    """Banke sa sajta NBS (spisak i „Detalji”), jednom mesečno; isto kao dugme „Preuzmi sa NBS”."""
+    from core.tasks import _run_with_singleton_lock
+
+    def _runner():
+        from .services import banke_nbs
+
+        try:
+            return banke_nbs.poruka(banke_nbs.osvezi("celery"))
+        except banke_nbs.PreuzimanjeUToku as exc:
+            return f"Task skipped: {exc}"
+
+    return _run_with_singleton_lock(task_name="finansije_osvezi_banke_nbs_task", lock_ttl_seconds=30 * 60, fn=_runner)
+
+
+@shared_task(name="finansije.tasks.sync_banke_sifarnik_task")
+def sync_banke_sifarnik_task():
+    """Partneri grupe 11 iz Stankovog programa u lokalnu kopiju banaka, svake noći."""
+    from core.tasks import _run_with_singleton_lock
+
+    def _runner():
+        from .services import banke_nbs
+
+        try:
+            return banke_nbs.poruka(banke_nbs.sinhronizuj_sifarnik("celery"))
+        except banke_nbs.PreuzimanjeUToku as exc:
+            return f"Task skipped: {exc}"
+
+    return _run_with_singleton_lock(task_name="finansije_sync_banke_sifarnik_task", lock_ttl_seconds=30 * 60, fn=_runner)

@@ -2,7 +2,7 @@
 {% load finance %}
 {% block title %}{{ bank.name }} · Banke{% endblock %}
 {% block hero_title %}{{ bank.name }}{% endblock %}
-{% block hero_description %}Banka · šifra partnera {{ bank.code }} · grupa 11{% endblock %}
+{% block hero_description %}Banka · šifra partnera {{ bank.code }} · grupa 11{% if bank.grupa %} · bankarska grupa {{ bank.grupa.naziv }}{% endif %}{% if bank.van_nbs %} · nije na spisku banaka NBS{% endif %}{% endblock %}
 {% block hero_actions %}<a class="btn btn-light" href="{% url 'finansije:bank_list' %}?{{ period_params }}">Sve banke</a>{% endblock %}
 {% block finance_content %}
 <nav class="finance-job-nav mb-3" aria-label="Podaci banke">
@@ -11,8 +11,26 @@
 {% if tab == 'basic' %}
   <div class="card"><div class="card-body"><h2 class="finance-job-heading">Osnovni podaci</h2>
   <div class="table-responsive"><table class="table table-striped table-sm"><tbody>{% for label, value in bank.fields %}<tr><th style="width:35%">{{ label }}</th><td>{{ value|default:"—" }}</td></tr>{% endfor %}</tbody></table></div>
-  <p class="text-muted">Podaci se preuzimaju iz šifarnika partnera. Račun naveden uz partnera nije potvrda broja IMS računa kod te banke.</p>
+  <p class="text-muted">Podaci su iz šifarnika partnera (Stankov program){% if bank.zapis %}, preuzeti {{ bank.zapis.preuzeto|date:"d.m.Y. H:i" }}{% if not bank.zapis.u_izvoru %} — šifra je obrisana u šifarniku {{ bank.zapis.nestala|date:"d.m.Y." }}{% endif %}{% endif %}; ispravljaju se u Stankovom programu. Račun naveden uz partnera nije potvrda broja IMS računa kod te banke.</p>
   </div></div>
+  {% if bank.zapis %}<div class="card"><div class="card-body"><h2 class="finance-job-heading">Naše oznake</h2>
+  <p class="text-muted">Vode se samo u ovoj aplikaciji: status (inače se određuje po spisku NBS i prometu), namena šifre i glavna šifra iste banke — dodatna šifra se prikazuje ispod glavne.</p>
+  {% if bank.glavna_code %}<p>Dodatna šifra uz glavnu šifru <a href="{% url 'finansije:bank_detail' bank.glavna_code %}">{{ bank.glavna_code }}</a>.</p>{% endif %}
+  {% if related_codes %}<p>Dodatne šifre iste banke: {% for b in related_codes %}<a href="{% url 'finansije:bank_detail' b.code %}">{{ b.code }} {{ b.name }}</a>{% if b.namena %} ({{ b.namena }}){% endif %}{% if not forloop.last %} · {% endif %}{% endfor %}</p>{% endif %}
+  {% if can_partner_edit %}<form method="post" action="{% url 'finansije:bank_partner_edit' bank.code %}" class="row g-3">{% csrf_token %}
+    {% for field in partner_form %}<div class="col-md-3"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}</div>{% endfor %}
+    <div class="col-12"><button class="btn btn-primary" type="submit">Sačuvaj oznake</button>{% if bank.zapis.izmenjeno %} <small class="text-muted ms-2">Poslednja izmena {{ bank.zapis.izmenjeno|date:"d.m.Y. H:i" }}{% if bank.zapis.izmenio %} · {{ bank.zapis.izmenio }}{% endif %}</small>{% endif %}</div>
+  </form>{% else %}
+  <table class="table table-sm mb-0"><tbody>
+    <tr><th style="width:35%">Status</th><td>{{ bank.zapis.get_status_display }}</td></tr>
+    <tr><th>Namena šifre</th><td>{{ bank.zapis.get_namena_display }}</td></tr>
+    <tr><th>Napomena</th><td>{{ bank.zapis.napomena|default:"—" }}</td></tr>
+  </tbody></table>{% endif %}
+  </div></div>{% endif %}
+{% elif tab == 'nbs' %}
+  {% include "finansije/banks/_nbs.html" with banka=bank.nbs %}
+{% elif tab == 'group' %}
+  {% include "finansije/banks/_group.html" %}
 {% elif tab == 'contacts' %}
   <div class="card"><div class="card-body">
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"><h2 class="finance-job-heading mb-0">Kontakti po vrsti posla</h2>{% if can_contact_edit %}<a class="btn btn-primary" href="{% url 'finansije:bank_contact_edit' bank.code %}">Dodaj kontakt</a>{% endif %}</div>

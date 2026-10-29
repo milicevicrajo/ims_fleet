@@ -5,6 +5,9 @@ app_name = "finansije"
 urlpatterns = [
     path("banke/", bank_views.bank_list, name="bank_list"),
     path("banke/konta/", bank_views.bank_accounts, name="bank_accounts"),
+    path("banke/osvezi/", bank_views.bank_refresh, name="bank_refresh"),
+    path("banke/srbija/", bank_views.bank_market, name="bank_market"),
+    path("banke/<int:bank_code>/oznake/", bank_views.bank_partner_edit, name="bank_partner_edit"),
     path("banke/<int:bank_code>/", bank_views.bank_detail, name="bank_detail"),
     path("banke/<int:bank_code>/kontakti/novi/", bank_views.bank_contact_edit, name="bank_contact_edit"),
     path("banke/<int:bank_code>/kontakti/<int:pk>/", bank_views.bank_contact_edit, name="bank_contact_edit"),
@@ -35,4 +38,6 @@ urlpatterns = [
     path("sinhronizacija/", views.sync_status, name="sync_status"),
     path("sinhronizacija/pokreni/", views.sync_run, name="sync_run"),
     path("sinhronizacija/nalog-z/", views.nalog_z_refresh, name="nalog_z_refresh"),
+    path("konto/", views.konto_tabela, name="konto_tabela"),
+    path("bruto-bilans/", views.bruto_bilans, name="bruto_bilans"),
 ]

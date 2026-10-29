@@ -158,6 +158,22 @@ class BankViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertFalse(BankAccountRule.objects.exists())
 
+    def test_saved_link_moves_postings_without_partner_to_the_bank(self, source):
+        self.grant("finansije:bank_accounts", "finansije:bank_list", "finansije:view_all")
+        save_entry(number=1, account="24404", account_name="Devizni racun - Raiffeisen bank EUR", partner_group=0, partner_code=0,
+                   debit=Decimal("100"), credit=Decimal("0"))
+        period = {"date_from": "2026-01-01", "date_to": "2026-06-30"}
+        before = self.client.get(reverse("finansije:bank_list"), period)
+        self.assertEqual([row["account"] for row in before.context["unmapped"]], ["24404"])
+        page = self.client.get(reverse("finansije:bank_accounts"))
+        self.assertNotContains(page, "Uredi vezu")
+        self.assertEqual(page.context["account_values"]["24404"], {"bank_code": 2, "segment": "foreign", "note": "", "saved": False})
+        self.assertEqual(self.client.post(reverse("finansije:bank_accounts"), {"account": "24404", "bank_code": 2, "segment": "foreign"}).status_code, 302)
+        after = self.client.get(reverse("finansije:bank_list"), period)
+        self.assertEqual(after.context["unmapped"], [])
+        self.assertEqual(next(b for b in after.context["banks"] if b["code"] == 2)["totals"]["inflow"], 100)
+        self.assertTrue(self.client.get(reverse("finansije:bank_accounts")).context["account_values"]["24404"]["saved"])
+
     def test_bill_registration_is_not_automatically_custody(self, source):
         self.grant("finansije:bank_detail", "finansije:view_all", "menice:menica_list", "menice:ulazna_menica_list")
         Menica.objects.create(tip="izlazna", naziv_banke="Raiffeisen banka", serijski_broj_menice="AA")
@@ -177,3 +193,40 @@ class BankViewTests(TestCase):
         response = self.client.post(reverse("finansije:bank_bill_edit", args=[3]), {"bill": bill.pk, "delivered_on": "2026-01-02"})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(BankBillPlacement.objects.count(), 2)
+
+
+@patch("finansije.services.kontni_plan.tabela_konta", return_value=[["1", "15030", "Dati avansi u inostranstvu"] + [""] * 12])
+class KontoTabelaTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user("konto-reader", password="test")
+        self.role = Role.objects.create(name="Konto test", slug="konto-test")
+        self.user.roles.add(self.role)
+        self.client.force_login(self.user)
+
+    def test_requires_permission_before_source_read(self, source):
+        self.assertEqual(self.client.get(reverse("finansije:konto_tabela")).status_code, 403)
+        source.assert_not_called()
+
+    def test_shows_table_rows_and_sidebar_link(self, source):
+        self.role.permissions.add(PermissionCode.objects.get_or_create(code="finansije:konto_tabela")[0])
+        response = self.client.get(reverse("finansije:konto_tabela"))
+        self.assertContains(response, "Dati avansi u inostranstvu")
+        self.assertContains(response, 'href="%s"' % reverse("finansije:konto_tabela"))
+
+
+class BankAccountSuggestionTests(SimpleTestCase):
+    BANKS = [dict(code=2, name="Raiffeisen Banka a.d. BEOGRAD", zr="908-26501-15"), dict(code=17, name="Raiffeisen banka a.d. Beograd", zr="265-1"),
+             dict(code=3, name="NLB Banka AD BEOGRAD", zr="908-2"), dict(code=4, name="Addiko Bank a.d. Beograd", zr="908-3"),
+             dict(code=13, name="Banka Postanska stedionica akcionarsko drustvo Beograd", zr="908-4"),
+             dict(code=12, name="POSTANSKA ST BOLOVANJE", zr=""),
+             dict(code=16, name="Aikbank akcionarsko drustvo Beograd", zr="908-10501-97"),
+             dict(code=15, name="Aikbank akcionarsko drustvo Beograd", zr="908-10501-97", glavna_code=16)]
+
+    def test_old_account_names_point_to_todays_bank(self):
+        for name, code in (("KOMERCIJALNA BANKA-EUR", 3), ("Devizni racun -Hypo banka", 4), ("Devizni račun pošt.šted. EUR", 13),
+                           ("Devizni racun - Reiffeisen bank - viza", 2), ("Dev.račun Agricole banka eur", None),
+                           ("Investicione jedinice Raiff invest", None)):
+            self.assertEqual(suggested_bank(name, self.BANKS), code, name)
+
+    def test_additional_code_is_not_suggested(self):
+        self.assertEqual(suggested_bank("Devizni račun AIK banka EUR", self.BANKS), 16)

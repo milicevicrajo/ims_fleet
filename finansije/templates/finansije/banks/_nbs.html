@@ -1,0 +1,34 @@
+{% include "finansije/banks/_nbs_status.html" with change_runs=None %}
+{% if not banka %}
+  <div class="alert alert-info">Ova šifra partnera nije povezana ni sa jednom bankom sa spiska NBS (veza je po PIB-u, pa po matičnom broju). To je stara banka, ugašen račun ili partner koji nije banka{% if not bank.pib %}; u šifarniku partnera nema PIB-a{% endif %}.</div>
+{% else %}
+<div class="card"><div class="card-body">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+    <h2 class="finance-job-heading mb-0">{{ banka.naziv }} {% if not banka.aktivna %}<span class="badge bg-secondary">Istorijska · nije na spisku NBS od {{ banka.nestala|date:"d.m.Y." }}</span>{% endif %}</h2>
+    <a class="btn btn-sm btn-outline-primary" href="{{ banka.nbs_url }}" target="_blank" rel="noopener"><i class="mdi mdi-open-in-new"></i> Stranica na NBS</a>
+  </div>
+  <p class="text-muted">Preuzeto {{ banka.preuzeto|date:"d.m.Y. H:i" }}{% if banka.promenjeno %} · poslednja promena {{ banka.promenjeno|date:"d.m.Y." }}{% endif %}. NBS navodi da se podaci ažuriraju kvartalno.</p>
+  <div class="table-responsive"><table class="table table-striped table-sm"><tbody>
+    <tr><th style="width:30%">Adresa</th><td>{{ banka.adresa }}{% if banka.postanski_broj %} · {{ banka.postanski_broj }}{% endif %}{% if banka.grad %} {{ banka.grad }}{% endif %}</td></tr>
+    <tr><th>Matični broj · PIB</th><td>{{ banka.maticni_broj|default:"—" }} · {{ banka.pib|default:"—" }}</td></tr>
+    <tr><th>SWIFT</th><td>{{ banka.swift|default:"—" }}</td></tr>
+    <tr><th>Telefon · telefaks</th><td>{{ banka.telefon|default:"—" }}{% if banka.telefaks %} · faks {{ banka.telefaks }}{% endif %}</td></tr>
+    <tr><th>Veb sajt · e-mail</th><td>{{ banka.web|default:"—" }} · {{ banka.email|default:"—" }}</td></tr>
+    <tr><th>Rešenje o dozvoli za rad</th><td>{{ banka.resenje|default:"—" }}{% if banka.datum_resenja %} od {{ banka.datum_resenja|date:"d.m.Y." }}{% endif %}</td></tr>
+    <tr><th>Broj zaposlenih</th><td>{{ banka.broj_zaposlenih|default:"—" }}</td></tr>
+    <tr><th>Akcionari preko 5%</th><td>{% for a in banka.akcionari %}{{ a.naziv }} – {{ a.procenat }}{% if not forloop.last %}<br>{% endif %}{% empty %}—{% endfor %}</td></tr>
+    <tr><th>Upravni odbor</th><td>{% for c in banka.upravni_odbor %}{{ c.ime }} <small class="text-muted">– {{ c.funkcija }}</small>{% if not forloop.last %}<br>{% endif %}{% empty %}—{% endfor %}</td></tr>
+    <tr><th>Izvršni odbor</th><td>{% for c in banka.izvrsni_odbor %}{{ c.ime }} <small class="text-muted">– {{ c.funkcija }}</small>{% if not forloop.last %}<br>{% endif %}{% empty %}—{% endfor %}</td></tr>
+    <tr><th>Prilozi na NBS</th><td>{% for p in banka.prilozi %}<a href="{{ p.url }}" target="_blank" rel="noopener">{{ p.naziv }}</a>{% if not forloop.last %} · {% endif %}{% empty %}—{% endfor %}</td></tr>
+    <tr><th>Napomena NBS</th><td>{{ banka.napomena|default:"—"|linebreaksbr }}</td></tr>
+  </tbody></table></div>
+</div></div>
+<div class="card"><div class="card-body">
+  <h2 class="finance-job-heading">Provera šifarnika partnera prema NBS</h2>
+  <p class="text-muted">Šifarnik partnera starog ERP-a se ne menja iz ove aplikacije; razlike se ispravljaju u starom programu. Poređenje zanemaruje velika/mala slova, dijakritike i razmake.</p>
+  <div class="table-responsive"><table class="table table-sm">
+    <thead><tr><th>Podatak</th><th>Šifarnik partnera (šifra {{ bank.code }})</th><th>NBS</th><th></th></tr></thead>
+    <tbody>{% for d in differences %}<tr{% if not d.isto %} class="table-warning"{% endif %}><td>{{ d.polje }}</td><td>{{ d.sifarnik|default:"—" }}</td><td>{{ d.nbs|default:"—" }}</td><td>{% if d.isto %}<span class="text-success">isto</span>{% else %}<strong>razlikuje se</strong>{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</div></div>
+{% endif %}

@@ -138,3 +138,37 @@ class ReportFilters(forms.Form):
         if start and end and start > end:
             raise forms.ValidationError("Početni datum mora biti pre krajnjeg datuma.")
         return data
+
+
+class BrutoBilansForm(forms.Form):
+    godina = forms.IntegerField(label="Godina", min_value=2000)
+    datum_od = ReportDateField(label="Datum od")
+    datum_do = ReportDateField(label="Datum do")
+    oj_od = forms.IntegerField(label="OJ od", required=False, min_value=0)
+    oj_do = forms.IntegerField(label="OJ do", required=False, min_value=0)
+    konto_od = forms.RegexField(label="Od konta", regex=r"^\d{1,6}$", required=False,
+                                error_messages={"invalid": "Konto ima do 6 cifara."})
+    konto_do = forms.RegexField(label="Do konta", regex=r"^\d{1,6}$", required=False,
+                                error_messages={"invalid": "Konto ima do 6 cifara."})
+    nivo = forms.ChoiceField(label="Nivo", initial="konto")
+
+    def __init__(self, *args, **kwargs):
+        from .services.bruto_bilans import NIVOI
+
+        super().__init__(*args, **kwargs)
+        godina = timezone.localdate().year
+        self.fields["godina"].initial = godina
+        self.fields["datum_od"].initial = date(godina, 1, 1)
+        self.fields["datum_do"].initial = date(godina, 12, 31)
+        self.fields["nivo"].choices = NIVOI
+        for naziv, field in self.fields.items():
+            field.widget.attrs["class"] = "form-select" if naziv == "nivo" else "form-control"
+        for naziv in ("oj_od", "oj_do", "konto_od", "konto_do"):
+            self.fields[naziv].widget.attrs["placeholder"] = "sve"
+
+    def clean(self):
+        values = super().clean()
+        godina, od, do = values.get("godina"), values.get("datum_od"), values.get("datum_do")
+        if godina and od and do and (od > do or od.year != godina or do.year != godina):
+            raise forms.ValidationError("Izaberite period unutar izabrane godine (datum od ne može biti posle datuma do).")
+        return values

@@ -30,7 +30,8 @@ def finance_sidebar_section(request):
             return "jobs"
         return "overview"
     return {"finansije:dashboard": "overview", "finansije:job_card": "jobs",
-            "finansije:ledger": "ledger", "finansije:sync_status": "sync"}.get(view, "")
+            "finansije:ledger": "ledger", "finansije:sync_status": "sync",
+            "finansije:konto_tabela": "konto_tabela", "finansije:bruto_bilans": "bruto_bilans"}.get(view, "")
 
 
 @register.simple_tag

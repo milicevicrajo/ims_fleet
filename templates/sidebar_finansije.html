@@ -6,9 +6,16 @@
 {% url 'finansije:sync_status' as sync_url %}
 {% url 'finansije:bank_list' as banks_url %}
 {% url 'finansije:sef_list' as sef_url %}
+{% url 'finansije:konto_tabela' as konto_url %}
+{% url 'finansije:bruto_bilans' as bruto_bilans_url %}
 <aside class="left-sidebar" data-sidebarbg="skin5"><div class="scroll-sidebar"><nav class="sidebar-nav"><ul id="sidebarnav" class="pt-4">
   {% if finansije_permissions.dashboard %}
     {% include "finansije/_sidebar_item.html" with section="overview" label="Finansijski pregled" icon="mdi-chart-bar" href=overview_url %}
+  {% endif %}
+  {% if finansije_permissions.bruto_bilans and finansije_permissions.view_all %}
+    {% include "finansije/_sidebar_item.html" with section="bruto_bilans" label="Bruto bilans" icon="mdi-scale-balance" href=bruto_bilans_url %}
+  {% endif %}
+  {% if finansije_permissions.dashboard %}
     {% include "finansije/_sidebar_item.html" with section="jobs" label="Šifre posla" icon="mdi-briefcase-outline" href=report_url|add:"?group=job" %}
     {% if finansije_permissions.mesecni_pregled %}{% include "finansije/_sidebar_item.html" with section="month" label="Mesečni pregled" icon="mdi-calendar" href=report_url|add:"?group=month" %}{% endif %}
     {% if finansije_permissions.konta %}{% include "finansije/_sidebar_item.html" with section="accounts" label="Konta" icon="mdi-file-tree" href=report_url|add:"?group=account" %}{% endif %}
@@ -24,5 +31,8 @@
   {% endif %}
   {% if finansije_permissions.sync_status and finansije_permissions.view_all %}
     {% include "finansije/_sidebar_item.html" with section="sync" label="Sinhronizacija" icon="mdi-sync" href=sync_url %}
+  {% endif %}
+  {% if finansije_permissions.konto_tabela %}
+    {% include "finansije/_sidebar_item.html" with section="konto_tabela" label="Tabela konto" icon="mdi-table" href=konto_url %}
   {% endif %}
 </ul></nav></div></aside>

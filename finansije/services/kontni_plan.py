@@ -44,6 +44,19 @@ def nazivi_konta(company=None):
     return plan
 
 
+KOLONE_TABELE = (("sif_pred", "Preduzeće"), ("knt", "Konto"), ("naz_knt", "Naziv konta"), ("vrsta", "Vrsta"),
+                 ("grupa", "Grupa"), ("povez", "Povez"), ("komentar", "Komentar"), ("r_p", "R/P"),
+                 ("knjizi_se", "Knjiži se"), ("ind_saldo", "Saldo"), ("ind_devizno", "Devizno"),
+                 ("ind_posao", "Šifra posla"), ("ind_blagajne", "Blagajna"), ("nt", "NT"), ("idpdv", "PDV"))
+
+
+def tabela_konta():
+    """Ceo sadržaj lokalne tabele `[IMS_ERP].dbo.konto`, samo SELECT, kako je upisan."""
+    with connections["server_db"].cursor() as cursor:
+        cursor.execute(f"SELECT {', '.join(k for k, _ in KOLONE_TABELE)} FROM [IMS_ERP].dbo.konto ORDER BY sif_pred, knt")
+        return [["" if v is None else str(v).strip() for v in red] for red in cursor.fetchall()]
+
+
 def naziv_konta(code, plan, rezerva=""):
     return plan.get(code) or rezerva or ""
 

@@ -3177,14 +3177,57 @@ postojeća metodologija (`finansije-metodologija-obracuna.md`, uklonjena 18.09.2
 ### 18. Banke
 
 Ekran `/finansije/banke/` prikazuje partnere iz `PUTGEO-SERVER.bazaims.dbo.partner`
-za podešenu firmu i `grupa=11`. Osnovni podaci čitaju se neposredno iz izvora,
-sa istim poljima kao u Naplati. Novi podaci ne upisuju se u nasleđeni šifarnik.
+(Stankov program) za podešenu firmu i `grupa=11`. Od 29.10.2026. čitaju se iz lokalne kopije
+`BankaPartner`, koju sinhronizacija puni **svake noći u 01:55** (`finansije.tasks.sync_banke_sifarnik_task`)
+i dugmetom **Osveži podatke banaka**; neposredno iz izvora samo dok kopija još nije preuzeta.
+Sinhronizacija ide samo u jednom smeru: podaci partnera (naziv, adresa, MB, PIB, račun...) menjaju
+se u Stankovom programu, a svaka promena i obrisana šifra beleže se (`BankePreuzimanje`, izvor
+„šifarnik”) i prikazuju na ekranu za proveru. Novi podaci ne upisuju se u nasleđeni šifarnik.
 
-Kartice banke idu redom: **Osnovni podaci, Kontakti, Promet po računima, Menice,
-Garancije, Oročena sredstva**. Početni period je 1. januar tekuće godine do danas.
+Samo u aplikaciji vode se **naše oznake** šifre (kartica Osnovni podaci, `finansije:bank_partner_edit`,
+uz pristup celoj firmi): **status** (automatski, aktivna, istorijska, nije banka), **namena šifre**
+(glavni račun, bolovanja, namenski...) i **glavna šifra iste banke** — dodatna šifra (npr. AIK 15 uz 16)
+prikazuje se ispod glavne. Ručni status ima prednost nad automatskim.
+
+Kartice banke idu redom: **Osnovni podaci, Podaci sa NBS, Grupa i povezana lica, Kontakti,
+Promet po računima, Menice, Garancije, Oročena sredstva**. Početni period je 1. januar tekuće godine do danas.
 Može se izabrati drugi period unutar jedne godine od 2025. nadalje. Za svaki račun
 odvojeno se prikazuju promet izabranog perioda i povećanja/smanjenja od početka
 izabrane godine do danas, odnosno do 31. decembra za završene godine.
+
+#### Podaci sa NBS, bankarske grupe i istorijske banke (od 29.10.2026.)
+
+- **Izvor:** registar banaka NBS (`webappcenter.nbs.rs` → Banke, stranica „Detalji” svake banke),
+  samo čitanje. Preuzima se dugmetom **Osveži podatke banaka** na ekranu Banke (`finansije:bank_refresh`,
+  uz pristup celoj firmi; isto dugme osvežava i šifarnik) i automatski **prvog u mesecu u 06:30** (`finansije.tasks.osvezi_banke_nbs_task`).
+  NBS navodi da podatke ažurira kvartalno. Podaci su na sajtu ćirilicom i preslovljavaju se u latinicu.
+- **Čuvanje:** `BankaNbs` (poslednje stanje: adresa, MB, PIB, SWIFT, kontakti, rešenje, broj zaposlenih,
+  akcionari preko 5%, upravni i izvršni odbor, prilozi, napomena NBS) i `BankePreuzimanje` (svako
+  preuzimanje sa spiskom promena „bilo / sada”). Sve banke se preuzmu pre upisa — ako jedna stranica
+  ne uspe, ništa se ne menja. Najnovije promene prikazuju se na ekranu Banke, za proveru.
+- **Veza sa šifarnikom:** partner grupe 11 vezuje se za NBS banku po PIB-u, pa po matičnom broju
+  (bez vodećih nula). Više šifara iste banke (npr. račun za bolovanja) pripada istoj banci.
+  Šifarnik partnera starog ERP-a se ne menja; kartica „Podaci sa NBS” pokazuje razlike prema
+  NBS-u, a ispravljaju se u starom programu.
+- **Grupe:** `BankarskaGrupa` i `PovezanoLiceBanke` po spisku direktora („Banke – povezana lica”,
+  migracija `0011`): banke, lizing, DZU, osiguranja. Banka se u grupu svrstava po PIB-u. Kartica
+  „Grupa i povezana lica” za svako lice pokazuje našeg partnera (po PIB-u, sve grupe partnera)
+  i promet u periodu, u obuhvatu korisnika. Pripadnost „po nazivu” nije potvrđena (proveriti u APR-u).
+- **Istorijske banke:** partner grupe 11 koji nije na spisku NBS prikazuje se posebno. Bez ručne
+  oznake, „Istorijska” je ako nema ni stanja ni prometa u izabranoj godini ili je obrisan u šifarniku; inače
+  „Nije banka sa spiska NBS” (npr. Uprava za trezor). Banka koju NBS skine sa spiska ostaje
+  istorijska, sa datumom kada je nestala.
+
+#### Banke u Srbiji (od 29.10.2026.)
+
+Dugme **Banke u Srbiji** na ekranu Banke (`finansije:bank_market`, nije u bočnom meniju) otvara
+pregled celog tržišta u obliku pregleda direktora: svih banaka sa spiska NBS po bankarskim grupama
+(zaposleni, najveći akcionar, predsednici i veličina upravnog i izvršnog odbora, revizor iz priloga
+na NBS, red „Ukupno / prosek”) i svih grupa sa povezanim licima. Za svaku banku i lice prikazuje se
+da li ga imamo u šifarniku — banke po PIB-u u `BankaPartner`, ostala lica u kopiji partnera grupe 1
+koju održavaju Potraživanja (bez upita prema povezanom serveru) — a uz pristup celoj firmi i promet
+u izabranom periodu. Excel (`?izvoz=xlsx`) ima iste kolone kao „Banke_Srbija_NBS_podaci” i
+„Banke – povezana lica”, uz kolonu saradnje.
 
 #### Knjiženja i povezivanje
 
@@ -20029,7 +20072,7 @@ chrome-for-testing/  Chrome za Selenium
  :20    Svakog sata — Finansije, tekuća godina
 ```
 
-**Ukupno 23 zakazana posla** (ugovori zaposlenih u 01:15 i opomene za gorivo u 07:45, od 29.09.2026.; SEF fakture u 06:50, od 30.09.2026.). [P] Stara sinhronizacija šifara i OJ (01:30) ugašena je 28.09.2026. — `sync_celery_periodic_tasks` je briše iz rasporeda.
+**Ukupno 25 zakazanih poslova** (ugovori zaposlenih u 01:15 i opomene za gorivo u 07:45, od 29.09.2026.; SEF fakture u 06:50, od 30.09.2026.; šifarnik banaka u 01:55 i banke sa NBS prvog u mesecu u 06:30, od 29.10.2026.). [P] Stara sinhronizacija šifara i OJ (01:30) ugašena je 28.09.2026. — `sync_celery_periodic_tasks` je briše iz rasporeda.
 
 ---
 
@@ -20043,6 +20086,7 @@ chrome-for-testing/  Chrome za Selenium
 | 01:20 | Flota — provera otpisa vozila | `fleet.tasks.proveri_otpis` | `sync` | 60 min |
 | 01:40 | Organizacija — registar, obrt šifara, nazivi jedinica iz kadrovske baze (čita `ob_jedin` na PUTGEO-SERVER.bazaldims), veze modula, **centar iz registra na knjiženjima Finansija** i poređenje sa starom | `organizacija.tasks.sync_organizacija_task` | `sync` | 90 min |
 | 01:45 | Flota — trebovanja | `fleet.tasks.fetch_requisition_data_task` | `sync` | 90 min |
+| 01:55 | Finansije — šifarnik banaka (partneri grupe 11 iz Stankovog programa u lokalnu kopiju) | `finansije.tasks.sync_banke_sifarnik_task` | `sync` | 30 min |
 | 02:00 | Flota — polise | `fleet.tasks.fetch_policy_data_task` | `sync` | 90 min |
 | 02:20 | Nabavka — EUF fakture | `nabavka.tasks.sync_euf_invoices_task` | `sync` | — |
 | 02:45 | Nabavka — UF stavke | `nabavka.tasks.sync_uf_items_task` | `sync` | — |
@@ -20052,6 +20096,7 @@ chrome-for-testing/  Chrome za Selenium
 | **04:20** | **Gorivo — NIS** | `fleet.tasks.run_nis_command` | **`selenium`** | **4 h** |
 | **05:10** | **Gorivo — OMV putnička** | `fleet.tasks.run_omv_putnicka_command` | **`selenium`** | **4 h** |
 | **06:10** | **Gorivo — OMV teretna** | `fleet.tasks.run_omv_teretna_command` | **`selenium`** | **4 h** |
+| 06:30, **1. u mesecu** | Finansije — banke sa NBS (spisak i „Detalji” svake banke) | `finansije.tasks.osvezi_banke_nbs_task` | `sync` | 30 min |
 | 06:50 | Finansije — SEF fakture (preskače se bez `SEF_API_KEY`) | `finansije.tasks.sync_sef_task` | `sync` | 90 min |
 | 07:10 | Nabavka — roba | `nabavka.tasks.sync_goods_task` | `sync` | — |
 | 07:30 | Nabavka — fiskalni računi koji čekaju proveru (stranica Poreske uprave nije bila dostupna) | `nabavka.tasks.fiskalni_ponovi_task` | `sync` | 60 min |

@@ -312,6 +312,8 @@ CELERY_TASK_ROUTES = {
     'hr.tasks.sync_ugovori_zaposlenih_task': {'queue': 'sync'},
     'fleet.tasks.opomene_goriva_task': {'queue': 'sync'},
     'finansije.tasks.sync_sef_task': {'queue': 'sync'},
+    'finansije.tasks.osvezi_banke_nbs_task': {'queue': 'sync'},
+    'finansije.tasks.sync_banke_sifarnik_task': {'queue': 'sync'},
 }
 
 FINANSIJE_COMPANY = 1

@@ -25,7 +25,7 @@ class Command(BaseCommand):
                     continue
                 schedule, _ = CrontabSchedule.objects.get_or_create(
                     hour=spec["hour"], minute=spec["minute"], day_of_week="*",
-                    day_of_month="*", month_of_year="*", timezone=spec.get("timezone", settings.CELERY_TIMEZONE),
+                    day_of_month=spec.get("day_of_month", "*"), month_of_year="*", timezone=spec.get("timezone", settings.CELERY_TIMEZONE),
                 )
                 PeriodicTask.objects.update_or_create(name=spec["name"], defaults={
                     "task": spec["task"], "crontab": schedule, "interval": None,

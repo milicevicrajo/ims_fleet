@@ -25,6 +25,21 @@ EXPECTED_PERIODIC_TASKS = [
         "minute": "50",
     },
     {
+        # Od 29.10.2026.: lokalna kopija banaka (partneri grupe 11) iz Stankovog programa.
+        "name": "Finansije - sifarnik banaka",
+        "task": "finansije.tasks.sync_banke_sifarnik_task",
+        "hour": "1",
+        "minute": "55",
+    },
+    {
+        # Od 29.10.2026.: spisak i podaci banaka sa sajta NBS, prvog u mesecu (NBS ih ažurira kvartalno).
+        "name": "Finansije - banke sa NBS",
+        "task": "finansije.tasks.osvezi_banke_nbs_task",
+        "day_of_month": "1",
+        "hour": "6",
+        "minute": "30",
+    },
+    {
         "name": "Finansije - sve godine od 2025",
         "task": "finansije.tasks.sync_all_years",
         "hour": "3",
@@ -194,7 +209,7 @@ class Command(BaseCommand):
                 minute=spec["minute"],
                 hour=spec["hour"],
                 day_of_week="*",
-                day_of_month="*",
+                day_of_month=spec.get("day_of_month", "*"),
                 month_of_year="*",
                 timezone=spec.get("timezone", timezone),
             )

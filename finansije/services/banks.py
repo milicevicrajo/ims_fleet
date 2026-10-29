@@ -26,15 +26,30 @@ def company_id():
     return getattr(settings, "FINANSIJE_COMPANY", 1)
 
 
-def fetch_banks(company):
+def source_banks(company):
+    """Partneri grupe 11 neposredno iz šifarnika (Stankov program), samo SELECT."""
     alias = getattr(settings, "FINANSIJE_SOURCE_DB", "server_db")
     with connections[alias].cursor() as cursor:
         cursor.execute(f"SELECT {', '.join(PARTNER_FIELDS)} FROM {SOURCE}.partner WHERE sif_pred=%s AND grupa=%s ORDER BY naz_par,sif_par", [company, 11])
-        banks = [dict(zip(PARTNER_FIELDS, (clean(value) for value in row))) for row in cursor.fetchall()]
-    for bank in banks:
-        bank["code"] = int(bank["sif_par"])
-        bank["name"] = bank["naz_par"]
-        bank["fields"] = [(label, bank[field]) for field, label in zip(PARTNER_FIELDS, PARTNER_LABELS)]
+        return [dict(zip(PARTNER_FIELDS, (clean(value) for value in row))) for row in cursor.fetchall()]
+
+
+def bank_dict(podaci, zapis=None):
+    bank = dict(podaci, code=int(podaci["sif_par"]), name=podaci["naz_par"], zapis=zapis)
+    bank["fields"] = [(label, bank.get(field, "")) for field, label in zip(PARTNER_FIELDS, PARTNER_LABELS)]
+    bank.update(status=zapis.status if zapis else "", namena=zapis.get_namena_display() if zapis and zapis.namena else "",
+                napomena=zapis.napomena if zapis else "", glavna_code=zapis.glavna.sifra if zapis and zapis.glavna else None,
+                u_izvoru=zapis.u_izvoru if zapis else True)
+    return bank
+
+
+def fetch_banks(company):
+    """Banke iz lokalne kopije šifarnika (`BankaPartner`, sinhronizacija noću i dugmetom);
+    neposredno iz izvora samo dok kopija još nije preuzeta."""
+    from finansije.models import BankaPartner
+
+    zapisi = list(BankaPartner.objects.filter(company=company).select_related("glavna").order_by("naziv", "sifra"))
+    banks = [bank_dict(z.podaci, z) for z in zapisi] if zapisi else [bank_dict(row) for row in source_banks(company)]
     if len({bank["code"] for bank in banks}) != len(banks):
         raise ValueError("Šifarnik banaka ima duplirane šifre.")
     return banks
@@ -60,11 +75,25 @@ def suggested_segment(account, name):
     return "other"
 
 
+# Reč iz naziva konta → deo naziva banke danas. Konta nose stare nazive: Komercijalna (Kombank) je
+# danas NLB, Hypo je Addiko; „Reiffeisen” je greška u nazivu konta. Credit Agricole se ne pogađa.
+BANK_WORDS = (("raiff", "raiff"), ("reiff", "raiff"), ("intesa", "intesa"), ("aik", "aik"), ("erste", "erste"),
+              ("halk", "halk"), ("otp", "otp"), ("alta", "alta"), ("addiko", "addiko"), ("hypo", "addiko"),
+              ("adriatic", "adriatic"), ("nlb", "nlb"), ("komercijal", "nlb"), ("kombank", "nlb"), ("post", "postansk"))
+
+
 def suggested_bank(name, banks):
     """A suggestion for approval, never an automatic posting assignment."""
-    text = normalized(name)
-    brands = ("raiff", "intesa", "aik", "erste", "halk", "otp", "alta", "addiko", "adriatic", "nlb")
-    matches = [bank for bank in banks if any(brand in text and brand in normalized(bank["name"]) for brand in brands)]
+    words = normalized(name).split()
+    if any(word.startswith("investicion") for word in words):  # jedinice fonda (DZU), ne račun u banci
+        return None
+    targets = {bank_word for account_word, bank_word in BANK_WORDS if any(word.startswith(account_word) for word in words)}
+    matches = [bank for bank in banks if any(target in normalized(bank["name"]) for target in targets)]
+    if len(matches) > 1:
+        # Istorijske i dodatne šifre (npr. račun za bolovanja) ne predlažu se kad postoji glavna.
+        current = [bank for bank in matches if not bank.get("glavna_code") and bank.get("u_izvoru", True)
+                   and bank.get("status") not in ("istorijska", "nije_banka")]
+        matches = current or matches
     if len(matches) > 1:
         primary = [bank for bank in matches if bank.get("zr", "").startswith("908-")]
         if len(primary) == 1:

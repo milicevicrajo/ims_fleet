@@ -33,7 +33,7 @@
  :20    Svakog sata — Finansije, tekuća godina
 ```
 
-**Ukupno 23 zakazana posla** (ugovori zaposlenih u 01:15 i opomene za gorivo u 07:45, od 29.09.2026.; SEF fakture u 06:50, od 30.09.2026.). [P] Stara sinhronizacija šifara i OJ (01:30) ugašena je 28.09.2026. — `sync_celery_periodic_tasks` je briše iz rasporeda.
+**Ukupno 25 zakazanih poslova** (ugovori zaposlenih u 01:15 i opomene za gorivo u 07:45, od 29.09.2026.; SEF fakture u 06:50, od 30.09.2026.; šifarnik banaka u 01:55 i banke sa NBS prvog u mesecu u 06:30, od 29.10.2026.). [P] Stara sinhronizacija šifara i OJ (01:30) ugašena je 28.09.2026. — `sync_celery_periodic_tasks` je briše iz rasporeda.
 
 ---
 
@@ -47,6 +47,7 @@
 | 01:20 | Flota — provera otpisa vozila | `fleet.tasks.proveri_otpis` | `sync` | 60 min |
 | 01:40 | Organizacija — registar, obrt šifara, nazivi jedinica iz kadrovske baze (čita `ob_jedin` na PUTGEO-SERVER.bazaldims), veze modula, **centar iz registra na knjiženjima Finansija** i poređenje sa starom | `organizacija.tasks.sync_organizacija_task` | `sync` | 90 min |
 | 01:45 | Flota — trebovanja | `fleet.tasks.fetch_requisition_data_task` | `sync` | 90 min |
+| 01:55 | Finansije — šifarnik banaka (partneri grupe 11 iz Stankovog programa u lokalnu kopiju) | `finansije.tasks.sync_banke_sifarnik_task` | `sync` | 30 min |
 | 02:00 | Flota — polise | `fleet.tasks.fetch_policy_data_task` | `sync` | 90 min |
 | 02:20 | Nabavka — EUF fakture | `nabavka.tasks.sync_euf_invoices_task` | `sync` | — |
 | 02:45 | Nabavka — UF stavke | `nabavka.tasks.sync_uf_items_task` | `sync` | — |
@@ -56,6 +57,7 @@
 | **04:20** | **Gorivo — NIS** | `fleet.tasks.run_nis_command` | **`selenium`** | **4 h** |
 | **05:10** | **Gorivo — OMV putnička** | `fleet.tasks.run_omv_putnicka_command` | **`selenium`** | **4 h** |
 | **06:10** | **Gorivo — OMV teretna** | `fleet.tasks.run_omv_teretna_command` | **`selenium`** | **4 h** |
+| 06:30, **1. u mesecu** | Finansije — banke sa NBS (spisak i „Detalji” svake banke) | `finansije.tasks.osvezi_banke_nbs_task` | `sync` | 30 min |
 | 06:50 | Finansije — SEF fakture (preskače se bez `SEF_API_KEY`) | `finansije.tasks.sync_sef_task` | `sync` | 90 min |
 | 07:10 | Nabavka — roba | `nabavka.tasks.sync_goods_task` | `sync` | — |
 | 07:30 | Nabavka — fiskalni računi koji čekaju proveru (stranica Poreske uprave nije bila dostupna) | `nabavka.tasks.fiskalni_ponovi_task` | `sync` | 60 min |

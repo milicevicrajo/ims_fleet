@@ -1,0 +1,55 @@
+{% extends "finansije/base.html" %}
+{% load finance %}
+{% block title %}Banke u Srbiji · Banke{% endblock %}
+{% block hero_title %}Banke u Srbiji{% endblock %}
+{% block hero_description %}Sve banke sa spiska NBS po bankarskim grupama, sa povezanim licima i našom saradnjom{% endblock %}
+{% block hero_period %}{% endblock %}
+{% block hero_actions %}
+  <a class="btn btn-light" href="{% url 'finansije:bank_list' %}?{{ period_params }}"><i class="mdi mdi-arrow-left"></i> Banke</a>
+  <a class="btn btn-light" href="?{% if period_params %}{{ period_params }}&amp;{% endif %}izvoz=xlsx" data-no-preloader><i class="mdi mdi-file-excel"></i> Preuzmi Excel</a>
+{% endblock %}
+{% block finance_content %}
+{% include "finansije/banks/_nbs_status.html" with change_runs=None %}
+<div class="card"><div class="card-body">
+  <h2 class="finance-job-heading">Banke – registar NBS</h2>
+  <p class="finance-accounting-note">{{ zbir.banaka }} banaka na spisku NBS · sarađujemo sa {{ zbir.sa_nama }} · ukupno zaposlenih {{ zbir.zaposlenih }} · upravni odbor prosečno {{ zbir.prosek_uo|default:"—" }} članova ({{ zbir.nezavisnih }} nezavisnih ukupno) · izvršni odbor prosečno {{ zbir.prosek_io|default:"—" }}. Revizor je naziv revizorske kuće iz priloga na NBS.</p>
+  <div class="table-responsive"><table class="table table-hover table-sm">
+    <thead><tr><th>Banka</th><th class="text-end">Zaposlenih</th><th>Najveći akcionar</th><th>Upravni odbor</th><th>Izvršni odbor</th><th>Revizor</th><th>Saradnja sa nama</th></tr></thead>
+    <tbody>{% for r in banke %}{% ifchanged r.grupa r.banka.aktivna %}
+      <tr class="table-light"><th colspan="7">{% if not r.banka.aktivna %}Istorijske — nisu više na spisku NBS{% elif r.grupa %}{{ r.grupa.naziv }}{% if r.grupa.maticna_grupa %} <small class="text-muted fw-normal">· {{ r.grupa.maticna_grupa }}</small>{% endif %}{% else %}Bez grupe{% endif %}</th></tr>
+    {% endifchanged %}<tr>
+      <td><strong>{{ r.banka.naziv }}</strong> <a href="{{ r.banka.nbs_url }}" target="_blank" rel="noopener" title="Stranica banke na NBS"><i class="mdi mdi-open-in-new" aria-hidden="true"></i><span class="visually-hidden">NBS</span></a>
+        <small class="d-block text-muted">{{ r.banka.grad }} · MB {{ r.banka.maticni_broj }} · PIB {{ r.banka.pib }} · {{ r.banka.swift }}</small></td>
+      <td class="text-end">{{ r.banka.broj_zaposlenih|default:"—" }}</td>
+      <td>{% with a=r.banka.najveci_akcionar %}{% if a %}{{ a.naziv }} <small class="text-muted">{{ a.procenat }}</small>{% if r.banka.akcionari|length > 1 %}<small class="d-block text-muted">još {{ r.banka.akcionari|length|add:"-1" }} preko 5%</small>{% endif %}{% else %}—{% endif %}{% endwith %}</td>
+      <td>{{ r.banka.predsednik_uo|default:"—" }}<small class="d-block text-muted">{{ r.banka.upravni_odbor|length }} članova, {{ r.banka.nezavisnih_uo }} nezavisnih</small></td>
+      <td>{{ r.banka.predsednik_io|default:"—" }}<small class="d-block text-muted">{{ r.banka.izvrsni_odbor|length }} članova</small></td>
+      <td>{{ r.banka.revizor|default:"—" }}</td>
+      <td>{% for n in r.nase %}{% if finansije_permissions.bank_detail %}<a href="{% url 'finansije:bank_detail' n.code %}?{{ period_params }}">{{ n.code }}</a>{% else %}{{ n.code }}{% endif %}{% if n.namena %} <small class="text-muted">({{ n.namena }})</small>{% endif %}{% if not forloop.last %}, {% endif %}{% empty %}<span class="text-muted">ne radimo</span>{% endfor %}
+        {% if r.promet %}<small class="d-block text-muted">{{ r.promet.stavki }} stavki u periodu</small>{% endif %}</td>
+    </tr>{% empty %}<tr><td colspan="7" class="text-muted">Podaci sa NBS još nisu preuzeti. Na ekranu Banke pokrenite „Osveži podatke banaka”.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</div></div>
+
+<div class="card"><div class="card-body">
+  <h2 class="finance-job-heading">Bankarske grupe i povezana lica</h2>
+  <p class="finance-accounting-note">Spisak direktora: {{ grupe|length }} grupa. Naš partner se traži po PIB-u u šifarniku (banke u grupi 11, ostala lica u grupi 1).{% if nepotvrdjenih %} Za {{ nepotvrdjenih }} lica pripadnost grupi je utvrđena po nazivu i treba je proveriti u APR-u.{% endif %}{% if sa_prometom %} Promet je za izabrani period, bez naloga POC i ZAT.{% else %} Promet se prikazuje korisnicima sa pristupom celoj firmi.{% endif %}</p>
+  {% if sa_prometom %}{% include "finansije/banks/_period.html" %}{% endif %}
+  {% for g in grupe %}<details class="mb-2"{% if g.sa_nama %} open{% endif %}>
+    <summary class="fw-semibold py-1">{{ g.grupa.naziv }}{% if g.grupa.maticna_grupa %} <span class="text-muted fw-normal">· {{ g.grupa.maticna_grupa }}</span>{% endif %} <span class="text-muted fw-normal">· {{ g.lica|length }} lica · {% if g.sa_nama %}u našem šifarniku {{ g.sa_nama }}{% else %}ne sarađujemo{% endif %}</span></summary>
+    <div class="table-responsive"><table class="table table-sm mb-2">
+      <thead><tr><th>Vrsta</th><th>Pravno lice</th><th>MB · PIB</th><th>Pripadnost grupi</th><th>Kod nas</th>{% if sa_prometom %}<th class="text-end">Stavki</th><th class="text-end">Duguje</th><th class="text-end">Potražuje</th>{% endif %}</tr></thead>
+      <tbody>{% for m in g.lica %}<tr>
+        <td>{{ m.lice.vrsta }}</td>
+        <td>{{ m.lice.naziv }}{% if m.lice.vlasnistvo %}<small class="d-block text-muted">{{ m.lice.vlasnistvo }}</small>{% endif %}</td>
+        <td class="text-nowrap">{{ m.lice.maticni_broj }} · {{ m.lice.pib }}</td>
+        <td>{% if m.lice.potvrdjeno %}<span class="text-success">{{ m.lice.potvrda }}</span>{% else %}<span class="text-warning-emphasis">{{ m.lice.potvrda|default:"—" }}</span>{% endif %}</td>
+        <td>{% for p in m.partneri %}{{ p.grupa }} / {{ p.sifra }} {{ p.naziv }}{% if not forloop.last %}<br>{% endif %}{% empty %}<span class="text-muted">nije u šifarniku</span>{% endfor %}</td>
+        {% if sa_prometom %}<td class="text-end">{{ m.promet.stavki|default:"—" }}</td>
+        <td class="text-end">{% if m.promet %}{{ m.promet.duguje|amount_badge }}{% else %}—{% endif %}</td>
+        <td class="text-end">{% if m.promet %}{{ m.promet.potrazuje|amount_badge }}{% else %}—{% endif %}</td>{% endif %}
+      </tr>{% endfor %}</tbody>
+    </table></div>
+  </details>{% endfor %}
+</div></div>
+{% endblock %}

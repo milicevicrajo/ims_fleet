@@ -1,0 +1,48 @@
+{% extends "finansije/base.html" %}
+{% load l10n %}
+{% block title %}Bruto bilans{% endblock %}
+{% block hero_title %}Bruto bilans{% endblock %}
+{% block hero_description %}Početno stanje, promet u periodu, ukupno i saldo po kontima · izveštaj starog ERP-a (SPFINizv12){% endblock %}
+{% block hero_period %}{% if delovi is not None %}<div class="finance-hero-period"><i class="mdi mdi-calendar-range me-1" aria-hidden="true"></i>Period <strong>od {{ parametri.datum_od|date:"d.m.Y." }} do {{ parametri.datum_do|date:"d.m.Y." }}</strong></div>{% endif %}{% endblock %}
+{% block finance_content %}
+<div class="card"><div class="card-body finance-filter">
+  <form method="get" class="finance-period">
+    {% for field in form %}<div class="finance-period-field"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}
+    <button class="btn btn-primary" type="submit" name="generisi" value="1"><i class="mdi mdi-play" aria-hidden="true"></i> Generiši izveštaj</button>
+    <button class="btn btn-outline-success" type="submit" name="izvoz" value="xlsx" data-no-preloader><i class="mdi mdi-file-excel" aria-hidden="true"></i> Preuzmi Excel</button>
+    <div class="finance-period-errors text-danger">{{ form.non_field_errors }}</div>
+  </form>
+  <p class="finance-accounting-note mb-0">Prazan OJ i konto znače „sve”. „Do konta” može biti i početak konta (npr. 5 = sva konta klase 5).
+    Podaci su iz lokalne kopije nalog_z{% if nalog_z %}, poslednje osvežavanje {{ nalog_z.finished_at|date:"d.m.Y. H:i" }}{% endif %}.</p>
+</div></div>
+{% if greska %}<div class="alert alert-danger" role="alert">{{ greska }}</div>{% endif %}
+{% if delovi is not None %}
+<div class="card"><div class="card-body">
+  <h2 class="finance-job-heading">Bruto bilans <small class="text-muted">· {{ filteri }}</small></h2>
+  {% for deo in delovi %}
+  <h3 class="h6 mt-3 fw-bold">{{ deo.naziv }}</h3>
+  {# Konto se ređa kao tekst (5, 52, 520), iznosi po neformatiranoj vrednosti iz data-order. #}
+  <div class="table-responsive"><table class="table table-sm table-hover table-bordered finance-datatable bruto-bilans" data-page-length="100" data-order-column="0" style="width:100%">
+    <thead>
+      <tr><th rowspan="2">Konto</th><th rowspan="2">Naziv</th><th colspan="2" class="text-center">Početno stanje</th><th colspan="2" class="text-center">Promet u periodu</th><th colspan="2" class="text-center">Ukupno</th><th rowspan="2" class="finance-number">Saldo</th></tr>
+      <tr><th class="finance-number">Duguje</th><th class="finance-number">Potražuje</th><th class="finance-number">Duguje</th><th class="finance-number">Potražuje</th><th class="finance-number">Duguje</th><th class="finance-number">Potražuje</th></tr>
+    </thead>
+    <tbody>{% for s in deo.stavke %}<tr>
+      <td class="text-nowrap" data-order="k{{ s.konto }}">{{ s.konto }}</td><td>{{ s.naziv }}</td>
+      <td data-order="{{ s.dug0|unlocalize }}">{{ s.dug0|floatformat:"2g" }}</td><td data-order="{{ s.pot0|unlocalize }}">{{ s.pot0|floatformat:"2g" }}</td>
+      <td data-order="{{ s.dug1|unlocalize }}">{{ s.dug1|floatformat:"2g" }}</td><td data-order="{{ s.pot1|unlocalize }}">{{ s.pot1|floatformat:"2g" }}</td>
+      <td data-order="{{ s.dugu|unlocalize }}">{{ s.dugu|floatformat:"2g" }}</td><td data-order="{{ s.potu|unlocalize }}">{{ s.potu|floatformat:"2g" }}</td>
+      <td data-order="{{ s.saldo|unlocalize }}"{% if s.saldo < 0 %} class="text-danger"{% endif %}>{{ s.saldo|floatformat:"2g" }}</td>
+    </tr>{% endfor %}</tbody>
+    <tfoot><tr class="fw-bold table-light">
+      <td colspan="2">Svega · {{ deo.naziv }}</td>
+      <td class="text-end text-nowrap">{{ deo.zbir.dug0|floatformat:"2g" }}</td><td class="text-end text-nowrap">{{ deo.zbir.pot0|floatformat:"2g" }}</td>
+      <td class="text-end text-nowrap">{{ deo.zbir.dug1|floatformat:"2g" }}</td><td class="text-end text-nowrap">{{ deo.zbir.pot1|floatformat:"2g" }}</td>
+      <td class="text-end text-nowrap">{{ deo.zbir.dugu|floatformat:"2g" }}</td><td class="text-end text-nowrap">{{ deo.zbir.potu|floatformat:"2g" }}</td>
+      <td class="text-end text-nowrap{% if deo.zbir.saldo < 0 %} text-danger{% endif %}">{{ deo.zbir.saldo|floatformat:"2g" }}</td>
+    </tr></tfoot>
+  </table></div>
+  {% empty %}<p class="text-muted mb-0">Nema knjiženja za izabrane parametre.</p>{% endfor %}
+</div></div>
+{% endif %}
+{% endblock %}

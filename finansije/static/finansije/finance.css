@@ -65,6 +65,9 @@
 .finance-filter-center { grid-column: span 3; }
 .finance-filter-job { grid-column: span 5; }
 .finance-filter-ledger .finance-filter-kind { grid-column: span 4; }
+/* Veze konta i banaka: konto i banka šire, vrsta posla i napomena uže. */
+.bank-link-account, .bank-link-bank { grid-column: span 3; }
+.bank-link-segment, .bank-link-note { grid-column: span 2; }
 .finance-page .fleet-list-filter .form-control,
 .finance-page .fleet-list-filter .form-select { height: 36px; min-height: 36px; border: 1px solid #d7dce5; border-radius: 6px; font-size: .82rem; padding: 6px 9px; }
 .finance-page .fleet-list-filter .select2-container { width: 100% !important; max-width: 100%; }

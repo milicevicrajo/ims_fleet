@@ -9,25 +9,29 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.views.decorators.http import require_GET, require_http_methods
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from core.mixins import role_permission_required, user_has_role_permission
 from menice.models import Menica
 from .access import can_view_all
-from .bank_forms import BankPeriodForm, BankContactForm, BankAccountRuleForm, BankBillPlacementForm
-from .models import BankContact, BankAccountRule, BankBillPlacement, SyncRun
+from .bank_forms import BankPeriodForm, BankContactForm, BankAccountRuleForm, BankBillPlacementForm, BankaPartnerForm
+from .models import BankaPartner, BankContact, BankAccountRule, BankBillPlacement, BankePreuzimanje, SyncRun
+from .services import banke_nbs
 from .services import banks as service
 
 logger = logging.getLogger(__name__)
-TABS = [("basic", "Osnovni podaci"), ("contacts", "Kontakti"), ("turnover", "Promet po računima"),
+TABS = [("basic", "Osnovni podaci"), ("nbs", "Podaci sa NBS"), ("group", "Grupa i povezana lica"),
+        ("contacts", "Kontakti"), ("turnover", "Promet po računima"),
         ("bills", "Menice"), ("guarantees", "Garancije"), ("deposits", "Oročena sredstva")]
 
 
 def context_for(request):
     request.session["current_app"] = "finansije"
     form = BankPeriodForm(request.GET)
+    # Sinhronizacija ide svakog sata (hiljade zapisa sa velikim JSON zbirovima) — ne učitavati ih cele.
+    successful = SyncRun.objects.filter(company=service.company_id(), status="success")
     context = dict(form=form, valid=form.is_valid(), restricted=not can_view_all(request.user),
-                   last_success=SyncRun.objects.filter(company=service.company_id(), status="success").first())
+                   last_success=successful.only("finished_at", "latest_booking_date", "started_at").first())
     context["can_map"] = can_view_all(request.user) and user_has_role_permission(request.user, "finansije:bank_accounts")
     try:
         banks = service.fetch_banks(service.company_id())
@@ -35,12 +39,15 @@ def context_for(request):
         logger.exception("Bank partner source unavailable")
         context["source_error"] = "Šifarnik banaka trenutno nije dostupan. Pokušajte ponovo."
         banks = []
-    context["source_banks"] = banks
+    context["source_banks"] = banke_nbs.razvrstaj(banks)
+    context["can_bank_refresh"] = can_view_all(request.user) and user_has_role_permission(request.user, "finansije:bank_refresh")
+    context["can_market"] = user_has_role_permission(request.user, "finansije:bank_market")
+    context["last_runs"] = [run for run in (BankePreuzimanje.objects.filter(izvor=izvor).exclude(status="running").first()
+                                            for izvor, _ in BankePreuzimanje.IZVORI) if run]
     if context["valid"]:
         context["period_params"] = urlencode({key: form.cleaned_data[key].isoformat() for key in ("date_from", "date_to")})
-        covered = any(run.year_from <= form.cleaned_data["date_from"].year <= run.year_to for run in
-                      SyncRun.objects.filter(company=service.company_id(), status="success"))
-        context["period_missing"] = not covered
+        year = form.cleaned_data["date_from"].year
+        context["period_missing"] = not successful.filter(year_from__lte=year, year_to__gte=year).exists()
     return context
 
 
@@ -66,7 +73,96 @@ def bank_list(request):
     context = context_for(request)
     if context["valid"] and not context.get("source_error"):
         context.update(service.report_for(request.user, context["source_banks"], context["form"].cleaned_data["date_from"], context["form"].cleaned_data["date_to"]))
+        context.update(razvrstane_banke(context["banks"]))
+    # Najnovije promene svakog izvora (šifarnik, NBS), za proveru.
+    context["change_runs"] = [run for run in (next((r for r in BankePreuzimanje.objects.filter(izvor=izvor, status="success")[:20] if r.promene), None)
+                                              for izvor, _ in BankePreuzimanje.IZVORI) if run]
     return render(request, "finansije/banks/list.html", context)
+
+
+def razvrstane_banke(banks):
+    """Banke po grupama; istorijske i partneri koji nisu banke posebno.
+
+    Ručni status (`BankaPartner.status`) ima prednost. Bez njega: banka sa spiska NBS je aktivna;
+    ostali partneri grupe 11 su istorijski ako nemaju ni stanja ni prometa u godini ili su obrisani
+    u šifarniku, a inače „nije banka sa spiska NBS” (npr. Uprava za trezor).
+    """
+    grupe, van_nbs = {}, []
+    for bank in banks:
+        status = bank.get("status") or ""
+        if status == "aktivna" or (not status and not bank["van_nbs"] and bank.get("u_izvoru", True)):
+            grupa = bank["grupa"]
+            kljuc = grupa.naziv if grupa else "Bez grupe"
+            stavka = grupe.setdefault(kljuc, dict(naziv=kljuc, maticna=grupa.maticna_grupa if grupa else "", banke=[]))
+            stavka["banke"].append(bank)
+            continue
+        totals = bank["totals"]
+        bez_prometa = not (totals["count"] or totals["opening"] or totals["balance"])
+        bank["istorijska"] = status == "istorijska" or (not status and (bez_prometa or not bank.get("u_izvoru", True)
+                                                                         or bool(bank["nbs"] and not bank["nbs"].aktivna)))
+        bank["nije_banka"] = status == "nije_banka"
+        van_nbs.append(bank)
+    poredak = sorted(grupe.values(), key=lambda g: (g["naziv"] == "Bez grupe", g["naziv"].lower()))
+    for grupa in poredak:
+        # Dodatna šifra (npr. račun za bolovanja) odmah ispod glavne šifre iste banke.
+        grupa["banke"].sort(key=lambda b: ((b["nbs"].naziv if b["nbs"] else b["name"]).lower(), b.get("glavna_code") or b["code"],
+                                           b.get("glavna_code") is not None, b["code"]))
+    van_nbs.sort(key=lambda b: (b["istorijska"], b["name"].lower()))
+    return dict(bank_groups=poredak, outside_nbs=van_nbs)
+
+
+@require_GET
+@login_required
+@role_permission_required()
+def bank_market(request):
+    """Banke u Srbiji: sve banke sa spiska NBS i sve grupe sa povezanim licima; otvara se sa ekrana Banke."""
+    from .services import banke_trziste, izvoz
+
+    context = context_for(request)
+    # Promet sa grupama samo uz pristup celoj firmi — delimičan obuhvat bi potcenio saradnju.
+    sa_prometom = context["valid"] and can_view_all(request.user)
+    start, end = (context["form"].cleaned_data["date_from"], context["form"].cleaned_data["date_to"]) if sa_prometom else (None, None)
+    podaci = banke_trziste.pregled(context["source_banks"], request.user, start, end)
+    if request.GET.get("izvoz") == "xlsx":
+        period = izvoz.period_tekst(start, end) + " (promet sa grupama)" if sa_prometom else ""
+        return izvoz.excel_odgovor(banke_trziste.dokument(podaci, sa_prometom, period), "banke_u_srbiji")
+    context.update(podaci, sa_prometom=sa_prometom)
+    return render(request, "finansije/banks/market.html", context)
+
+
+@require_POST
+@login_required
+@role_permission_required()
+def bank_refresh(request):
+    """Šifarnik partnera (Stankov program), pa podaci sa NBS — isto kao noćni i mesečni posao."""
+    edit_access(request)
+    for osvezi in (banke_nbs.sinhronizuj_sifarnik, banke_nbs.osvezi):
+        try:
+            run = osvezi("manual", request.user)
+        except banke_nbs.PreuzimanjeUToku as exc:
+            messages.warning(request, str(exc))
+        else:
+            (messages.success if run.status == "success" else messages.error)(request, banke_nbs.poruka(run))
+    nazad = request.POST.get("next", "")
+    return redirect(nazad if nazad.startswith("/finansije/banke/") else reverse("finansije:bank_list"))
+
+
+@require_POST
+@login_required
+@role_permission_required()
+def bank_partner_edit(request, bank_code):
+    """Naše oznake šifre banke: status, namena i glavna šifra; podaci partnera ostaju iz šifarnika."""
+    edit_access(request)
+    zapis = get_object_or_404(BankaPartner, company=service.company_id(), sifra=bank_code)
+    form = BankaPartnerForm(request.POST, instance=zapis)
+    if form.is_valid():
+        zapis = form.save(commit=False)
+        zapis.izmenio, zapis.izmenjeno = request.user, timezone.now()
+        zapis.save()
+        messages.success(request, "Oznake banke su sačuvane.")
+    else:
+        messages.error(request, "Oznake nisu sačuvane: " + " ".join(e for errors in form.errors.values() for e in errors))
+    return bank_redirect(bank_code, "basic")
 
 
 @require_GET
@@ -87,6 +183,21 @@ def bank_detail(request, bank_code):
     context["can_contact_delete"] = can_view_all(request.user) and user_has_role_permission(request.user, "finansije:bank_contact_delete")
     if tab == "contacts":
         context["contacts"] = BankContact.objects.filter(company=service.company_id(), bank_code=bank_code)
+    if tab == "basic" and bank.get("zapis"):
+        context["can_partner_edit"] = can_view_all(request.user) and user_has_role_permission(request.user, "finansije:bank_partner_edit")
+        context["partner_form"] = BankaPartnerForm(instance=bank.get("zapis"))
+        context["related_codes"] = [b for b in context["source_banks"] if b.get("glavna_code") == bank_code]
+    if tab == "nbs":
+        context["differences"] = banke_nbs.razlike(bank)
+    if tab == "group" and bank["grupa"]:
+        context["group_banks"] = [b for b in context["source_banks"] if b["grupa"] == bank["grupa"]]
+        if context["valid"]:
+            try:
+                context["group_members"] = banke_nbs.lica_grupe(request.user, bank["grupa"], context["form"].cleaned_data["date_from"],
+                                                                 context["form"].cleaned_data["date_to"])
+            except DatabaseError:
+                logger.exception("Partneri povezanih lica nisu dostupni")
+                context["source_error"] = "Šifarnik partnera trenutno nije dostupan. Pokušajte ponovo."
     if tab in ("turnover", "guarantees", "deposits") and context["valid"]:
         report = service.report_for(request.user, context["source_banks"], context["form"].cleaned_data["date_from"], context["form"].cleaned_data["date_to"])
         selected = next(row for row in report["banks"] if row["code"] == bank_code)
@@ -170,7 +281,19 @@ def bank_accounts(request):
         return redirect("finansije:bank_accounts")
     saved = {r.account: r for r in BankAccountRule.objects.filter(company=service.company_id())}
     names = {b["code"]: b["name"] for b in context["source_banks"]}
-    context.update(edit_form=form, catalog=[dict(code=c, name=n, rule=saved.get(c), bank=names.get(saved[c].bank_code, "—") if c in saved else "Nije potvrđeno") for c, n in catalog])
+    rows, values = [], {}
+    for c, n in catalog:
+        rule = saved.get(c)
+        suggestion = None if rule else service.suggested_bank(n, context["source_banks"])
+        segment = rule.segment if rule else service.suggested_segment(c, n)
+        rows.append(dict(code=c, name=n, rule=rule, bank=names.get(rule.bank_code, "Bez veze sa jednom bankom") if rule else "",
+                         suggestion=names.get(suggestion, ""), suggestion_code=suggestion,
+                         segment_label=dict(BankAccountRule.SEGMENTS)[segment]))
+        # Izbor konta u formi popunjava sačuvanu vezu ili predlog, bez ponovnog učitavanja strane.
+        values[c] = dict(bank_code=rule.bank_code if rule else suggestion, segment=segment, note=rule.note if rule else "",
+                         saved=bool(rule))
+    context.update(edit_form=form, catalog=rows, account_values=values,
+                   linked_count=sum(1 for r in rows if r["rule"]), suggested_count=sum(1 for r in rows if r["suggestion_code"]))
     return render(request, "finansije/banks/accounts.html", context)
 
 

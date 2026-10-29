@@ -306,14 +306,57 @@ postojeća metodologija (`finansije-metodologija-obracuna.md`, uklonjena 18.09.2
 ## 18. Banke
 
 Ekran `/finansije/banke/` prikazuje partnere iz `PUTGEO-SERVER.bazaims.dbo.partner`
-za podešenu firmu i `grupa=11`. Osnovni podaci čitaju se neposredno iz izvora,
-sa istim poljima kao u Naplati. Novi podaci ne upisuju se u nasleđeni šifarnik.
+(Stankov program) za podešenu firmu i `grupa=11`. Od 29.10.2026. čitaju se iz lokalne kopije
+`BankaPartner`, koju sinhronizacija puni **svake noći u 01:55** (`finansije.tasks.sync_banke_sifarnik_task`)
+i dugmetom **Osveži podatke banaka**; neposredno iz izvora samo dok kopija još nije preuzeta.
+Sinhronizacija ide samo u jednom smeru: podaci partnera (naziv, adresa, MB, PIB, račun...) menjaju
+se u Stankovom programu, a svaka promena i obrisana šifra beleže se (`BankePreuzimanje`, izvor
+„šifarnik”) i prikazuju na ekranu za proveru. Novi podaci ne upisuju se u nasleđeni šifarnik.
 
-Kartice banke idu redom: **Osnovni podaci, Kontakti, Promet po računima, Menice,
-Garancije, Oročena sredstva**. Početni period je 1. januar tekuće godine do danas.
+Samo u aplikaciji vode se **naše oznake** šifre (kartica Osnovni podaci, `finansije:bank_partner_edit`,
+uz pristup celoj firmi): **status** (automatski, aktivna, istorijska, nije banka), **namena šifre**
+(glavni račun, bolovanja, namenski...) i **glavna šifra iste banke** — dodatna šifra (npr. AIK 15 uz 16)
+prikazuje se ispod glavne. Ručni status ima prednost nad automatskim.
+
+Kartice banke idu redom: **Osnovni podaci, Podaci sa NBS, Grupa i povezana lica, Kontakti,
+Promet po računima, Menice, Garancije, Oročena sredstva**. Početni period je 1. januar tekuće godine do danas.
 Može se izabrati drugi period unutar jedne godine od 2025. nadalje. Za svaki račun
 odvojeno se prikazuju promet izabranog perioda i povećanja/smanjenja od početka
 izabrane godine do danas, odnosno do 31. decembra za završene godine.
+
+### Podaci sa NBS, bankarske grupe i istorijske banke (od 29.10.2026.)
+
+- **Izvor:** registar banaka NBS (`webappcenter.nbs.rs` → Banke, stranica „Detalji” svake banke),
+  samo čitanje. Preuzima se dugmetom **Osveži podatke banaka** na ekranu Banke (`finansije:bank_refresh`,
+  uz pristup celoj firmi; isto dugme osvežava i šifarnik) i automatski **prvog u mesecu u 06:30** (`finansije.tasks.osvezi_banke_nbs_task`).
+  NBS navodi da podatke ažurira kvartalno. Podaci su na sajtu ćirilicom i preslovljavaju se u latinicu.
+- **Čuvanje:** `BankaNbs` (poslednje stanje: adresa, MB, PIB, SWIFT, kontakti, rešenje, broj zaposlenih,
+  akcionari preko 5%, upravni i izvršni odbor, prilozi, napomena NBS) i `BankePreuzimanje` (svako
+  preuzimanje sa spiskom promena „bilo / sada”). Sve banke se preuzmu pre upisa — ako jedna stranica
+  ne uspe, ništa se ne menja. Najnovije promene prikazuju se na ekranu Banke, za proveru.
+- **Veza sa šifarnikom:** partner grupe 11 vezuje se za NBS banku po PIB-u, pa po matičnom broju
+  (bez vodećih nula). Više šifara iste banke (npr. račun za bolovanja) pripada istoj banci.
+  Šifarnik partnera starog ERP-a se ne menja; kartica „Podaci sa NBS” pokazuje razlike prema
+  NBS-u, a ispravljaju se u starom programu.
+- **Grupe:** `BankarskaGrupa` i `PovezanoLiceBanke` po spisku direktora („Banke – povezana lica”,
+  migracija `0011`): banke, lizing, DZU, osiguranja. Banka se u grupu svrstava po PIB-u. Kartica
+  „Grupa i povezana lica” za svako lice pokazuje našeg partnera (po PIB-u, sve grupe partnera)
+  i promet u periodu, u obuhvatu korisnika. Pripadnost „po nazivu” nije potvrđena (proveriti u APR-u).
+- **Istorijske banke:** partner grupe 11 koji nije na spisku NBS prikazuje se posebno. Bez ručne
+  oznake, „Istorijska” je ako nema ni stanja ni prometa u izabranoj godini ili je obrisan u šifarniku; inače
+  „Nije banka sa spiska NBS” (npr. Uprava za trezor). Banka koju NBS skine sa spiska ostaje
+  istorijska, sa datumom kada je nestala.
+
+### Banke u Srbiji (od 29.10.2026.)
+
+Dugme **Banke u Srbiji** na ekranu Banke (`finansije:bank_market`, nije u bočnom meniju) otvara
+pregled celog tržišta u obliku pregleda direktora: svih banaka sa spiska NBS po bankarskim grupama
+(zaposleni, najveći akcionar, predsednici i veličina upravnog i izvršnog odbora, revizor iz priloga
+na NBS, red „Ukupno / prosek”) i svih grupa sa povezanim licima. Za svaku banku i lice prikazuje se
+da li ga imamo u šifarniku — banke po PIB-u u `BankaPartner`, ostala lica u kopiji partnera grupe 1
+koju održavaju Potraživanja (bez upita prema povezanom serveru) — a uz pristup celoj firmi i promet
+u izabranom periodu. Excel (`?izvoz=xlsx`) ima iste kolone kao „Banke_Srbija_NBS_podaci” i
+„Banke – povezana lica”, uz kolonu saradnje.
 
 ### Knjiženja i povezivanje
 

@@ -2,28 +2,37 @@
 {% load finance l10n %}
 {% block title %}Banke{% endblock %}
 {% block hero_title %}Banke{% endblock %}
-{% block hero_description %}Partneri grupe 11 · promet i saldo po bankama i kontima 23 i 24{% endblock %}
-{% block hero_actions %}{% if can_map %}<a class="btn btn-light" href="{% url 'finansije:bank_accounts' %}"><i class="mdi mdi-link-variant"></i> Veze konta i banaka</a>{% endif %}{% endblock %}
+{% block hero_description %}Partneri grupe 11 · po bankarskim grupama · promet i saldo po kontima 23 i 24{% endblock %}
+{% block hero_actions %}
+  {% if can_bank_refresh %}<form method="post" action="{% url 'finansije:bank_refresh' %}" class="d-inline">{% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <button class="btn btn-light" type="submit" title="Preuzima šifarnik banaka iz Stankovog programa i podatke svih banaka sa sajta NBS (oko 20 sekundi)"><i class="mdi mdi-cloud-download-outline"></i> Osveži podatke banaka</button></form>{% endif %}
+  {% if can_market %}<a class="btn btn-light" href="{% url 'finansije:bank_market' %}?{{ period_params }}"><i class="mdi mdi-bank-outline"></i> Banke u Srbiji</a>{% endif %}
+  {% if can_map %}<a class="btn btn-light" href="{% url 'finansije:bank_accounts' %}"><i class="mdi mdi-link-variant"></i> Veze konta i banaka</a>{% endif %}
+{% endblock %}
 {% block finance_content %}
 {% include "finansije/banks/_period.html" %}
+{% include "finansije/banks/_nbs_status.html" %}
 {% if valid and not source_error %}
 <div class="card"><div class="card-body">
-  <h2 class="finance-job-heading">Pregled banaka <small class="text-muted">· RSD</small></h2>
-  <p class="finance-accounting-note">Početno stanje uključuje naloge POC. Promet u periodu je duguje + potražuje bez POC i ZAT; saldo je duguje − potražuje od početka izabrane godine. Zbir uključuje prenose između računa, oročenja i ostala povezana konta.</p>
-  <div class="table-responsive"><table class="table table-striped table-hover finance-datatable">
-    <thead><tr><th>Šifra</th><th>Banka</th><th class="finance-number">Stanje pre perioda</th><th class="finance-number">Duguje u periodu</th><th class="finance-number">Potražuje u periodu</th><th class="finance-number">Ukupan promet</th><th class="finance-number">Saldo na kraju perioda</th></tr></thead>
-    <tbody>{% for row in banks %}<tr>
-      <td>{{ row.code }}</td><td>{% if finansije_permissions.bank_detail %}<a href="{% url 'finansije:bank_detail' row.code %}?{{ period_params }}">{{ row.name }}</a>{% else %}{{ row.name }}{% endif %}</td>
-      {% if period_missing %}<td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>{% else %}
-      <td data-order="{{ row.totals.opening|unlocalize }}">{{ row.totals.opening|amount_badge }}</td>
-      <td data-order="{{ row.totals.inflow|unlocalize }}">{{ row.totals.inflow|amount_badge }}</td>
-      <td data-order="{{ row.totals.outflow|unlocalize }}">{{ row.totals.outflow|amount_badge }}</td>
-      <td data-order="{{ row.totals.turnover|unlocalize }}">{{ row.totals.turnover|amount_badge }}</td>
-      <td data-order="{{ row.totals.balance|unlocalize }}">{{ row.totals.balance|amount_badge }}</td>
-      {% endif %}
-    </tr>{% endfor %}</tbody>
+  <h2 class="finance-job-heading">Banke po grupama <small class="text-muted">· RSD</small></h2>
+  <p class="finance-accounting-note">Banke sa spiska NBS, razvrstane po bankarskim grupama. Više šifara partnera iste banke (npr. račun za bolovanja) prikazano je u istoj grupi. Početno stanje uključuje naloge POC. Promet u periodu je duguje + potražuje bez POC i ZAT; saldo je duguje − potražuje od početka izabrane godine.</p>
+  <div class="table-responsive"><table class="table table-hover finance-bank-groups">
+    <thead><tr><th>Šifra</th><th>Banka</th><th class="text-end">Stanje pre perioda</th><th class="text-end">Duguje u periodu</th><th class="text-end">Potražuje u periodu</th><th class="text-end">Ukupan promet</th><th class="text-end">Saldo na kraju perioda</th></tr></thead>
+    {% for group in bank_groups %}<tbody>
+      <tr class="table-light"><th colspan="7">{{ group.naziv }}{% if group.maticna %} <small class="text-muted fw-normal">· {{ group.maticna }}</small>{% endif %}</th></tr>
+      {% for row in group.banke %}{% include "finansije/banks/_bank_row.html" %}{% endfor %}
+    </tbody>{% empty %}<tbody><tr><td colspan="7" class="text-muted">Nema banaka sa spiska NBS. {% if can_bank_refresh %}Pokrenite „Osveži podatke banaka”.{% endif %}</td></tr></tbody>{% endfor %}
   </table></div>
 </div></div>
+{% if outside_nbs %}<div class="card"><div class="card-body">
+  <h2 class="finance-job-heading">Istorijske banke i ostali računi grupe 11</h2>
+  <p class="finance-accounting-note">Partneri grupe 11 koji nisu na spisku banaka NBS ili su ručno označeni kao istorijski ili „nije banka”. Bez ručne oznake, „Istorijska” je šifra bez stanja i prometa u izabranoj godini ili obrisana u šifarniku. Oznaka se menja na kartici Osnovni podaci banke.</p>
+  <div class="table-responsive"><table class="table table-hover">
+    <thead><tr><th>Šifra</th><th>Partner</th><th class="text-end">Stanje pre perioda</th><th class="text-end">Duguje u periodu</th><th class="text-end">Potražuje u periodu</th><th class="text-end">Ukupan promet</th><th class="text-end">Saldo na kraju perioda</th></tr></thead>
+    <tbody>{% for row in outside_nbs %}{% include "finansije/banks/_bank_row.html" %}{% endfor %}</tbody>
+  </table></div>
+</div></div>{% endif %}
 {% if unmapped %}<div class="card"><div class="card-body">
   <h2 class="finance-job-heading">Konta bez potvrđene veze sa bankom</h2>
   <p>Ovi iznosi nisu uključeni u zbir pojedinačne banke. {% if can_map %}<a href="{% url 'finansije:bank_accounts' %}">Poveži konta</a>.{% endif %}</p>
