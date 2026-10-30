@@ -647,18 +647,19 @@ def bruto_bilans(request):
     if not can_view_all(request.user):
         raise PermissionDenied("Bruto bilans zahteva pristup celoj firmi.")
     request.session["current_app"] = "finansije"
-    # Procedura se pokreće tek na „Generiši izveštaj” ili izvoz, ne pri otvaranju strane.
+    # Izveštaj se računa tek na „Generiši izveštaj” ili izvoz, ne pri otvaranju strane.
     pokrenut = "generisi" in request.GET or "izvoz" in request.GET
     form = BrutoBilansForm(request.GET if pokrenut else None)
     context = {"form": form, "pokrenut": pokrenut, "delovi": None, "greska": "",
-               "nalog_z": NalogZRefreshRun.objects.filter(status="success").first()}
+               "sync_run": SyncRun.objects.filter(company=getattr(settings, "FINANSIJE_COMPANY", 1), status="success")
+                                         .only("finished_at").first()}
     if pokrenut and form.is_valid():
         parametri = form.cleaned_data
         try:
             redovi = bilans.izvrsi(parametri["godina"], parametri["datum_od"], parametri["datum_do"], parametri["oj_od"],
                                    parametri["oj_do"], parametri["konto_od"], parametri["konto_do"])
         except DatabaseError:
-            logger.exception("Bruto bilans (SPFINizv12) nije izrađen")
+            logger.exception("Bruto bilans nije izrađen")
             context["greska"] = "Bruto bilans trenutno nije moguće izraditi. Pokušajte ponovo."
         else:
             delovi = bilans.agregiraj(redovi, parametri["nivo"])
