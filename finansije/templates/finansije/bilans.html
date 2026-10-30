@@ -1,0 +1,56 @@
+{% extends "finansije/base.html" %}
+{% block title %}{{ naslov }}{% endblock %}
+{% block hero_title %}{{ naslov }}{% endblock %}
+{% block hero_description %}{% if naslov == "Bilans stanja" %}Imovina, kapital i obaveze na izabrani dan, uporedo sa krajem prethodne godine{% else %}Prihodi, rashodi i rezultat za izabrani period, uporedo sa istim periodom prethodne godine{% endif %} · obrazac za privredna društva{% endblock %}
+{% block hero_period %}{% if bilans %}<div class="finance-hero-period"><i class="mdi mdi-calendar-range me-1" aria-hidden="true"></i><strong>{{ opis }}</strong></div>{% endif %}{% endblock %}
+{% block finance_content %}
+<style>
+  .bilans-tabela td, .bilans-tabela th { vertical-align: top; }
+  .bilans-tabela .bilans-zaglavlje td { background: #14395b; color: #fff; font-weight: 700; letter-spacing: .04em; }
+  .bilans-tabela .bilans-zbir td { font-weight: 700; background: #f1f5f9; }
+  .bilans-tabela .bilans-zbir-glavni td { font-weight: 700; background: #e2e8f0; }
+  .bilans-tabela details summary { cursor: pointer; }
+  .bilans-tabela details table { margin: .35rem 0 0; font-size: .8rem; }
+  .bilans-tabela .bilans-grupa { color: #64748b; font-size: .8rem; }
+</style>
+<div class="card"><div class="card-body finance-filter">
+  <form method="get" class="finance-period">
+    {% for field in form %}<div class="finance-period-field"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}
+    <button class="btn btn-primary" type="submit" name="generisi" value="1"><i class="mdi mdi-play" aria-hidden="true"></i> Generiši izveštaj</button>
+    <button class="btn btn-outline-success" type="submit" name="izvoz" value="xlsx" data-no-preloader><i class="mdi mdi-file-excel" aria-hidden="true"></i> Preuzmi Excel</button>
+    <a class="btn btn-outline-secondary" href="{% url 'finansije:bilansi_metodologija' %}?izvestaj={% if naslov == 'Bilans stanja' %}BS{% else %}BU{% endif %}"><i class="mdi mdi-book-open-variant" aria-hidden="true"></i> Metodologija</a>
+    <div class="finance-period-errors text-danger">{{ form.non_field_errors }}</div>
+  </form>
+  <p class="finance-accounting-note mb-0">Podaci su knjiženja Finansija, ista kao na ekranima Konta i Bruto bilans{% if sync_run %} (poslednje preuzimanje {{ sync_run.finished_at|date:"d.m.Y. H:i" }}){% endif %}.
+    {% if naslov == "Bilans stanja" %}Uključena su sva knjiženja godine do izabranog dana; dok godina nije zaključena, saldo klasa 5–7 prikazan je kao dobitak (0410) ili gubitak (0414) tekuće godine.
+    {% else %}Klase 5 i 6 bez početnog stanja i zatvaranja (ZAT, 59900/69900); porez na dobit se vidi tek kad je knjižen zaključni nalog (31.12.).{% endif %}
+    Zbirovi i parovi dobitak/gubitak nikad nisu negativni. Klikom na naziv pozicije vide se konta koja je čine.</p>
+</div></div>
+{% if greska %}<div class="alert alert-danger" role="alert">{{ greska }}</div>{% endif %}
+{% if bilans %}
+<div class="card"><div class="card-body">
+  <h2 class="finance-job-heading">Kontrole</h2>
+  <ul class="list-unstyled mb-0">{% for kolona, poruka, u_redu in bilans.kontrole %}
+    <li class="{% if u_redu is None %}text-muted{% elif u_redu %}text-success{% else %}text-danger{% endif %}"><i class="mdi {% if u_redu is None %}mdi-minus-circle-outline{% elif u_redu %}mdi-check-circle{% else %}mdi-alert-circle{% endif %}" aria-hidden="true"></i> <strong>{{ kolona }}:</strong> {{ poruka }}</li>
+  {% endfor %}</ul>
+</div></div>
+<div class="card"><div class="card-body">
+  <h2 class="finance-job-heading">{{ bilans.naslov }} <small class="text-muted">· {{ opis }}</small></h2>
+  <div class="table-responsive"><table class="table table-sm table-bordered bilans-tabela" style="width:100%">
+    <thead><tr><th style="width:9rem">Grupa računa, račun</th><th>Pozicija</th><th class="text-center">AOP</th>
+      {% for kolona in bilans.kolone %}<th class="text-end text-nowrap">{{ kolona }}</th>{% endfor %}</tr></thead>
+    <tbody>{% for red in bilans.redovi %}
+      {% if red.zaglavlje %}<tr class="bilans-zaglavlje"><td colspan="{{ bilans.kolone|length|add:3 }}">{{ red.zaglavlje }}</td></tr>{% endif %}
+      <tr class="{% if red.zbir and red.nivo >= 2 %}bilans-zbir-glavni{% elif red.zbir %}bilans-zbir{% endif %}">
+        <td class="bilans-grupa">{{ red.grupa_racuna }}</td>
+        <td>{% if red.konta %}<details><summary>{{ red.naziv }}</summary>
+          <table class="table table-sm mb-0">{% for konto, naziv_konta, iznos in red.konta %}<tr><td class="text-nowrap">{{ konto }}</td><td>{{ naziv_konta }}</td><td class="text-end text-nowrap{% if iznos < 0 %} text-danger{% endif %}">{{ iznos|floatformat:"2g" }}</td></tr>{% endfor %}</table>
+        </details>{% else %}{{ red.naziv }}{% endif %}</td>
+        <td class="text-center">{{ red.aop }}</td>
+        {% for iznos in red.iznosi %}<td class="text-end text-nowrap{% if iznos is not None and iznos < 0 %} text-danger{% endif %}">{% if iznos is None %}—{% else %}{{ iznos|floatformat:"2g" }}{% endif %}</td>{% endfor %}
+      </tr>
+    {% endfor %}</tbody>
+  </table></div>
+</div></div>
+{% endif %}
+{% endblock %}

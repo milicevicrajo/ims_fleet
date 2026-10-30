@@ -40,4 +40,7 @@ urlpatterns = [
     path("sinhronizacija/nalog-z/", views.nalog_z_refresh, name="nalog_z_refresh"),
     path("konto/", views.konto_tabela, name="konto_tabela"),
     path("bruto-bilans/", views.bruto_bilans, name="bruto_bilans"),
+    path("bilans-stanja/", views.bilans_stanja, name="bilans_stanja"),
+    path("bilans-uspeha/", views.bilans_uspeha, name="bilans_uspeha"),
+    path("bilansi/metodologija/", views.bilansi_metodologija, name="bilansi_metodologija"),
 ]

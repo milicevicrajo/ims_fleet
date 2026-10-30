@@ -1,0 +1,222 @@
+{% extends "finansije/base.html" %}
+{% block title %}Metodologija bilansa{% endblock %}
+{% block hero_title %}Metodologija bilansa{% endblock %}
+{% block hero_description %}Kako se računaju Bruto bilans, Bilans stanja i Bilans uspeha: izvor podataka, pravila, formule i kontrole{% endblock %}
+{% block hero_period %}{% endblock %}
+{% block finance_content %}
+<style>
+  .metod h3 { font-size: 1.05rem; font-weight: 700; margin: 1.4rem 0 .5rem; color: #14395b; }
+  .metod h3:first-child { margin-top: 0; }
+  .metod p, .metod li { max-width: 62rem; }
+  .metod .metod-formula { font-family: Consolas, "Courier New", monospace; background: #f1f5f9; border-radius: 4px; padding: .1rem .35rem; white-space: nowrap; }
+  .metod .metod-okvir { background: #f8fafc; border-left: 4px solid #14395b; padding: .75rem 1rem; margin: .75rem 0; max-width: 62rem; }
+  .metod table.metod-kolone { max-width: 62rem; }
+  .metod-pozicije td, .metod-pozicije th { vertical-align: top; }
+  .metod-pozicije .metod-zaglavlje td { background: #14395b; color: #fff; font-weight: 700; letter-spacing: .04em; }
+  .metod-pozicije .metod-zbir td { background: #f1f5f9; }
+  .metod-pozicije .metod-zbir-glavni td { background: #e2e8f0; font-weight: 600; }
+  .metod-pozicije tr:target td { background: #fff3cd; }
+</style>
+<div class="card"><div class="card-body metod">
+  <ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation"><button class="nav-link{% if izvestaj == 'BB' %} active{% endif %}" data-bs-toggle="tab" data-bs-target="#metod-bb" type="button" role="tab" aria-controls="metod-bb" aria-selected="{% if izvestaj == 'BB' %}true{% else %}false{% endif %}">Bruto bilans</button></li>
+    <li class="nav-item" role="presentation"><button class="nav-link{% if izvestaj == 'BS' %} active{% endif %}" data-bs-toggle="tab" data-bs-target="#metod-bs" type="button" role="tab" aria-controls="metod-bs" aria-selected="{% if izvestaj == 'BS' %}true{% else %}false{% endif %}">Bilans stanja</button></li>
+    <li class="nav-item" role="presentation"><button class="nav-link{% if izvestaj == 'BU' %} active{% endif %}" data-bs-toggle="tab" data-bs-target="#metod-bu" type="button" role="tab" aria-controls="metod-bu" aria-selected="{% if izvestaj == 'BU' %}true{% else %}false{% endif %}">Bilans uspeha</button></li>
+    <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#metod-izvor" type="button" role="tab" aria-controls="metod-izvor" aria-selected="false">Izvor podataka i obrazac</button></li>
+  </ul>
+  <div class="tab-content">
+
+  {# ---------------------------------------------------------------- BRUTO BILANS #}
+  <div class="tab-pane fade{% if izvestaj == 'BB' %} show active{% endif %}" id="metod-bb" role="tabpanel">
+    <h3>Šta pokazuje</h3>
+    <p>Za svako konto: početno stanje, promet u izabranom periodu, ukupan promet i saldo. Služi kao provera knjiženja
+      (zbir duguje mora biti jednak zbiru potražuje) i kao polazna tabela za Bilans stanja i Bilans uspeha.
+      Pravila su ista kao u Stankovom izveštaju <span class="metod-formula">SPFINizv12</span>.</p>
+
+    <h3>Koja knjiženja ulaze</h3>
+    <ul>
+      <li>Knjiženja izabrane <strong>godine</strong> čiji je datum naloga između <strong>datuma od</strong> i <strong>datuma do</strong> (period mora biti unutar godine).</li>
+      <li>Sve vrste naloga, i početno stanje (POC), i zatvaranje (ZAT), i zaključni nalog.</li>
+      <li>Samo aktivne stavke: stavka obrisana u Stankovom programu ne ulazi u bilans.</li>
+      <li>Filteri: <strong>OJ od–do</strong> (organizaciona jedinica knjiženja) i <strong>konto od–do</strong>. Prazno polje znači „sve”.
+        „Do konta” može biti i početak konta: <span class="metod-formula">5</span> znači do 599999, <span class="metod-formula">52</span> do 529999.</li>
+    </ul>
+
+    <h3>Kolone</h3>
+    <table class="table table-sm table-bordered metod-kolone">
+      <thead><tr><th>Kolona</th><th>Kako se računa (za svako konto)</th></tr></thead>
+      <tbody>
+        <tr><td>Početno stanje – duguje / potražuje</td><td><span class="metod-formula">Σ duguje</span> i <span class="metod-formula">Σ potražuje</span> naloga vrste <strong>POC</strong></td></tr>
+        <tr><td>Promet u periodu – duguje / potražuje</td><td><span class="metod-formula">Σ duguje</span> i <span class="metod-formula">Σ potražuje</span> svih ostalih naloga (sve osim POC)</td></tr>
+        <tr><td>Ukupno – duguje / potražuje</td><td>početno stanje + promet u periodu</td></tr>
+        <tr><td>Saldo – duguje / potražuje</td><td><span class="metod-formula">S = ukupno duguje − ukupno potražuje</span>. Ako je S &gt; 0, upisuje se u „duguje”; ako je S &lt; 0, upisuje se −S u „potražuje”. Saldo je uvek pozitivan broj.</td></tr>
+        <tr><td>Neto saldo – duguje / potražuje</td><td><span class="metod-formula">N = saldo duguje − saldo potražuje</span> reda. Klase 0, 1, 2 i 5 (imovina i rashodi) prikazuju N u koloni „duguje”, a klase 3, 4 i 6 (kapital, obaveze, prihodi) prikazuju −N u koloni „potražuje” — i kada je negativan (crveno). Klase 7, 8 i 9 idu na stranu na koju saldo pada.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Nivo detalja</h3>
+    <p>Na nivou <strong>konto</strong> svaki red je jedno konto. Na nivoima <strong>sintetika</strong> (prve 3 cifre), <strong>grupa</strong> (2 cifre)
+      i <strong>klasa</strong> (1 cifra) redovi se sabiraju, ali se saldo <strong>prvo deli na dugovni i potražni za svako konto</strong>,
+      pa tek onda sabira: dugovni saldo jednog konta ne prebija se sa potražnim saldom drugog konta iste grupe.</p>
+    <div class="metod-okvir">Primer: 24100 ima saldo 100 duguje, 24190 ima saldo 30 potražuje. Grupa 241 prikazuje saldo <strong>100 duguje i 30 potražuje</strong>
+      (ne 70), a neto saldo 70 duguje.</div>
+
+    <h3>Delovi i zbirovi</h3>
+    <p>Bilansna evidencija (sve klase osim 8) i vanbilansna evidencija (klasa 8) su posebne tabele, svaka sa svojim zbirom „Svega”.</p>
+
+    <h3>Kontrole</h3>
+    <ul>
+      <li>U bilansnoj evidenciji zbir „Ukupno – duguje” = zbir „Ukupno – potražuje” (svaki nalog je u ravnoteži).</li>
+      <li>Zbir „Saldo – duguje” = zbir „Saldo – potražuje”.</li>
+    </ul>
+
+    <h3>Razlika od Stankovog izveštaja</h3>
+    <p>Procedura <span class="metod-formula">SPFINizv12</span> radi nad lokalnom kopijom <span class="metod-formula">nalog_z</span>, koja zadržava naloge obrisane
+      u izvoru i osvežava se tek u 10 i 11 h. Ovde se računa nad istim knjiženjima kao ekran Konta, koja se preuzimaju svakog sata,
+      pa se obrisani nalozi (npr. ON 300 od 30.04.2026, −75,4 mil. na 52000) ne računaju.</p>
+  </div>
+
+  {# ---------------------------------------------------------------- BILANS STANJA #}
+  <div class="tab-pane fade{% if izvestaj == 'BS' %} show active{% endif %}" id="metod-bs" role="tabpanel">
+    <h3>Šta pokazuje</h3>
+    <p>Imovinu (<strong>aktiva</strong>, AOP 0001–0060) i izvore te imovine — kapital i obaveze (<strong>pasiva</strong>, AOP 0401–0457) — na izabrani dan,
+      po obrascu za privredna društva. Uporedna kolona je stanje na 31.12. prethodne godine.</p>
+
+    <h3>Koja knjiženja ulaze</h3>
+    <ul>
+      <li>Sva knjiženja godine izabranog dana, od 01.01. do tog dana, uključujući početno stanje (POC), zatvaranje (ZAT) i zaključni nalog.</li>
+      <li>Konta klasa 0–4 (bilans) i 8 (vanbilansna evidencija, pozicije 0060 i 0457). Klase 5–7 daju rezultat tekuće godine (korak 4). Klasa 9 se ne koristi.</li>
+      <li>Uporedna kolona (31.12. prethodne godine) računa se isto. Ako ta godina nije preuzeta u aplikaciju, koristi se početno stanje (POC) naredne godine — to je isti saldo posle zaključka.</li>
+    </ul>
+
+    <h3>Obračun korak po korak</h3>
+    <ol>
+      <li><strong>Saldo konta.</strong> Za svako konto <span class="metod-formula">S = Σ duguje − Σ potražuje</span>.</li>
+      <li><strong>Pozicija konta.</strong> Konto ide na poziciju čija kolona „Konta” sadrži njegov početak; kada odgovara više početaka, važi najduži
+        (npr. 28800 ide na 0029 po početku 288, a ne na 0058). Konta 331–337 idu na 0406 ako im je saldo potražni, a na 0407 ako je dugovni.</li>
+      <li><strong>Iznos.</strong> Za pozicije aktive iznos konta je <span class="metod-formula">duguje − potražuje</span>, za pozicije pasive
+        <span class="metod-formula">potražuje − duguje</span> (izuzetak: gubitak 0412–0414 i nerealizovani gubici 0407 su dugovni). Iznos pozicije je zbir njenih konta.
+        Konto čiji je saldo na suprotnoj strani daje negativan iznos — npr. dobavljač sa dugovnim saldom ili porez na dobit kada su akontacije veće od obaveze.</li>
+      <li><strong>Rezultat tekuće godine.</strong> Dok godina nije zaključena, klase 5, 6 i 7 imaju saldo:
+        <span class="metod-formula">R = Σ saldo klasa 5, 6 i 7</span>. Ako je R potražni (prihodi veći od rashoda), −R se dodaje na <strong>0410</strong> (dobitak tekuće godine);
+        ako je dugovni, R se dodaje na <strong>0414</strong> (gubitak tekuće godine). Posle zaključnog naloga R = 0, a rezultat je već na kontima 341/351.
+        Porez na dobit tokom godine nije obračunat.</li>
+      <li><strong>Zbirovi.</strong> Zbirne pozicije su formule obrasca (kolona „Formula” u tabeli ispod): npr. <span class="metod-formula">0059 = 0001 + 0002 + 0029 + 0030</span>.</li>
+      <li><strong>Kapital i gubitak iznad visine kapitala.</strong> Kapital 0401 ne može biti negativan. Kada su obaveze veće od imovine, 0401 = 0, a razlika je na
+        <span class="metod-formula">0455 = 0415 + 0429 + 0430 + 0431 − 0059</span>; inače je 0455 = 0. Ostali zbirovi se ne seku na nuli, da bi bilans ostao u ravnoteži.</li>
+    </ol>
+    <div class="metod-okvir">Primer: tekući račun 24100 ima saldo 1.200 duguje → 0057 (gotovina) = 1.200. Osnovni kapital 30000 ima saldo 1.000 potražuje → 0402 = 1.000.
+      Klase 5 i 6 imaju prihod 500 i rashod 300, godina nije zaključena → R = 300 − 500 = −200 → 0410 = 200. Ukupna aktiva 0059 = 1.200 = ukupna pasiva 0456 (1.000 + 200).</div>
+
+    <h3>Kontrole na ekranu</h3>
+    <ul>
+      <li><strong>Aktiva 0059 = pasiva 0456</strong> i <strong>vanbilansna aktiva 0060 = pasiva 0457</strong>, za obe kolone.</li>
+      <li><strong>Konta bez pozicije</strong> — konto klase 0–4 ili 8 sa saldom kome obrazac ne daje poziciju (treba dopuniti obrazac).</li>
+      <li><strong>Saldo na suprotnoj strani</strong> — stavke sa negativnim iznosom. U zvaničnom bilansu se prekvalifikuju (npr. preplaćen porez na dobit sa 0452 na 0046);
+        ovaj izveštaj ih ne prepravlja, već ih pokazuje.</li>
+    </ul>
+
+    <h3>Šta ovaj bilans ne radi</h3>
+    <ul>
+      <li>Ne radi godišnje prekvalifikacije i ispravke koje se rade pri sastavljanju zvaničnog bilansa.</li>
+      <li>Dobit prethodne godine ostaje na 0410 (konto 341) dok se knjiženjem ne prenese na 340.</li>
+      <li>Iznosi su u dinarima sa parama, ne u hiljadama.</li>
+    </ul>
+
+    <h3>Pozicije obrasca</h3>
+    <p class="small text-muted">„Iznos konta” je strana salda koja daje pozitivan iznos. „≥ 0” označava pozicije koje ne mogu biti negativne. Klik na AOP u formuli vodi na tu poziciju.</p>
+    {% include "finansije/_bilans_pozicije.html" with pozicije=pozicije_bs prefiks="bs" %}
+  </div>
+
+  {# ---------------------------------------------------------------- BILANS USPEHA #}
+  <div class="tab-pane fade{% if izvestaj == 'BU' %} show active{% endif %}" id="metod-bu" role="tabpanel">
+    <h3>Šta pokazuje</h3>
+    <p>Prihode, rashode i rezultat (dobitak ili gubitak) za izabrani period, po obrascu za privredna društva (AOP 1001–1062).
+      Uporedna kolona je isti period prethodne godine.</p>
+
+    <h3>Koja knjiženja ulaze</h3>
+    <ul>
+      <li>Knjiženja jedne godine, sa datumom naloga od <strong>datuma od</strong> do <strong>datuma do</strong>, <strong>bez početnog stanja</strong> (POC).</li>
+      <li>Konta klasa 5 (rashodi) i 6 (prihodi), <strong>bez zatvaranja</strong>: nalozi ZAT i konta prenosa 59900/69900 se izostavljaju, kao u ostalim izveštajima Finansija.
+        Inače bi posle zaključka godine svi prihodi i rashodi bili nula.</li>
+      <li>Porez na dobit iz klase 7, po posebnim pravilima (korak 4).</li>
+      <li>Uporedna kolona: isti datumi godinu ranije, ako je ta godina preuzeta u aplikaciju (knjiženja se preuzimaju od 2025).</li>
+    </ul>
+
+    <h3>Obračun korak po korak</h3>
+    <ol>
+      <li><strong>Saldo konta u periodu.</strong> <span class="metod-formula">S = Σ duguje − Σ potražuje</span> za svako konto klase 5 i 6.</li>
+      <li><strong>Pozicija konta.</strong> Kao u Bilansu stanja: najduži početak konta iz kolone „Konta”.</li>
+      <li><strong>Iznos.</strong> Za prihode <span class="metod-formula">potražuje − duguje</span>, za rashode <span class="metod-formula">duguje − potražuje</span>.
+        Izuzetak je 1010 (smanjenje vrednosti zaliha, 631), koji je dugovni i oduzima se od poslovnih prihoda. Konta 59 i 69 (obustavljeno poslovanje, promene politika, ispravke grešaka)
+        se prebijaju: <span class="metod-formula">1047 = 69 − 59</span> ako je pozitivno, inače <span class="metod-formula">1048 = 59 − 69</span>.</li>
+      <li><strong>Porez na dobit.</strong> Godinu u Stankovom programu zatvara nalog ON od 31.12: zatvara 59900/69900 kroz klasu 7 i u istom nalogu knjiži i zatvara porez,
+        pa je saldo konta poreza nula. Zato se porez čita iz prometa:
+        <ul>
+          <li><strong>1051</strong> poreski rashod perioda = dugovni promet konta <strong>721</strong> u periodu;</li>
+          <li><strong>1052 / 1053</strong> odloženi poreski rashod / prihod = promet konta <strong>498</strong> i <strong>288</strong> u nalozima koji knjiže 722:
+            potražni promet je rashod, dugovni je prihod, i prebijaju se;</li>
+          <li><strong>1054</strong> isplaćena lična primanja poslodavcu = dugovni promet konta <strong>723</strong>.</li>
+        </ul>
+        Porez se zato vidi samo kada period obuhvata 31.12. i godina je zaključena; tokom godine neto rezultat je rezultat pre poreza.</li>
+      <li><strong>Zbirovi i parovi dobitak/gubitak.</strong> Zbirovi su formule obrasca. Parovi dobitak/gubitak se računaju istom razlikom sa obrnutim znakom, a negativan iznos postaje 0:
+        <ul>
+          <li><span class="metod-formula">1025 poslovni dobitak = 1001 − 1013</span>, <span class="metod-formula">1026 poslovni gubitak = 1013 − 1001</span>;</li>
+          <li><span class="metod-formula">1037 / 1038</span> dobitak / gubitak iz finansiranja = 1027 − 1032 / 1032 − 1027;</li>
+          <li><span class="metod-formula">1045 / 1046</span> iz redovnog poslovanja pre oporezivanja = 1043 − 1044 / 1044 − 1043;</li>
+          <li><span class="metod-formula">1049 dobitak pre oporezivanja = 1045 − 1046 + 1047 − 1048</span> (1050 obrnuto);</li>
+          <li><span class="metod-formula">1055 neto dobitak = 1049 − 1050 − 1051 − 1052 + 1053 − 1054</span> (1056 obrnuto).</li>
+        </ul></li>
+    </ol>
+    <div class="metod-okvir">Provera na 2025. godini: prihodi i rashodi bez zatvaranja daju dobitak pre oporezivanja <strong>34.500.017,92</strong> (isto kao konto 71010 u zaključnom nalogu ON 1007);
+      porez 721 = 14.860.955,00; odloženi poreski prihod (498 u istom nalogu) = 7.799.547,54;
+      neto dobitak = 34.500.017,92 − 14.860.955,00 + 7.799.547,54 = <strong>27.438.610,46</strong>, isto kao prenos na 34100.</div>
+
+    <h3>Kontrole na ekranu</h3>
+    <ul>
+      <li><strong>Neto rezultat</strong> (1055 − 1056) za obe kolone; za zaključenu godinu mora biti jednak prenosu rezultata na 341/351.</li>
+      <li><strong>Konta bez pozicije</strong> — konto klase 5 ili 6 sa saldom kome obrazac ne daje poziciju.</li>
+      <li><strong>Saldo na suprotnoj strani</strong> — npr. trošak sa potražnim saldom (storno veći od troška).</li>
+    </ul>
+
+    <h3>Pozicije obrasca</h3>
+    <p class="small text-muted">„Iznos konta” je strana salda koja daje pozitivan iznos. „≥ 0” označava pozicije koje ne mogu biti negativne. Klik na AOP u formuli vodi na tu poziciju.</p>
+    {% include "finansije/_bilans_pozicije.html" with pozicije=pozicije_bu prefiks="bu" %}
+  </div>
+
+  {# ---------------------------------------------------------------- IZVOR #}
+  <div class="tab-pane fade" id="metod-izvor" role="tabpanel">
+    <h3>Knjiženja</h3>
+    <p>Sva tri bilansa računaju se nad knjiženjima Finansija: stavke glavne knjige iz Stankovog programa
+      (<span class="metod-formula">PUTGEO-SERVER.bazaims.dbo.nalog_z</span>), koje aplikacija preuzima svakog sata u :20 (tekuća godina) i čuva lokalno.
+      Datum je datum naloga, iznosi su u dinarima. Stavka obrisana u Stankovom programu označava se kao neaktivna i ne ulazi ni u jedan bilans.
+      Vreme poslednjeg preuzimanja piše na ekranu svakog bilansa.</p>
+    <p>Godine dostupne u aplikaciji: od 2025. Za stanje na 31.12.2024. koristi se početno stanje 2025.</p>
+
+    <h3>Obrazac Bilansa stanja i Bilansa uspeha</h3>
+    <p>Pozicije (AOP), konta i formule preuzeti su jednom iz šifarnika probne instalacije programa SMS (baza SMS na SMS-SERVER, tabele
+      <span class="metod-formula">SifAop</span> i <span class="metod-formula">SifAopkto</span>, obrazac Tipkto 5 — onaj koji SMS vodi za IMS za 2022–2024).
+      Obrazac je upisan u aplikaciju (<span class="metod-formula">finansije/services/bilansi_obrazac.py</span>) i ne čita se iz SMS-a.</p>
+    <p>Odluke finansija od 30.10.2026:</p>
+    <ul>
+      <li>Konta koja SMS deli na dve ili tri pozicije („deo”) raspoređena su na jednu: avansi 029 → 0015, učešća 040–042 → 0019, investicione jedinice 236 → 0054,
+        aktivna vremenska razgraničenja 280–289 (osim 288) → 0058, lizing 416 → 0424, krediti 422, 424, 425 i 429 → 0437, 439 → 0448; ostala → pozicija „u zemlji”.</li>
+      <li>Pasivna vremenska razgraničenja: grupa 49 osim 495 i 498 → 0454, sa 497 (razgraničene obaveze za PDV), koje SMS nije rasporedio.</li>
+      <li>331–337 po strani salda (0406 / 0407); 59 i 69 se prebijaju (1047 / 1048).</li>
+    </ul>
+    <p>Ispravljene greške šifarnika SMS-a:</p>
+    <ul>
+      <li>zbirovi 0003, 0018 i 0048 oduzimali su 0008, 0025, 0052 i 0053 — po obrascu se sabiraju;</li>
+      <li>0407 i 1010 imali su obrnutu stranu salda;</li>
+      <li>331 i 59/69 imali su pogrešan znak, pa je SMS za 2022. pokazivao dobitak pre oporezivanja 21.960.265,60 umesto 22.181.593,09 iz zaključnog naloga.</li>
+    </ul>
+
+    <h3>Provera prema SMS probi za 2022.</h3>
+    <p>Iz glavne knjige 2022: 99 od 117 pozicija Bilansa stanja i 59 od 62 pozicije Bilansa uspeha jednake su probnom bilansu SMS-a.
+      Sve razlike su „deo” konta koja SMS nije rasporedio (ostavio ih je na nuli) i njegove greške znaka; zato proba SMS-a nije u ravnoteži
+      (aktiva 2.060.065.721,98, pasiva 2.053.459.031,93), a ovaj obračun jeste (2.105.879.232,15).</p>
+  </div>
+
+  </div>
+</div></div>
+{% endblock %}

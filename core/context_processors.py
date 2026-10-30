@@ -66,7 +66,7 @@ def current_app(request):
         "finansije_permissions": {
             code: user_has_role_permission(request.user, f"finansije:{code}")
             for code in ("dashboard", "ledger", "export", "sync_status", "view_all", "bank_list", "bank_detail", "sef_list",
-                         "mesecni_pregled", "konta", "konto_tabela", "bruto_bilans")
+                         "mesecni_pregled", "konta", "konto_tabela", "bruto_bilans", "bilans_stanja", "bilans_uspeha", "bilansi_metodologija")
         },
         "hr_permissions": {
             code: user_has_role_permission(request.user, f"hr:{code}")

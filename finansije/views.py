@@ -669,6 +669,66 @@ def bruto_bilans(request):
     return render(request, "finansije/bruto_bilans.html", context)
 
 
+def _bilans(request, izvestaj):
+    """Bilans stanja ili Bilans uspeha po obrascu za privredna društva (services/bilansi.py)."""
+    from .forms import BilansStanjaForm, BilansUspehaForm
+    from .services import bilansi
+
+    if not can_view_all(request.user):
+        raise PermissionDenied("Bilansi zahtevaju pristup celoj firmi.")
+    request.session["current_app"] = "finansije"
+    pokrenut = "generisi" in request.GET or "izvoz" in request.GET
+    form = (BilansStanjaForm if izvestaj == "BS" else BilansUspehaForm)(request.GET if pokrenut else None)
+    context = {"form": form, "pokrenut": pokrenut, "bilans": None, "greska": "", "naslov": bilansi.NAZIVI[izvestaj],
+               "sync_run": SyncRun.objects.filter(company=getattr(settings, "FINANSIJE_COMPANY", 1), status="success")
+                                         .only("finished_at").first()}
+    if pokrenut and form.is_valid():
+        parametri = form.cleaned_data
+        opis = (f"Na dan {parametri['na_dan']:%d.%m.%Y.}" if izvestaj == "BS"
+                else izvoz.period_tekst(parametri["datum_od"], parametri["datum_do"]))
+        try:
+            bilans = bilansi.izradi(izvestaj, parametri)
+        except DatabaseError:
+            logger.exception("%s nije izrađen", bilansi.NAZIVI[izvestaj])
+            context["greska"] = f"{bilansi.NAZIVI[izvestaj]} trenutno nije moguće izraditi. Pokušajte ponovo."
+        else:
+            if request.GET.get("izvoz") == "xlsx":
+                datum = parametri["na_dan"] if izvestaj == "BS" else parametri["datum_do"]
+                ime = "bilans_stanja" if izvestaj == "BS" else "bilans_uspeha"
+                return izvoz.excel_odgovor(bilansi.dokument(bilans, opis), f"{ime}_{datum:%Y%m%d}")
+            context.update(bilans=bilans, opis=opis)
+    return render(request, "finansije/bilans.html", context)
+
+
+@require_GET
+@login_required
+@role_permission_required()
+def bilansi_metodologija(request):
+    """Kako se računaju Bruto bilans, Bilans stanja i Bilans uspeha; tabele pozicija iz istog obrasca kao obračun."""
+    from .services import bilansi
+
+    request.session["current_app"] = "finansije"
+    izvestaj = request.GET.get("izvestaj", "BB")
+    return render(request, "finansije/bilansi_metodologija.html", {
+        "izvestaj": izvestaj if izvestaj in ("BB", "BS", "BU") else "BB",
+        "pozicije_bs": bilansi.metodologija("BS"), "pozicije_bu": bilansi.metodologija("BU"),
+    })
+
+
+@require_GET
+@login_required
+@role_permission_required()
+def bilans_stanja(request):
+    return _bilans(request, "BS")
+
+
+@require_GET
+@login_required
+@role_permission_required()
+def bilans_uspeha(request):
+    return _bilans(request, "BU")
+
+
 @require_GET
 @login_required
 @role_permission_required()

@@ -173,3 +173,32 @@ class BrutoBilansForm(forms.Form):
         if godina and od and do and (od > do or od.year != godina or do.year != godina):
             raise forms.ValidationError("Izaberite period unutar izabrane godine (datum od ne može biti posle datuma do).")
         return values
+
+
+class BilansStanjaForm(forms.Form):
+    na_dan = ReportDateField(label="Na dan")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["na_dan"].initial = timezone.localdate()
+        self.fields["na_dan"].widget.attrs["class"] = "form-control"
+
+
+class BilansUspehaForm(forms.Form):
+    datum_od = ReportDateField(label="Datum od")
+    datum_do = ReportDateField(label="Datum do")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        danas = timezone.localdate()
+        self.fields["datum_od"].initial = date(danas.year, 1, 1)
+        self.fields["datum_do"].initial = danas
+        for field in self.fields.values():
+            field.widget.attrs["class"] = "form-control"
+
+    def clean(self):
+        values = super().clean()
+        od, do = values.get("datum_od"), values.get("datum_do")
+        if od and do and (od > do or od.year != do.year):
+            raise forms.ValidationError("Izaberite period unutar jedne godine (datum od ne može biti posle datuma do).")
+        return values

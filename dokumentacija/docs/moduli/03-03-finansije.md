@@ -90,6 +90,10 @@ dozvolama, a ne samo trenutno prikazana stranica tabele.
 | Knjiženja | `/finansije/knjizenja/` |
 | Izvoz u Excel / PDF | `/finansije/izvoz/` (`report=overview`, `ledger`, `job_card`; `format=pdf`) |
 | **Sinhronizacija** | `/finansije/sinhronizacija/` |
+| Bruto bilans | `/finansije/bruto-bilans/` |
+| **Bilans stanja** (od 30.10.2026.) | `/finansije/bilans-stanja/` — obrazac AOP na dan, uporedo sa 31.12. prethodne godine ([6.1.25](../obracuni/06-01-finansije.md)) |
+| **Bilans uspeha** (od 30.10.2026.) | `/finansije/bilans-uspeha/` — obrazac AOP za period, uporedo sa istim periodom prethodne godine |
+| Metodologija bilansa (od 30.10.2026.) | `/finansije/bilansi/metodologija/?izvestaj=BB\|BS\|BU` — kako se računa svaki bilans; tabele pozicija iz istog obrasca kao obračun |
 
 ---
 

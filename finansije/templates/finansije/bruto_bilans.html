@@ -10,6 +10,7 @@
     {% for field in form %}<div class="finance-period-field"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}
     <button class="btn btn-primary" type="submit" name="generisi" value="1"><i class="mdi mdi-play" aria-hidden="true"></i> Generiši izveštaj</button>
     <button class="btn btn-outline-success" type="submit" name="izvoz" value="xlsx" data-no-preloader><i class="mdi mdi-file-excel" aria-hidden="true"></i> Preuzmi Excel</button>
+    <a class="btn btn-outline-secondary" href="{% url 'finansije:bilansi_metodologija' %}?izvestaj=BB"><i class="mdi mdi-book-open-variant" aria-hidden="true"></i> Metodologija</a>
     <div class="finance-period-errors text-danger">{{ form.non_field_errors }}</div>
   </form>
   <p class="finance-accounting-note mb-0">Prazan OJ i konto znače „sve”. „Do konta” može biti i početak konta (npr. 5 = sva konta klase 5).

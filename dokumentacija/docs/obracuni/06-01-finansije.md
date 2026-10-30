@@ -51,6 +51,7 @@ tokova i povezane evidencije.
 | **F-16** | Vozila i zaduženja na poslu | Presek perioda i istorijskih dodela | `services/job_card.py: assigned_vehicles()`, `vehicle_custody()` | [6.1.12](#6112-vozila-zaduženja-i-putni-nalozi) |
 | **F-17** | Zaposleni i zarade na poslu | `DISTINCT br_obr` po zaposlenom i mesecu | `services/job_people.py: payroll_employees()` | [6.1.11](#6111-zaposleni-i-zarade) |
 | **F-18** | Osvežavanje naloga Z | Pokretanje `sp_AzurirajNalogZ` | `services/nalog_z.py: refresh_nalog_z()` | [6.1.16](#6116-sinhronizacija-istorija-i-procedure) |
+| **F-19** | Bilans stanja i Bilans uspeha | Saldo konta na strani AOP pozicije; zbirovi po obrascu | `services/bilansi.py`, `services/bilansi_obrazac.py` | [6.1.25](#6125-bilans-stanja-i-bilans-uspeha-od-30102026) |
 
 ### Oznake u formulama [P]
 
@@ -1298,3 +1299,45 @@ funkcije kao ekran, sa istim obuhvatom prava.
 | Detalj šifre posla | Sažetak (P, R, ZT, rezultat posle ZT, tokovi gotovine), struktura rashoda sa nazivima konta, IF i ON fakture |
 
 Tekst iz izvora se u Excel upisuje kao tekst (ne postaje formula). Nedostupan iznos je prazan / crta, ne nula.
+
+## 6.1.25. Bilans stanja i Bilans uspeha (od 30.10.2026.)
+
+Implementacija: `finansije/services/bilansi.py` (obračun), `finansije/services/bilansi_obrazac.py` (obrazac),
+testovi `finansije/test_bilansi.py`. Ekrani: Finansije → **Bilans stanja** (`/finansije/bilans-stanja/`) i
+**Bilans uspeha** (`/finansije/bilans-uspeha/`), dozvole `finansije:bilans_stanja` / `finansije:bilans_uspeha` uz
+`finansije:view_all`. Ekran **Metodologija bilansa** (`/finansije/bilansi/metodologija/`, dozvola
+`finansije:bilansi_metodologija`) opisuje pravila Bruto bilansa, Bilansa stanja i Bilansa uspeha i prikazuje sve
+pozicije sa kontima, stranom salda, formulom i napomenom (`bilansi.metodologija()`, `NAPOMENE` u obrascu).
+
+**Obrazac.** AOP pozicije, konta i zbirovi preuzeti su jednom iz šifarnika probne instalacije programa SMS
+(baza `SMS` na SMS-SERVER, `SifAop`/`SifAopkto`, Tipkto 5 — obrazac za privredna društva) i čuvaju se u
+kodu, ne čitaju se iz SMS-a. Odluke finansija od 30.10.2026. upisane su u zaglavlje `bilansi_obrazac.py`:
+„deo” konta idu na jednu poziciju (avansi 029 → 0015, učešća 040–042 → 0019, investicione jedinice 236 → 0054,
+AVR 28 osim 288 → 0058, lizing 416 → 0424, krediti 422/424/425/429 → 0437, 439 → 0448), grupa 49 osim 495 i 498
+→ 0454 (i 497), 331–337 po strani salda na 0406/0407. Ispravljene su greške SMS-a: zbirovi 0003, 0018 i 0048 su
+sabirali sa minusom, 0407 i 1010 su imali obrnutu stranu, a 59/69 i 331 pogrešan znak.
+
+**Iznos pozicije.** Za svaki konto bira se pozicija sa najdužim početkom konta (par 1047/1048 i 1052/1053 dobija
+oba); iznos je `duguje − potražuje` za pozicije strane D (aktiva, rashodi), a `potražuje − duguje` za stranu P.
+Zbir je formula obrasca. Ne mogu biti negativni samo parovi dobitak/gubitak i kapital 0401 / gubitak iznad
+visine kapitala 0455 — ostali zbirovi i stavke ostaju negativni, da bilans ostane u ravnoteži, a ekran ih
+navodi kao saldo na suprotnoj strani (u zvaničnom bilansu se prekvalifikuju).
+
+**Bilans stanja na dan:** sva knjiženja godine do tog dana, sa POC, ZAT i zaključnim nalogom. Dok godina nije
+zaključena, saldo klasa 5–7 ide na 0410 (dobitak, `341-R`) ili 0414 (gubitak, `351-R`). Uporedna kolona je 31.12.
+prethodne godine; ako ta godina nije preuzeta, koristi se početno stanje (POC) naredne godine.
+
+**Bilans uspeha za period** (jedna godina): klase 5 i 6 bez POC i bez zatvaranja (`CLOSING_POSTINGS`: ZAT i
+59900/69900). Zaključak godine u Stankovom programu je nalog ON od 31.12. koji zatvara 59900/69900 kroz klasu 7
+i u istom nalogu knjiži porez, pa se porez ne čita iz salda: **1051** = dugovni promet 721, **1054** = dugovni
+promet 723, **1052/1053** = promet 498 i 288 u nalozima koji knjiže 722 (potražni = rashod, dugovni = prihod).
+Uporedna kolona je isti period prethodne godine (ako je preuzeta).
+
+**Kontrole na ekranu:** aktiva 0059 = pasiva 0456, vanbilansna 0060 = 0457, konta bez pozicije, pozicije sa
+saldom na suprotnoj strani; za Bilans uspeha neto rezultat.
+
+**Provera (30.10.2026.):** 2025 — dobitak pre oporezivanja 34.500.017,92 = 71010 u ON 1007, porez 14.860.955,00,
+odloženi poreski prihod 7.799.547,54, neto 27.438.610,46 = prenos na 34100; Bilans stanja 31.12.2025 u
+ravnoteži (2.216.111.343,77). 2022 (iz `nalog_z` izvora, prema probi SMS-a): 99 od 117 pozicija Bilansa stanja i
+59 od 62 Bilansa uspeha jednake su SMS-u; razlike su samo „deo” konta koja SMS nije rasporedio i greške znaka
+SMS-a, a naš dobitak pre oporezivanja (22.181.593,09) jednak je zaključnom nalogu, dok SMS proba nije u ravnoteži.

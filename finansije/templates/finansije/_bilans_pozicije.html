@@ -1,0 +1,16 @@
+{# Pozicije obrasca (services/bilansi.metodologija); prefiks je "bs" ili "bu" za sidra AOP u formulama. #}
+<div class="table-responsive"><table class="table table-sm table-bordered metod-pozicije">
+  <thead><tr><th>AOP</th><th>Pozicija</th><th>Konta (početak konta)</th><th>Iznos konta</th><th>Formula (zbir)</th><th class="text-center" title="Negativan iznos postaje 0">≥ 0</th><th>Napomena</th></tr></thead>
+  <tbody>{% for p in pozicije %}
+    {% if p.zaglavlje %}<tr class="metod-zaglavlje"><td colspan="7">{{ p.zaglavlje }}</td></tr>{% endif %}
+    <tr id="{{ prefiks }}-{{ p.aop }}" class="{% if p.formula and p.nivo >= 2 %}metod-zbir-glavni{% elif p.formula %}metod-zbir{% endif %}">
+      <td class="text-nowrap fw-bold">{{ p.aop }}</td>
+      <td>{{ p.naziv }}</td>
+      <td>{% for konto, uslov in p.konta %}<span class="text-nowrap">{{ konto }}{% if uslov %} <small class="text-muted">({{ uslov }})</small>{% endif %}</span>{% if not forloop.last %}, {% endif %}{% empty %}<span class="text-muted">—</span>{% endfor %}</td>
+      <td class="text-nowrap">{{ p.strana|default:"" }}</td>
+      <td>{% for znak, ref in p.formula %}{% if not forloop.first or znak != "+" %} {{ znak }} {% endif %}<a href="#{{ prefiks }}-{{ ref }}">{{ ref }}</a>{% endfor %}</td>
+      <td class="text-center">{% if p.nenegativna %}<i class="mdi mdi-check" aria-label="da"></i>{% endif %}</td>
+      <td class="small">{{ p.napomena }}</td>
+    </tr>
+  {% endfor %}</tbody>
+</table></div>
