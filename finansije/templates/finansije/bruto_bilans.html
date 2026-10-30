@@ -14,7 +14,8 @@
   </form>
   <p class="finance-accounting-note mb-0">Prazan OJ i konto znače „sve”. „Do konta” može biti i početak konta (npr. 5 = sva konta klase 5).
     Podaci su knjiženja Finansija, ista kao na ekranu Konta{% if sync_run %} (poslednje preuzimanje {{ sync_run.finished_at|date:"d.m.Y. H:i" }}){% endif %}.
-    Saldo se računa za svaki konto posebno; na zbirnim nivoima dugovni i potražni salda se sabiraju odvojeno.</p>
+    Saldo se računa za svaki konto posebno; na zbirnim nivoima dugovni i potražni salda se sabiraju odvojeno.
+    Neto saldo je prebijen saldo reda po prirodi klase: klase 0, 1, 2 i 5 kao duguje, klase 3, 4 i 6 kao potražuje (i kad je negativan).</p>
 </div></div>
 {% if greska %}<div class="alert alert-danger" role="alert">{{ greska }}</div>{% endif %}
 {% if delovi is not None %}
@@ -25,8 +26,8 @@
   {# Konto se ređa kao tekst (5, 52, 520), iznosi po neformatiranoj vrednosti iz data-order. #}
   <div class="table-responsive"><table class="table table-sm table-hover table-bordered finance-datatable bruto-bilans" data-page-length="100" data-order-column="0" style="width:100%">
     <thead>
-      <tr><th rowspan="2">Konto</th><th rowspan="2">Naziv</th><th colspan="2" class="text-center">Početno stanje</th><th colspan="2" class="text-center">Promet u periodu</th><th colspan="2" class="text-center">Ukupno</th><th colspan="2" class="text-center">Saldo</th></tr>
-      <tr><th class="finance-number">Duguje</th><th class="finance-number">Potražuje</th><th class="finance-number">Duguje</th><th class="finance-number">Potražuje</th><th class="finance-number">Duguje</th><th class="finance-number">Potražuje</th><th class="finance-number">Duguje</th><th class="finance-number">Potražuje</th></tr>
+      <tr><th rowspan="2">Konto</th><th rowspan="2">Naziv</th><th colspan="2" class="text-center">Početno stanje</th><th colspan="2" class="text-center">Promet u periodu</th><th colspan="2" class="text-center">Ukupno</th><th colspan="2" class="text-center">Saldo</th><th colspan="2" class="text-center" title="Klase 0, 1, 2, 5 kao duguje; 3, 4, 6 kao potražuje">Neto saldo</th></tr>
+      <tr><th class="finance-number">Duguje</th><th class="finance-number">Potražuje</th><th class="finance-number">Duguje</th><th class="finance-number">Potražuje</th><th class="finance-number">Duguje</th><th class="finance-number">Potražuje</th><th class="finance-number">Duguje</th><th class="finance-number">Potražuje</th><th class="finance-number">Duguje</th><th class="finance-number">Potražuje</th></tr>
     </thead>
     <tbody>{% for s in deo.stavke %}<tr>
       <td class="text-nowrap" data-order="k{{ s.konto }}">{{ s.konto }}</td><td>{{ s.naziv }}</td>
@@ -34,6 +35,7 @@
       <td data-order="{{ s.dug1|unlocalize }}">{{ s.dug1|floatformat:"2g" }}</td><td data-order="{{ s.pot1|unlocalize }}">{{ s.pot1|floatformat:"2g" }}</td>
       <td data-order="{{ s.dugu|unlocalize }}">{{ s.dugu|floatformat:"2g" }}</td><td data-order="{{ s.potu|unlocalize }}">{{ s.potu|floatformat:"2g" }}</td>
       <td data-order="{{ s.saldo_d|unlocalize }}">{{ s.saldo_d|floatformat:"2g" }}</td><td data-order="{{ s.saldo_p|unlocalize }}">{{ s.saldo_p|floatformat:"2g" }}</td>
+      <td data-order="{{ s.neto_d|unlocalize }}"{% if s.neto_d < 0 %} class="text-danger"{% endif %}>{{ s.neto_d|floatformat:"2g" }}</td><td data-order="{{ s.neto_p|unlocalize }}"{% if s.neto_p < 0 %} class="text-danger"{% endif %}>{{ s.neto_p|floatformat:"2g" }}</td>
     </tr>{% endfor %}</tbody>
     <tfoot><tr class="fw-bold table-light">
       <td colspan="2">Svega · {{ deo.naziv }}</td>
@@ -41,6 +43,7 @@
       <td class="text-end text-nowrap">{{ deo.zbir.dug1|floatformat:"2g" }}</td><td class="text-end text-nowrap">{{ deo.zbir.pot1|floatformat:"2g" }}</td>
       <td class="text-end text-nowrap">{{ deo.zbir.dugu|floatformat:"2g" }}</td><td class="text-end text-nowrap">{{ deo.zbir.potu|floatformat:"2g" }}</td>
       <td class="text-end text-nowrap">{{ deo.zbir.saldo_d|floatformat:"2g" }}</td><td class="text-end text-nowrap">{{ deo.zbir.saldo_p|floatformat:"2g" }}</td>
+      <td class="text-end text-nowrap">{{ deo.zbir.neto_d|floatformat:"2g" }}</td><td class="text-end text-nowrap">{{ deo.zbir.neto_p|floatformat:"2g" }}</td>
     </tr></tfoot>
   </table></div>
   {% empty %}<p class="text-muted mb-0">Nema knjiženja za izabrane parametre.</p>{% endfor %}

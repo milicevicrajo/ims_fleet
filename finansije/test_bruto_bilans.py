@@ -43,6 +43,16 @@ class AgregacijaTests(SimpleTestCase):
         self.assertEqual(agregiraj(REDOVI, "k2")[0]["stavke"][0]["dug1"], Decimal("70"))
         self.assertEqual(agregiraj(REDOVI, "k1")[0]["stavke"][0]["saldo_d"], Decimal("140"))
 
+    def test_net_saldo_follows_the_nature_of_the_class(self):
+        redovi = [red("24100", "Tekući", dug1="100"), red("24190", "Prelazni", pot1="30"), red("43500", "Dobavljači", pot1="50", dug1="10"),
+                  red("88000", "Vanbilansna aktiva", dug1="7", tip=2), red("89000", "Vanbilansna pasiva", pot1="7", tip=2)]
+        klase = {s["konto"]: s for s in agregiraj(redovi, "k1")[0]["stavke"]}
+        self.assertEqual((klase["2"]["neto_d"], klase["2"]["neto_p"]), (Decimal("70"), Decimal("0")))
+        self.assertEqual((klase["4"]["neto_d"], klase["4"]["neto_p"]), (Decimal("0"), Decimal("40")))
+        vanbilansna = agregiraj(redovi, "konto")[1]
+        self.assertEqual([(s["neto_d"], s["neto_p"]) for s in vanbilansna["stavke"]], [(Decimal("7"), Decimal("0")), (Decimal("0"), Decimal("7"))])
+        self.assertEqual((agregiraj(redovi, "k1")[1]["stavke"][0]["neto_d"], agregiraj(redovi, "k1")[1]["stavke"][0]["neto_p"]), (Decimal("0"), Decimal("0")))
+
     def test_saldo_is_split_per_account_before_summing(self):
         # 24100 je dugovni (100), 24190 potražni (30): grupa 241 nema saldo 70, nego 100 duguje i 30 potražuje.
         grupa = agregiraj([red("24100", "Tekući", dug1="100"), red("24190", "Prelazni", pot1="30")], "k3")[0]["stavke"][0]

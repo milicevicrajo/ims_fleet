@@ -162,7 +162,8 @@ class BrutoBilansForm(forms.Form):
         self.fields["datum_do"].initial = date(godina, 12, 31)
         self.fields["nivo"].choices = NIVOI
         for naziv, field in self.fields.items():
-            field.widget.attrs["class"] = "form-select" if naziv == "nivo" else "form-control"
+            # Izbor nivoa kao ostale padajuće liste u Finansijama (select2).
+            field.widget.attrs["class"] = "form-select form-control select2-method" if naziv == "nivo" else "form-control"
         for naziv in ("oj_od", "oj_do", "konto_od", "konto_do"):
             self.fields[naziv].widget.attrs["placeholder"] = "sve"
 

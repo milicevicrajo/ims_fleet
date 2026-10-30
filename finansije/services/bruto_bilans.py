@@ -22,14 +22,19 @@ from . import izvoz
 from .kontni_plan import nazivi_konta
 
 NIVOI = (("konto", "Konto"), ("k3", "Sintetika (3 cifre)"), ("k2", "Grupa (2 cifre)"), ("k1", "Klasa (1 cifra)"))
-IZNOSI = ("dug0", "pot0", "dug1", "pot1", "dugu", "potu", "saldo_d", "saldo_p")
+SABIRA_SE = ("dug0", "pot0", "dug1", "pot1", "dugu", "potu", "saldo_d", "saldo_p")
+IZNOSI = SABIRA_SE + ("neto_d", "neto_p")
+# Neto saldo po prirodi klase (finansije, 30.10.2026.): imovina i rashodi kao duguje, kapital, obaveze i
+# prihodi kao potražuje — i kad je negativan. Ostale klase (7, 8, 9) na stranu na koju pada.
+DUGOVNE_KLASE, POTRAZNE_KLASE = ("0", "1", "2", "5"), ("3", "4", "6")
 NULA = Decimal("0")
 TIPOVI = {1: "BILANSNA AKTIVA I PASIVA", 2: "VANBILANSNA AKTIVA I PASIVA"}
 KOLONE = [izvoz.Kolona("Konto"), izvoz.Kolona("Naziv"),
           izvoz.Kolona("Početno stanje – duguje", "iznos"), izvoz.Kolona("Početno stanje – potražuje", "iznos"),
           izvoz.Kolona("Promet u periodu – duguje", "iznos"), izvoz.Kolona("Promet u periodu – potražuje", "iznos"),
           izvoz.Kolona("Ukupno – duguje", "iznos"), izvoz.Kolona("Ukupno – potražuje", "iznos"),
-          izvoz.Kolona("Saldo – duguje", "iznos"), izvoz.Kolona("Saldo – potražuje", "iznos")]
+          izvoz.Kolona("Saldo – duguje", "iznos"), izvoz.Kolona("Saldo – potražuje", "iznos"),
+          izvoz.Kolona("Neto saldo – duguje", "iznos"), izvoz.Kolona("Neto saldo – potražuje", "iznos")]
 
 
 def tekst(vrednost):
@@ -85,12 +90,25 @@ def agregiraj(redovi, nivo):
                                               **{kljuc: NULA for kljuc in IZNOSI}})
             saldo = (red["dugu"] or NULA) - (red["potu"] or NULA)
             vrednosti = dict(red, saldo_d=max(saldo, NULA), saldo_p=max(-saldo, NULA))
-            for kljuc in IZNOSI:
+            for kljuc in SABIRA_SE:
                 stavka[kljuc] += vrednosti[kljuc] or NULA
-        stavke = [grupe[sifra] for sifra in sorted(grupe)]
+        stavke = [neto_saldo(grupe[sifra]) for sifra in sorted(grupe)]
         delovi.append({"naziv": naziv_dela, "stavke": stavke,
                        "zbir": {kljuc: sum((s[kljuc] for s in stavke), NULA) for kljuc in IZNOSI}})
     return delovi
+
+
+def neto_saldo(stavka):
+    """Neto saldo reda (na svakom nivou) prema klasi: klasa je prva cifra konta."""
+    neto = stavka["saldo_d"] - stavka["saldo_p"]
+    klasa = stavka["konto"][:1]
+    if klasa in DUGOVNE_KLASE:
+        stavka["neto_d"], stavka["neto_p"] = neto, NULA
+    elif klasa in POTRAZNE_KLASE:
+        stavka["neto_d"], stavka["neto_p"] = NULA, -neto
+    else:
+        stavka["neto_d"], stavka["neto_p"] = max(neto, NULA), max(-neto, NULA)
+    return stavka
 
 
 def opis_filtera(parametri):
