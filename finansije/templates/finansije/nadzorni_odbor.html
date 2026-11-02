@@ -1,0 +1,66 @@
+{% extends "finansije/base.html" %}
+{% block title %}Izveštaj za nadzorni odbor{% endblock %}
+{% block hero_title %}Izveštaj za nadzorni odbor{% endblock %}
+{% block hero_description %}Prikaz prihoda i rashoda za izabrani period — za ceo Institut i po profitnim centrima, uporedo sa istim periodom prethodnih godina i planom{% endblock %}
+{% block hero_period %}{% if tabela %}<div class="finance-hero-period"><i class="mdi mdi-calendar-range me-1" aria-hidden="true"></i><strong>{{ opis }}</strong></div>{% endif %}{% endblock %}
+{% block finance_content %}
+<style>
+  .no-tabela { font-size: .82rem; }
+  .no-tabela th, .no-tabela td { vertical-align: middle; }
+  .no-tabela thead th { background: #14395b; color: #fff; text-align: center; white-space: nowrap; }
+  .no-tabela .no-opis { min-width: 16rem; }
+  .no-tabela .no-zaglavlje td { background: #e2e8f0; font-weight: 700; letter-spacing: .04em; }
+  .no-tabela .no-zbir td { font-weight: 700; background: #f1f5f9; }
+  .no-tabela .no-zbir-glavni td { font-weight: 700; background: #dbeafe; }
+  .no-tabela td.n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .no-tabela td.neg { color: #b91c1c; }
+</style>
+<ul class="nav nav-tabs mb-3">
+  {% for kljuc, naziv, upit in tabovi %}
+  <li class="nav-item"><a class="nav-link{% if kljuc == prikaz %} active{% endif %}" href="?{{ upit }}"{% if kljuc == prikaz %} aria-current="page"{% endif %}>{{ naziv }}</a></li>
+  {% endfor %}
+</ul>
+<div class="card"><div class="card-body finance-filter">
+  <form method="get" class="finance-period">
+    <input type="hidden" name="prikaz" value="{{ prikaz }}">
+    {% for field in form %}<div class="finance-period-field"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}
+    <button class="btn btn-primary" type="submit" name="generisi" value="1"><i class="mdi mdi-play" aria-hidden="true"></i> Generiši izveštaj</button>
+    <button class="btn btn-outline-success" type="submit" name="izvoz" value="xlsx" data-no-preloader><i class="mdi mdi-file-excel" aria-hidden="true"></i> Preuzmi Excel</button>
+    <button class="btn btn-outline-secondary" type="submit" name="izvoz" value="pdf" formtarget="_blank" data-no-preloader><i class="mdi mdi-file-pdf-box" aria-hidden="true"></i> PDF / štampa</button>
+    {% if can_podesavanja %}<a class="btn btn-outline-secondary" href="{% url 'finansije:nadzorni_odbor_podesavanja' %}"><i class="mdi mdi-cog-outline" aria-hidden="true"></i> Plan, centri i zaposleni</a>{% endif %}
+    <div class="finance-period-errors text-danger">{{ form.non_field_errors }}</div>
+  </form>
+  <p class="finance-accounting-note mb-0">Knjiženja Finansija, klase 5 i 6 bez početnog stanja i zatvaranja (ZAT, 59900/69900). Konto ide na poziciju po prve tri cifre (mapiranje izveštaja).
+    {% if prikaz == "firma" %}Učešće je u odnosu na ukupan prihod; plan za period je godišnji plan srazmerno broju meseci perioda.
+    {% else %}Centar je centar iz registra na datum knjiženja; knjiženja centara koji nisu upisani kao profitni su zajednička i dele se po koeficijentu godine.{% endif %}
+    Za tekuću godinu bez upisanog broja zaposlenih broje se aktivni zaposleni iz Kadrova danas.</p>
+</div></div>
+{% if greska %}<div class="alert alert-danger" role="alert">{{ greska }}</div>{% endif %}
+{% if tabela %}
+<div class="card"><div class="card-body">
+  <h2 class="finance-job-heading">Kontrole</h2>
+  <ul class="list-unstyled mb-0">{% for kolona, poruka, u_redu in kontrole %}
+    <li class="{% if u_redu is None %}text-muted{% elif u_redu %}text-success{% else %}text-danger{% endif %}"><i class="mdi {% if u_redu is None %}mdi-minus-circle-outline{% elif u_redu %}mdi-check-circle{% else %}mdi-alert-circle{% endif %}" aria-hidden="true"></i> <strong>{{ kolona }}:</strong> {{ poruka }}</li>
+  {% endfor %}
+  {% for tekst in zajednicko %}<li class="text-muted"><i class="mdi mdi-information-outline" aria-hidden="true"></i> {{ tekst }}</li>{% endfor %}</ul>
+</div></div>
+<div class="card"><div class="card-body">
+  <h2 class="finance-job-heading">{{ naslov }} <small class="text-muted">· iznosi {{ tabela.jedinica }}</small></h2>
+  {% regroup tabela.kolone by grupa as grupe %}
+  <div class="table-responsive"><table class="table table-sm table-bordered no-tabela mb-0">
+    <thead>
+      <tr><th rowspan="2">R.br.</th><th rowspan="2" class="no-opis">Opis</th>
+        {% for grupa in grupe %}<th colspan="{{ grupa.list|length }}">{{ grupa.grouper }}</th>{% endfor %}</tr>
+      <tr>{% for kolona in tabela.kolone %}<th>{{ kolona.naslov }}</th>{% endfor %}</tr>
+    </thead>
+    <tbody>{% for red in tabela.redovi %}
+      {% if red.vrsta == "zaglavlje" %}<tr class="no-zaglavlje"><td>{{ red.rb }}</td><td colspan="{{ tabela.kolone|length|add:1 }}">{{ red.naziv }}</td></tr>
+      {% else %}<tr class="{% if red.vrsta == 'zbir' %}no-zbir{% elif red.vrsta == 'zbir-glavni' %}no-zbir-glavni{% endif %}">
+        <td class="text-center">{{ red.rb }}</td><td>{{ red.naziv }}</td>
+        {% for tekst, negativan in red.celije %}<td class="n{% if negativan %} neg{% endif %}">{{ tekst }}</td>{% endfor %}
+      </tr>{% endif %}
+    {% endfor %}</tbody>
+  </table></div>
+</div></div>
+{% endif %}
+{% endblock %}

@@ -33,7 +33,8 @@ def finance_sidebar_section(request):
             "finansije:ledger": "ledger", "finansije:sync_status": "sync",
             "finansije:konto_tabela": "konto_tabela", "finansije:bruto_bilans": "bruto_bilans",
             "finansije:bilans_stanja": "bilans_stanja", "finansije:bilans_uspeha": "bilans_uspeha",
-            "finansije:bilansi_metodologija": "bilansi_metodologija"}.get(view, "")
+            "finansije:bilansi_metodologija": "bilansi_metodologija", "finansije:nadzorni_odbor": "nadzorni_odbor",
+            "finansije:nadzorni_odbor_podesavanja": "nadzorni_odbor"}.get(view, "")
 
 
 @register.simple_tag

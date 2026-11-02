@@ -202,3 +202,66 @@ class BilansUspehaForm(forms.Form):
         if od and do and (od > do or od.year != do.year):
             raise forms.ValidationError("Izaberite period unutar jedne godine (datum od ne može biti posle datuma do).")
         return values
+
+
+class NadzorniOdborForm(BilansUspehaForm):
+    """Izveštaj za nadzorni odbor: period jedne godine, uporedo isti period prethodnih godina."""
+    broj_godina = forms.IntegerField(label="Broj godina", min_value=1, max_value=6, initial=2)
+    jedinica = forms.ChoiceField(label="Iznosi", required=False,
+                                 choices=[("hiljade", "u hiljadama dinara"), ("dinari", "u dinarima")])
+
+    def __init__(self, *args, jedinica="hiljade", **kwargs):
+        super().__init__(*args, **kwargs)
+        self.podrazumevana_jedinica = jedinica
+        self.fields["jedinica"].initial = jedinica
+        self.fields["jedinica"].widget.attrs["class"] = "form-select"
+
+    def clean_jedinica(self):
+        return self.cleaned_data.get("jedinica") or self.podrazumevana_jedinica
+
+
+class NadzorniGodinaForm(forms.Form):
+    """Podešavanja izveštaja za nadzorni odbor za jednu godinu: broj zaposlenih i godišnji plan po poziciji."""
+    broj_zaposlenih = forms.IntegerField(label="Broj zaposlenih (ostvareno)", min_value=0, required=False)
+    plan_zaposlenih = forms.IntegerField(label="Planirani broj zaposlenih", min_value=0, required=False)
+
+    def __init__(self, *args, pozicije=(), **kwargs):
+        super().__init__(*args, **kwargs)
+        for pozicija in pozicije:
+            self.fields[f"plan_{pozicija.kod}"] = forms.DecimalField(
+                label=pozicija.naziv, required=False, max_digits=14, decimal_places=2)
+        for field in self.fields.values():
+            field.widget.attrs["class"] = "form-control form-control-sm text-end"
+
+
+class NadzorniCentarForm(forms.Form):
+    centar = forms.CharField(label="Centar", max_length=10, required=False)
+    koeficijent = forms.DecimalField(label="Koeficijent (%)", min_value=0, max_value=100, max_digits=5,
+                                     decimal_places=2, required=False)
+    broj_zaposlenih = forms.IntegerField(label="Broj zaposlenih", min_value=0, required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs["class"] = "form-control form-control-sm"
+
+
+class BaseNadzorniCentriFormSet(forms.BaseFormSet):
+    def clean(self):
+        if any(self.errors):
+            return
+        vidjeni, zbir = set(), 0
+        for forma in self.forms:
+            centar = (forma.cleaned_data.get("centar") or "").strip()
+            if not centar:
+                continue
+            if centar in vidjeni:
+                raise forms.ValidationError(f"Centar {centar} je upisan dvaput.")
+            vidjeni.add(centar)
+            zbir += forma.cleaned_data.get("koeficijent") or 0
+        if vidjeni and zbir != 100:
+            raise forms.ValidationError(f"Zbir koeficijenata je {zbir}%, a mora biti 100% — inače deo zajedničkih "
+                                        "prihoda i troškova ostaje neraspoređen.")
+
+
+NadzorniCentriFormSet = forms.formset_factory(NadzorniCentarForm, formset=BaseNadzorniCentriFormSet, extra=3)

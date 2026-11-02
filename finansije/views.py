@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
-from django.db import DatabaseError
+from django.db import DatabaseError, transaction
 from django.db.models import Sum
 from django.http import HttpResponse, JsonResponse, QueryDict
 from django.shortcuts import redirect, render
@@ -727,6 +727,116 @@ def bilans_stanja(request):
 @role_permission_required()
 def bilans_uspeha(request):
     return _bilans(request, "BU")
+
+
+@require_GET
+@login_required
+@role_permission_required()
+def nadzorni_odbor(request):
+    """Izveštaj za nadzorni odbor: cela firma ili po profitnim centrima (services/nadzorni_odbor.py)."""
+    from .forms import NadzorniOdborForm
+    from .services import nadzorni_odbor as no
+
+    if not can_view_all(request.user):
+        raise PermissionDenied("Izveštaj za nadzorni odbor zahteva pristup celoj firmi.")
+    request.session["current_app"] = "finansije"
+    prikaz = request.GET.get("prikaz") if request.GET.get("prikaz") in no.NASLOVI else "firma"
+    pokrenut = "generisi" in request.GET or "izvoz" in request.GET
+    form = NadzorniOdborForm(request.GET if pokrenut else None, jedinica="hiljade" if prikaz == "firma" else "dinari")
+    context = {"form": form, "prikaz": prikaz, "naslov": no.NASLOVI[prikaz], "pokrenut": pokrenut, "tabela": None,
+               "greska": "", "kontrole": [], "zajednicko": [],
+               "can_podesavanja": user_has_role_permission(request.user, "finansije:nadzorni_odbor_podesavanja")}
+    if pokrenut and form.is_valid():
+        od, do = form.cleaned_data["datum_od"], form.cleaned_data["datum_do"]
+        jedinica, broj_godina = form.cleaned_data["jedinica"], form.cleaned_data["broj_godina"]
+        opis = izvoz.period_tekst(od, do) + (f", uporedo isti period od {do.year - broj_godina + 1}." if broj_godina > 1 else "")
+        try:
+            if prikaz == "firma":
+                rezultat = no.izradi_firmu(od, do, broj_godina)
+                tabela, zajednicko = no.tabela_firme(rezultat, jedinica), []
+            else:
+                rezultat = no.izradi_centre(od, do, broj_godina)
+                tabela, zajednicko = no.tabela_centara(rezultat, jedinica), no.zajednicko_tekst(rezultat, jedinica)
+        except DatabaseError:
+            logger.exception("Izveštaj za nadzorni odbor nije izrađen")
+            context["greska"] = "Izveštaj trenutno nije moguće izraditi. Pokušajte ponovo."
+        else:
+            if request.GET.get("izvoz") in ("xlsx", "pdf"):
+                dokument = no.dokument(prikaz, tabela, opis, rezultat["kontrole"], zajednicko)
+                if request.GET["izvoz"] == "pdf":
+                    return izvoz.pdf_odgovor(request, dokument)
+                return izvoz.excel_odgovor(dokument, f"nadzorni_odbor_{prikaz}_{do:%Y%m%d}")
+            context.update(tabela=no.za_ekran(tabela), opis=opis, kontrole=rezultat["kontrole"], zajednicko=zajednicko)
+    upit = request.GET.copy()
+    upit.pop("izvoz", None)
+    upit.pop("jedinica", None)  # svaki prikaz ima svoju podrazumevanu jedinicu, kao u Excelu
+    context["tabovi"] = []
+    for kljuc, naziv in no.NASLOVI.items():
+        upit["prikaz"] = kljuc
+        context["tabovi"].append((kljuc, "Cela firma" if kljuc == "firma" else "Po profitnim centrima", upit.urlencode()))
+    return render(request, "finansije/nadzorni_odbor.html", context)
+
+
+@login_required
+@role_permission_required()
+def nadzorni_odbor_podesavanja(request):
+    """Plan po pozicijama, broj zaposlenih i profitni centri sa koeficijentima raspodele, za jednu godinu."""
+    from .forms import NadzorniCentriFormSet, NadzorniGodinaForm
+    from .models import NadzorniCentar, NadzorniGodina, NadzorniPlan
+    from .services import nadzorni_odbor as no
+
+    if not can_view_all(request.user):
+        raise PermissionDenied("Podešavanja izveštaja za nadzorni odbor zahtevaju pristup celoj firmi.")
+    request.session["current_app"] = "finansije"
+    try:
+        godina = int(request.POST.get("godina") or request.GET.get("godina") or timezone.localdate().year)
+    except ValueError:
+        godina = timezone.localdate().year
+    godina = min(max(godina, 2000), 2100)
+    zapis = NadzorniGodina.objects.filter(godina=godina).first()
+    centri = list(NadzorniCentar.objects.filter(godina=godina).order_by("centar"))
+    prepisano = not centri
+    if prepisano:  # nova godina: predlog su centri i koeficijenti poslednje upisane godine (bez broja zaposlenih)
+        poslednja = NadzorniCentar.objects.filter(godina__lt=godina).order_by("-godina").values_list("godina", flat=True).first()
+        centri = [NadzorniCentar(godina=godina, centar=c.centar, koeficijent=c.koeficijent)
+                  for c in NadzorniCentar.objects.filter(godina=poslednja).order_by("centar")] if poslednja else []
+    if request.method == "POST":
+        forma = NadzorniGodinaForm(request.POST, pozicije=no.POZICIJE)
+        centri_forme = NadzorniCentriFormSet(request.POST, prefix="centri")
+        if forma.is_valid() and centri_forme.is_valid():
+            podaci = forma.cleaned_data
+            with transaction.atomic():
+                NadzorniGodina.objects.update_or_create(godina=godina, defaults={
+                    "broj_zaposlenih": podaci["broj_zaposlenih"], "plan_zaposlenih": podaci["plan_zaposlenih"]})
+                for pozicija in no.POZICIJE:
+                    iznos = podaci[f"plan_{pozicija.kod}"]
+                    if iznos is None:
+                        NadzorniPlan.objects.filter(godina=godina, pozicija=pozicija.kod).delete()
+                    else:
+                        NadzorniPlan.objects.update_or_create(godina=godina, pozicija=pozicija.kod, defaults={"iznos": iznos})
+                NadzorniCentar.objects.filter(godina=godina).delete()
+                NadzorniCentar.objects.bulk_create([
+                    NadzorniCentar(godina=godina, centar=f.cleaned_data["centar"].strip(),
+                                   koeficijent=f.cleaned_data.get("koeficijent") or 0,
+                                   broj_zaposlenih=f.cleaned_data.get("broj_zaposlenih"))
+                    for f in centri_forme.forms if (f.cleaned_data.get("centar") or "").strip()])
+            messages.success(request, f"Podešavanja izveštaja za nadzorni odbor za {godina}. su sačuvana.")
+            return redirect(f"{reverse('finansije:nadzorni_odbor_podesavanja')}?godina={godina}")
+    else:
+        plan = dict(NadzorniPlan.objects.filter(godina=godina).values_list("pozicija", "iznos"))
+        pocetno = {f"plan_{kod}": iznos for kod, iznos in plan.items()}
+        if zapis:
+            pocetno.update(broj_zaposlenih=zapis.broj_zaposlenih, plan_zaposlenih=zapis.plan_zaposlenih)
+        forma = NadzorniGodinaForm(initial=pocetno, pozicije=no.POZICIJE)
+        centri_forme = NadzorniCentriFormSet(prefix="centri", initial=[
+            {"centar": c.centar, "koeficijent": c.koeficijent, "broj_zaposlenih": c.broj_zaposlenih} for c in centri])
+    polja_plana = [(p, forma[f"plan_{p.kod}"]) for p in no.POZICIJE]
+    return render(request, "finansije/nadzorni_odbor_podesavanja.html", {
+        "godina": godina, "godine": range(timezone.localdate().year - 4, timezone.localdate().year + 2),
+        "forma": forma, "centri_forme": centri_forme, "prepisano": prepisano and bool(centri),
+        "plan_prihodi": polja_plana[:len(no.PRIHODI)], "plan_rashodi": polja_plana[len(no.PRIHODI):],
+        "tekuca": godina == timezone.localdate().year,
+    })
 
 
 @require_GET

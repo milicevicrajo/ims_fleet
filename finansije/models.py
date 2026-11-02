@@ -344,5 +344,44 @@ class PovezanoLiceBanke(models.Model):
         return self.potvrda.startswith("Da")
 
 
+class NadzorniGodina(models.Model):
+    """Izveštaj za nadzorni odbor (od 02.11.2026.): broj zaposlenih firme za godinu — stvarni i planirani.
+
+    Stvarni broj se upisuje za protekle godine; za tekuću godinu bez upisa izveštaj broji aktivne iz Kadrova.
+    """
+    godina = models.PositiveSmallIntegerField(unique=True)
+    broj_zaposlenih = models.PositiveIntegerField(null=True, blank=True, verbose_name="Broj zaposlenih")
+    plan_zaposlenih = models.PositiveIntegerField(null=True, blank=True, verbose_name="Planirani broj zaposlenih")
+
+    class Meta:
+        ordering = ["-godina"]
+
+
+class NadzorniPlan(models.Model):
+    """Godišnji plan po poziciji izveštaja za nadzorni odbor, u hiljadama dinara (pozicije u `services/nadzorni_odbor`)."""
+    godina = models.PositiveSmallIntegerField()
+    pozicija = models.CharField(max_length=3)
+    iznos = models.DecimalField(max_digits=14, decimal_places=2)
+
+    class Meta:
+        ordering = ["godina", "pozicija"]
+        constraints = [models.UniqueConstraint(fields=["godina", "pozicija"], name="finansije_nadzorni_plan_jedinstven")]
+
+
+class NadzorniCentar(models.Model):
+    """Profitni centar u izveštaju po centrima za godinu: koeficijent raspodele zajedničkih prihoda i troškova (%).
+
+    Centar je oznaka centra u registru (`LedgerEntry.org_centar`); sva knjiženja ostalih centara su zajednička.
+    """
+    godina = models.PositiveSmallIntegerField()
+    centar = models.CharField(max_length=10)
+    koeficijent = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name="Koeficijent raspodele (%)")
+    broj_zaposlenih = models.PositiveIntegerField(null=True, blank=True, verbose_name="Broj zaposlenih")
+
+    class Meta:
+        ordering = ["godina", "centar"]
+        constraints = [models.UniqueConstraint(fields=["godina", "centar"], name="finansije_nadzorni_centar_jedinstven")]
+
+
 # SEF fakture (samo citanje, od 30.09.2026.) — modeli u posebnom fajlu.
 from .sef_models import SefFaktura, SefPrilog, SefPromena, SefSinhronizacija  # noqa: E402,F401

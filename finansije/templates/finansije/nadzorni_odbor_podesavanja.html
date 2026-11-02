@@ -1,0 +1,56 @@
+{% extends "finansije/base.html" %}
+{% block title %}Izveštaj za nadzorni odbor — podešavanja{% endblock %}
+{% block hero_title %}Izveštaj za nadzorni odbor — plan, centri i zaposleni{% endblock %}
+{% block hero_description %}Godišnji plan po pozicijama, profitni centri sa koeficijentima raspodele zajedničkih prihoda i troškova i broj zaposlenih, za {{ godina }}.{% endblock %}
+{% block finance_content %}
+<div class="card"><div class="card-body finance-filter">
+  <form method="get" class="finance-period">
+    <div class="finance-period-field"><label class="form-label" for="no-godina">Godina</label>
+      <select name="godina" id="no-godina" class="form-select" onchange="this.form.submit()">
+        {% for g in godine %}<option value="{{ g }}"{% if g == godina %} selected{% endif %}>{{ g }}</option>{% endfor %}
+      </select></div>
+    <a class="btn btn-outline-secondary" href="{% url 'finansije:nadzorni_odbor' %}"><i class="mdi mdi-arrow-left" aria-hidden="true"></i> Nazad na izveštaj</a>
+  </form>
+</div></div>
+
+<form method="post">
+  {% csrf_token %}
+  <input type="hidden" name="godina" value="{{ godina }}">
+  {% if forma.non_field_errors or centri_forme.non_form_errors %}<div class="alert alert-danger">{{ forma.non_field_errors }}{{ centri_forme.non_form_errors }}</div>{% endif %}
+
+  <div class="card"><div class="card-body">
+    <h2 class="finance-job-heading">Profitni centri i koeficijenti raspodele</h2>
+    <p class="text-muted small">Centar je oznaka centra iz registra (naučni blok je <strong>3</strong>). Knjiženja svih ostalih centara su zajednička i dele se po koeficijentu; zbir koeficijenata mora biti 100%. Centar bez koeficijenta (npr. 3) se prikazuje, ali ne prima zajedničke prihode i troškove. Prazan red se ne čuva.
+      {% if prepisano %}<strong>Predlog je preuzet iz poslednje upisane godine — proverite i sačuvajte.</strong>{% endif %}</p>
+    {{ centri_forme.management_form }}
+    <div class="table-responsive"><table class="table table-sm table-bordered mb-0" style="max-width:40rem">
+      <thead><tr><th>Centar</th><th>Koeficijent (%)</th><th>Broj zaposlenih</th></tr></thead>
+      <tbody>{% for f in centri_forme %}<tr>
+        <td>{{ f.centar }}{{ f.centar.errors }}</td><td>{{ f.koeficijent }}{{ f.koeficijent.errors }}</td><td>{{ f.broj_zaposlenih }}{{ f.broj_zaposlenih.errors }}</td>
+      </tr>{% endfor %}</tbody>
+    </table></div>
+  </div></div>
+
+  <div class="card"><div class="card-body">
+    <h2 class="finance-job-heading">Broj zaposlenih — Institut</h2>
+    <div class="row g-3" style="max-width:40rem">
+      <div class="col-sm-6"><label class="form-label" for="{{ forma.broj_zaposlenih.id_for_label }}">{{ forma.broj_zaposlenih.label }}</label>{{ forma.broj_zaposlenih }}{{ forma.broj_zaposlenih.errors }}</div>
+      <div class="col-sm-6"><label class="form-label" for="{{ forma.plan_zaposlenih.id_for_label }}">{{ forma.plan_zaposlenih.label }}</label>{{ forma.plan_zaposlenih }}{{ forma.plan_zaposlenih.errors }}</div>
+    </div>
+    <p class="text-muted small mt-2 mb-0">{% if tekuca %}Za tekuću godinu, dok broj nije upisan, izveštaj broji aktivne zaposlene iz Kadrova (i po centru, iz registra).{% else %}Za protekle godine broj se upisuje — Kadrovi čuvaju samo današnje stanje.{% endif %}</p>
+  </div></div>
+
+  <div class="card"><div class="card-body">
+    <h2 class="finance-job-heading">Godišnji plan {{ godina }} <small class="text-muted">· u hiljadama dinara</small></h2>
+    <div class="row">
+      <div class="col-lg-6"><table class="table table-sm mb-3"><thead><tr><th colspan="2">Prihodi</th></tr></thead><tbody>
+        {% for pozicija, polje in plan_prihodi %}<tr><td>{{ pozicija.broj }}. {{ pozicija.naziv }}</td><td style="width:11rem">{{ polje }}{{ polje.errors }}</td></tr>{% endfor %}
+      </tbody></table></div>
+      <div class="col-lg-6"><table class="table table-sm mb-0"><thead><tr><th colspan="2">Rashodi</th></tr></thead><tbody>
+        {% for pozicija, polje in plan_rashodi %}<tr><td>{{ pozicija.broj }}. {{ pozicija.naziv }}</td><td style="width:11rem">{{ polje }}{{ polje.errors }}</td></tr>{% endfor %}
+      </tbody></table></div>
+    </div>
+    <button class="btn btn-primary" type="submit"><i class="mdi mdi-content-save-outline" aria-hidden="true"></i> Sačuvaj za {{ godina }}.</button>
+  </div></div>
+</form>
+{% endblock %}

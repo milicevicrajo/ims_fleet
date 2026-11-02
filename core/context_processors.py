@@ -62,11 +62,13 @@ def current_app(request):
         "current_app": app,
         # Obaveštenje o novostima modula dok ga korisnik ne potvrdi („Razumem”).
         "novosti_modula": neprocitane(request),
-        "potrazivanja_permissions": {"dashboard": can_view(request.user), "view_all": can_view_all(request.user), "sync_status": can_sync(request.user)},
+        "potrazivanja_permissions": {"dashboard": can_view(request.user), "view_all": can_view_all(request.user), "sync_status": can_sync(request.user),
+                                     "alta_banka": user_has_role_permission(request.user, "potrazivanja:alta_banka")},
         "finansije_permissions": {
             code: user_has_role_permission(request.user, f"finansije:{code}")
             for code in ("dashboard", "ledger", "export", "sync_status", "view_all", "bank_list", "bank_detail", "sef_list",
-                         "mesecni_pregled", "konta", "konto_tabela", "bruto_bilans", "bilans_stanja", "bilans_uspeha", "bilansi_metodologija")
+                         "mesecni_pregled", "konta", "konto_tabela", "bruto_bilans", "bilans_stanja", "bilans_uspeha", "bilansi_metodologija",
+                         "nadzorni_odbor")
         },
         "hr_permissions": {
             code: user_has_role_permission(request.user, f"hr:{code}")

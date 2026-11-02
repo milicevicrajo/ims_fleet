@@ -94,6 +94,7 @@ dozvolama, a ne samo trenutno prikazana stranica tabele.
 | **Bilans stanja** (od 30.10.2026.) | `/finansije/bilans-stanja/` — obrazac AOP na dan, uporedo sa 31.12. prethodne godine ([6.1.25](../obracuni/06-01-finansije.md)) |
 | **Bilans uspeha** (od 30.10.2026.) | `/finansije/bilans-uspeha/` — obrazac AOP za period, uporedo sa istim periodom prethodne godine |
 | Metodologija bilansa (od 30.10.2026.) | `/finansije/bilansi/metodologija/?izvestaj=BB\|BS\|BU` — kako se računa svaki bilans; tabele pozicija iz istog obrasca kao obračun |
+| **Izveštaj za nadzorni odbor** (od 02.11.2026.) | `/finansije/nadzorni-odbor/?prikaz=firma\|centri` — prihodi i rashodi po pozicijama, cela firma i po profitnim centrima, Excel i PDF ([6.1.26](../obracuni/06-01-finansije.md)); plan, centri i broj zaposlenih: `/finansije/nadzorni-odbor/podesavanja/` |
 
 ---
 
