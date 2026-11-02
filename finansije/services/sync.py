@@ -11,7 +11,7 @@ from django.db.models.functions import Cast
 from django.utils import timezone
 
 from finansije.models import FinanceJob, LedgerEntry, SyncRun
-from .source import KEY_FIELDS, fetch_source, fingerprint, source_key, totals_for
+from .source import KEY_FIELDS, PRVA_GODINA, fetch_source, fingerprint, source_key, totals_for
 
 
 _local_lock = Lock()
@@ -172,8 +172,8 @@ def publish(rows, jobs, run):
 def sync_ledger(year_from=2025, year_to=None, company=None):
     company = company or getattr(settings, "FINANSIJE_COMPANY", 1)
     year_to = year_to or timezone.localdate().year
-    if not 2025 <= year_from <= year_to <= timezone.localdate().year:
-        raise ValueError("Period sinhronizacije mora biti od 2025. do tekuće godine.")
+    if not PRVA_GODINA <= year_from <= year_to <= timezone.localdate().year:
+        raise ValueError(f"Period sinhronizacije mora biti od {PRVA_GODINA}. do tekuće godine.")
     with sync_lock():
         # Any previous running record cannot still own this exclusive session lock.
         SyncRun.objects.filter(status="running").update(status="failed", finished_at=timezone.now(), error="Prethodni proces je prekinut pre završetka.")

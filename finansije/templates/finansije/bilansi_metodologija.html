@@ -140,7 +140,7 @@
       <li>Konta klasa 5 (rashodi) i 6 (prihodi), <strong>bez zatvaranja</strong>: nalozi ZAT i konta prenosa 59900/69900 se izostavljaju, kao u ostalim izveštajima Finansija.
         Inače bi posle zaključka godine svi prihodi i rashodi bili nula.</li>
       <li>Porez na dobit iz klase 7, po posebnim pravilima (korak 4).</li>
-      <li>Uporedna kolona: isti datumi godinu ranije, ako je ta godina preuzeta u aplikaciju (knjiženja se preuzimaju od 2025).</li>
+      <li>Uporedna kolona: isti datumi godinu ranije, ako je ta godina preuzeta u aplikaciju (knjiženja su u aplikaciji od 2016).</li>
     </ul>
 
     <h3>Obračun korak po korak</h3>
@@ -191,7 +191,7 @@
       (<span class="metod-formula">PUTGEO-SERVER.bazaims.dbo.nalog_z</span>), koje aplikacija preuzima svakog sata u :20 (tekuća godina) i čuva lokalno.
       Datum je datum naloga, iznosi su u dinarima. Stavka obrisana u Stankovom programu označava se kao neaktivna i ne ulazi ni u jedan bilans.
       Vreme poslednjeg preuzimanja piše na ekranu svakog bilansa.</p>
-    <p>Godine dostupne u aplikaciji: od 2025. Za stanje na 31.12.2024. koristi se početno stanje 2025.</p>
+    <p>Godine dostupne u aplikaciji: od 2016 (do 2018. iz arhivske baze Stankovog programa). Godine 2016–2024 su preuzete jednom, 02.11.2026; redovno se osvežava od 2025. Za stanje na 31.12. godine koja nije preuzeta koristi se početno stanje naredne godine.</p>
 
     <h3>Obrazac Bilansa stanja i Bilansa uspeha</h3>
     <p>Pozicije (AOP), konta i formule preuzeti su jednom iz šifarnika probne instalacije programa SMS (baza SMS na SMS-SERVER, tabele

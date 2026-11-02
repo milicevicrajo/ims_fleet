@@ -75,6 +75,21 @@ class SyncTests(TestCase):
         self.assertTrue(LedgerEntry.objects.get(year=2025).active)
         self.assertFalse(LedgerEntry.objects.get(journal_number=2).active)
 
+    def test_komanda_po_godinu_sinhronizuje_svaku_godinu_posebno_i_ceka_zauzetu(self):
+        from io import StringIO
+        from django.core.management import call_command
+
+        run = SyncRun(source_rows=1, created=1, updated=0, unchanged=0, removed=0)
+        komanda = "finansije.management.commands.sync_finansije"
+        with patch(f"{komanda}.sync_ledger", side_effect=[run, SyncBusy("zauzeto"), run, run]) as sync, \
+                patch(f"{komanda}.time.sleep") as spavaj:
+            izlaz = StringIO()
+            call_command("sync_finansije", "--year-from", "2016", "--year-to", "2018", "--po-godinu", stdout=izlaz)
+        self.assertEqual([c.kwargs for c in sync.call_args_list],
+                         [{"year_from": g, "year_to": g} for g in (2016, 2017, 2017, 2018)])
+        spavaj.assert_called_once_with(60)
+        self.assertIn("2018: Preuzeto 1", izlaz.getvalue())
+
     def test_empty_source_does_not_erase_existing_scope(self):
         self.run_sync([posting()])
         with self.assertRaisesMessage(ValueError, "Izvor je prazan"):
@@ -171,6 +186,23 @@ class SourceReadTests(TestCase):
         for call in cursor.execute.call_args_list:
             self.assertTrue(call.args[0].lstrip().startswith("SELECT"))
             self.assertTrue(call.args[1])
+
+    def test_godine_do_2018_su_iz_arhive_a_sifarnici_iz_tekuce_baze(self):
+        from .services.source import ARHIVA, SOURCE, izvori_naloga
+        self.assertEqual(izvori_naloga(2016, 2026), [(ARHIVA, 2016, 2018), (SOURCE, 2019, 2026)])
+        self.assertEqual(izvori_naloga(2016, 2016), [(ARHIVA, 2016, 2016)])
+        self.assertEqual(izvori_naloga(2025, 2026), [(SOURCE, 2025, 2026)])
+        with patch("finansije.services.source.connections") as connections:
+            cursor = connections.__getitem__.return_value.cursor.return_value.__enter__.return_value
+            cursor.fetchall.side_effect = [[("410001 ", "Posao A", "41 ", "D", "P")], [("61000 ", "Prihod")], [],
+                                           [(1, 123, "Partner")], [], []]
+            cursor.fetchmany.return_value = []
+            fetch_source(1, 2017, 2019)
+        upiti = [c.args[0] for c in cursor.execute.call_args_list]
+        self.assertTrue(all(SOURCE in u for u in upiti[:4]))
+        self.assertEqual([ARHIVA in u for u in upiti[4:]], [True, True, False, False])
+        self.assertEqual([c.args[1][1:] for c in cursor.execute.call_args_list[4:]],
+                         [["2017", "2018"], ["2017", "2018"], ["2019", "2019"], ["2019", "2019"]])
 
     @patch("finansije.services.source.connections")
     def test_source_change_during_read_is_detected(self, connections):
@@ -369,7 +401,7 @@ class ReportTests(TestCase):
         self.assertTrue(all(not ranking["rows"] for ranking in empty.context["rankings"]))
 
     def test_overview_invalid_period_does_not_display_unfiltered_numbers(self):
-        for changes in ({"date_from": "2024-01-01"}, {"date_from": "bad"}, {"date_from": "2026-03-01", "date_to": "2026-02-01"}, {"date_to": ""}):
+        for changes in ({"date_from": "2015-01-01"}, {"date_from": "bad"}, {"date_from": "2026-03-01", "date_to": "2026-02-01"}, {"date_to": ""}):
             response = self.client.get(reverse("finansije:dashboard"), changes)
             self.assertEqual(response.status_code, 200)
             self.assertFalse(response.context["valid"])
@@ -537,7 +569,7 @@ class ReportTests(TestCase):
         self.assertTrue(all(r["revenue_share"] is None for r in response.context["rows"]))
 
     def test_invalid_period_and_account_do_not_show_unfiltered_results(self):
-        for changes in ({"date_from": "2026-03-01"}, {"date_from": "2024-01-01"}, {"account": "5';DELETE"}):
+        for changes in ({"date_from": "2026-03-01"}, {"date_from": "2015-01-01"}, {"account": "5';DELETE"}):
             response = self.client.get(reverse("finansije:report"), dict(self.params, **changes))
             self.assertFalse(response.context["valid"])
             self.assertEqual(response.context["totals"]["count"], 0)
@@ -588,7 +620,7 @@ class ReportTests(TestCase):
         self.assertNotIn("<img", data["data"][0][6])
         self.assertIn("&lt;img", data["data"][0][6])
         self.assertIn("finance-amount-negative", data["data"][0][9])
-        invalid = self.client.get(reverse("finansije:ledger"), dict(params, date_from="2024-01-01")).json()
+        invalid = self.client.get(reverse("finansije:ledger"), dict(params, date_from="2015-01-01")).json()
         self.assertEqual(invalid["recordsTotal"], 0)
 
     def test_sync_datatable_orders_real_timestamps_and_keeps_error_in_same_row(self):

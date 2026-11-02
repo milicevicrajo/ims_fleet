@@ -126,7 +126,7 @@ class JobCardTests(TestCase):
         self.assertEqual(self.get_table("invoices").status_code, 409)
 
     def test_invalid_or_unauthorized_choice_does_not_query_other_modules(self):
-        for params in ({"job": "unknown"}, {"month": 13}, {"year": 2024}, {"month": "bad"}):
+        for params in ({"job": "unknown"}, {"month": 13}, {"year": 2015}, {"month": "bad"}):
             response = self.get_card(**params)
             self.assertFalse(response.context["valid"])
             self.assertNotIn("totals", response.context)

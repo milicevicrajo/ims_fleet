@@ -209,8 +209,20 @@ knjiženja prenosi mesec tog knjiženja.
 
 ## 6.1.4. Odakle Finansije čitaju
 
-Podrazumevano preduzeće je `FINANSIJE_COMPANY=1`. Finansijska analitika **počinje od 2025.
-godine**. [P]
+Podrazumevano preduzeće je `FINANSIJE_COMPANY=1`. Finansijska analitika **počinje od 2016.
+godine** (`PRVA_GODINA` u `finansije/services/source.py`). [P]
+
+Knjiženja do 2018. postoje samo u arhivskoj bazi `[PUTGEO-SERVER].[BazaIMS18]` (`bazaims` ih ima od 2019.);
+`fetch_source` ih čita odatle (`izvori_naloga`), a šifarnike (posao, konto, partner, OJ) uvek iz `bazaims`.
+Godine 2016–2024 se preuzimaju **jednokratno, ručno** (od 02.11.2026.); redovna sinhronizacija (svaki sat tekuća
+godina, noću sve godine) osvežava od 2025:
+
+    manage.py sync_finansije --year-from 2016 --year-to 2024 --po-godinu
+
+Svaka godina je posebna transakcija od oko 4–5 minuta (~95.000 stavki; prvi uvoz 160.421 stavke je trajao
+6 min 48 s). Dok se godina upisuje, ekrani Finansija koji čitaju knjiženja **čekaju** (baza nema
+`READ_COMMITTED_SNAPSHOT`) — pokretati van radnog vremena, a pre noćnih poslova u 01:00. Ako je sinhronizacija
+zauzeta (npr. ona u :20), komanda čeka 60 s i pokušava ponovo. Ponovno pokretanje ne duplira stavke.
 
 | Skup | Izvor | Način |
 |---|---|---|
@@ -916,7 +928,7 @@ pouzdanog izvornog vremena izmene** koje bi omogućilo preuzimanje samo novih re
 
 | Osobina | Vrednost |
 |---|---|
-| Obuhvat | Firma `FINANSIJE_COMPANY` (1), godine **od 2025.** |
+| Obuhvat | Firma `FINANSIJE_COMPANY` (1), redovno godine **od 2025.**; 2016–2024 jednokratno (02.11.2026.) |
 | Identitet stavke | firma + godina + vrsta naloga + broj naloga + stavka |
 | Način | **Ceo opseg pri svakom prolazu** |
 | Novi stabilni ključ | **Dodaje se** |
@@ -1373,4 +1385,5 @@ Kadrova danas, po centru iz registra. Kadrovi ne čuvaju istoriju, pa se za prot
 centara 42, 43, 44 i 70 i prihodi na ino tržištu i iz budžeta jednaki su listu „izvestaj oj”. Razlike su u
 Excelu: ostali prihodi profitnih centara (oko 7,4 mil. din.) tamo nisu ni kod centra ni u zajedničkim prihodima
 (red sadrži samo konto 631); stavka 614 od 1.321.100 din. centra 11 je u Excelu kod centra 41; 4.192,57 din.
-rashoda je u Excelu kod centra 3 umesto 41. Knjiženja pre 2025. nisu preuzeta, pa za 2023–2024 nema kolona.
+rashoda je u Excelu kod centra 3 umesto 41. Od 02.11.2026. preuzeta su i knjiženja 2016–2024, pa se prikazuju i
+kolone prethodnih godina.

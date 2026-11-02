@@ -83,7 +83,8 @@ Potvrđena je jednakost priliva/odliva i za januar 2026, celu 2025. i celu 2026.
 
 ## Podaci i obračun
 
-- Podržan obuhvat: preduzeće `FINANSIJE_COMPANY` (podrazumevano 1), godine od 2025.
+- Podržan obuhvat: preduzeće `FINANSIJE_COMPANY` (podrazumevano 1), godine od 2016. (`PRVA_GODINA`); do 2018.
+  iz arhive `BazaIMS18`. Redovna sinhronizacija osvežava od 2025, a 2016–2024 su jednokratno preuzete 02.11.2026.
 - Identitet stavke: preduzeće, godina, vrsta naloga, broj naloga i stavka.
 - Izveštaji koriste datum knjiženja `dat_naloga`; datumi izvora se čuvaju kao datumi, bez vremenske komponente.
 - Prihodi = potražuje − duguje na klasi 6; rashodi = duguje − potražuje na klasi 5.

@@ -4,6 +4,8 @@ from datetime import date, datetime
 from django import forms
 from django.utils import timezone
 
+from .services.source import PRVA_GODINA
+
 
 GROUPS = [("center", "Po centrima / OJ"), ("job", "Po šiframa posla"), ("account", "Po kontima"), ("month", "Po mesecima")]
 KINDS = [("pnl", "Prihodi i rashodi"), ("revenue", "Samo prihodi"), ("expense", "Samo rashodi")]
@@ -77,7 +79,7 @@ class JobMonthForm(forms.Form):
         values.setdefault("month", str(today.month))
         super().__init__(values)
         self.fields["job"].choices = [("", "Izaberite šifru posla")] + choices
-        self.fields["year"].choices = [(y, y) for y in range(2025, today.year + 1)]
+        self.fields["year"].choices = [(y, y) for y in range(PRVA_GODINA, today.year + 1)]
         for field in self.fields.values():
             field.widget.attrs["class"] = "form-select form-control select2-method"
 
@@ -144,8 +146,8 @@ class ReportFilters(forms.Form):
     def clean(self):
         data = super().clean()
         start, end = data.get("date_from"), data.get("date_to")
-        if start and start < date(2025, 1, 1):
-            self.add_error("date_from", "Podaci su dostupni od 01.01.2025.")
+        if start and start < date(PRVA_GODINA, 1, 1):
+            self.add_error("date_from", f"Podaci su dostupni od 01.01.{PRVA_GODINA}.")
         if start and end and start > end:
             raise forms.ValidationError("Početni datum mora biti pre krajnjeg datuma.")
         return data
