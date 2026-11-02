@@ -423,6 +423,20 @@
       <button type="submit" class="btn btn-primary"><i class="mdi mdi-content-save me-1" aria-hidden="true"></i>Sačuvaj komentar</button></div>
   </form></div>
 </div>
+
+{# Šta nedostaje posle „Sačuvaj“ ili „Predaj“ (od 02.11.2026.): greške sa servera ili provera u pregledaču. #}
+<div class="modal fade" id="rlGreskeModal" tabindex="-1" aria-labelledby="rlGreskeNaslov" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title text-danger" id="rlGreskeNaslov"><i class="mdi mdi-alert-circle me-1" aria-hidden="true"></i><span>Radna lista nije sačuvana</span></h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button></div>
+    <div class="modal-body p-3">
+      <p class="mb-2">Dopunite sledeće, pa kliknite ponovo:</p>
+      <ul class="mb-0" id="rlGreskeLista"></ul>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn btn-primary" data-bs-dismiss="modal">U redu</button></div>
+  </div></div>
+</div>
+{{ greske_cuvanja|json_script:"greske-cuvanja" }}
 </div>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
@@ -948,18 +962,41 @@ document.addEventListener("DOMContentLoaded", function () {
     return sameUnit && sameCategory && !isEmpty(row);
   }
 
+  // Zbir dana preko svih redova: dan koji već ima pun radni dan (8 h) ne dobija predlog (od 02.11.2026.).
+  var PUN_DAN = 8;
+  function satiDana(day) {
+    var zbir = 0;
+    document.querySelectorAll('.work-sheet-table tbody input[name$="-day_' + day + '"]').forEach(function (input) {
+      if (!input.disabled) zbir += parseInt(input.value, 10) || 0;
+    });
+    return zbir;
+  }
+
   function primeni() {
-    var cells = 0, missing = [];
+    var cells = 0, missing = [], pokriveno = 0;
     predlog.redovi.forEach(function (red) {
+      var dani = Object.keys(red.sati).filter(function (day) {
+        if (satiDana(day) < PUN_DAN) return true;
+        pokriveno += 1;
+        return false;
+      });
+      if (!dani.length) return;
       var target = rows().filter(function (row) { return matches(row, red); })[0] || rows().filter(isEmpty)[0];
       if (!target) { missing.push(red.naziv); return; }
+      dani = dani.filter(function (day) {
+        var input = target.querySelector('input[name$="-day_' + day + '"]');
+        return input && !input.disabled && input.value.trim() === "";
+      });
+      if (!dani.length) return;
       if (red.sifra_id && !unit(target).value) { setSelect(unit(target), String(red.sifra_id)); mark(unit(target)); upisano.push(unit(target)); }
       var cat = category(target);
       if (cat && red.vrsta_id && !cat.value) { setSelect(cat, String(red.vrsta_id)); mark(cat); upisano.push(cat); }
-      Object.keys(red.sati).forEach(function (day) {
+      dani.forEach(function (day) {
         var input = target.querySelector('input[name$="-day_' + day + '"]');
-        if (!input || input.disabled || input.value.trim() !== "") return;
-        input.value = red.sati[day];
+        // Ako je deo dana već upisan u drugom redu, predlog dopunjuje samo do punog dana.
+        var ostatak = PUN_DAN - satiDana(day);
+        if (ostatak <= 0) return;
+        input.value = Math.min(red.sati[day], ostatak);
         mark(input);
         upisano.push(input);
         input.dispatchEvent(new Event("input", {bubbles: true}));
@@ -974,6 +1011,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var poruka = cells || terenUpisan
       ? "Predlog je upisan u " + cells + " praznih polja" + (terenUpisan ? " i terenski dodatak" : "") + ". Proverite ga i kliknite „Sačuvaj“."
       : "Sva polja iz predloga su već popunjena — ništa nije promenjeno.";
+    if (pokriveno) poruka += " Preskočeno dana koji već imaju " + PUN_DAN + " h: " + pokriveno + ".";
     if (missing.length) poruka += " Nema slobodnog reda za: " + missing.join(", ") + ".";
     javi(poruka);
     if (undoButton) undoButton.hidden = !upisano.length;
@@ -1015,6 +1053,22 @@ document.addEventListener("DOMContentLoaded", function () {
     javi("Radna lista je ispražnjena. Kliknite „Sačuvaj“ da se promena upiše" +
          (applyButton ? ", ili „Popuni prazna polja“ za novi predlog." : "."));
   }); });
+  function prikaziGreske(naslov, greske) {
+    var prozor = document.getElementById("rlGreskeModal");
+    if (!prozor || !window.bootstrap) { alert(naslov + ":\n– " + greske.join("\n– ")); return; }
+    prozor.querySelector(".modal-title span").textContent = naslov;
+    var lista = document.getElementById("rlGreskeLista");
+    lista.innerHTML = "";
+    greske.forEach(function (greska) {
+      var stavka = document.createElement("li");
+      stavka.textContent = greska;
+      lista.appendChild(stavka);
+    });
+    bootstrap.Modal.getOrCreateInstance(prozor).show();
+  }
+  var greskeSaServera = JSON.parse((document.getElementById("greske-cuvanja") || {}).textContent || "[]");
+  if (greskeSaServera.length) prikaziGreske("Radna lista nije sačuvana", greskeSaServera);
+
   // Predaja (proverava i server, hr/services/radna_lista.py): svaki red sa satima ima vrstu i šifru posla,
   // zbir sati vrsta fonda je fond meseca (radni dani × 8), topli obrok je upisan.
   var FOND_VRSTE = {{ fond_vrste_json|safe }}, FOND = {{ fond_sati }};
@@ -1041,7 +1095,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (obrok && obrokSifra && parseInt(obrok.value, 10) > 0 && !obrokSifra.value) greske.push("topli obrok nema šifru posla");
     if (greske.length) {
       event.preventDefault();
-      alert("Lista ne može da se preda:\n– " + greske.join("\n– "));
+      prikaziGreske("Lista ne može da se preda", greske);
     } else if (proveriUpozorenja() && !confirm("Upisano je više dana godišnjeg odmora nego što je preostalo. Predati listu ipak?")) {
       event.preventDefault();
     }

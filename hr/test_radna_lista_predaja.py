@@ -94,6 +94,17 @@ class PredajaRadneListeTests(TestCase):
         self.assertContains(odgovor, "Izaberite vrstu rada ili odsustva.")
         self.assertEqual(self.posalji(red={"sifra": self.unit, "vrsta": self.bolovanje, "sati": PUN_MAJ}).status_code, 302)
 
+    def test_neuspela_predaja_javlja_sta_fali_i_ne_upisuje_predlog_ponovo(self):
+        # 02.11.2026.: posle neuspelog čuvanja forma nosi uneto — predlog se ne upisuje ponovo, a šta fali ide u prozor.
+        odgovor = self.posalji(red={"vrsta": self.redovan, "sati": PUN_MAJ})
+        self.assertFalse(odgovor.context["prefill_auto"])
+        greske = odgovor.context["greske_cuvanja"]
+        self.assertIn("Lista nije predata: svaki red sa satima mora da ima vrstu i šifru posla.", greske)
+        self.assertIn("Red 1, šifra posla: Unesite šifru posla.", greske)
+        self.assertContains(odgovor, 'id="rlGreskeModal"')
+        self.assertEqual(self.client.get(reverse("hr:work_time_sheet"), {"month": 5, "year": 2026})
+                         .context["greske_cuvanja"], [])
+
     def test_zbir_sati_mora_biti_fond_meseca(self):
         self.assertEqual(fond_sati(2026, 5), 168)
         self.assertEqual(fond_sati(2026, 5, datetime.date(2026, 5, 18)), 80)  # zaposlen od 18.5.: 10 radnih dana

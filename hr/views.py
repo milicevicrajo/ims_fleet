@@ -649,6 +649,31 @@ def evidencija_prolaza(employee, year, month, days_in_month):
     }
 
 
+NAZIVI_POLJA_RADNE_LISTE = {
+    "status": "Status",
+    "meal_days": "Topli obrok (dana)",
+    "meal_organizational_unit": "Topli obrok — šifra",
+    "field_allowance_days": "Terenski dodatak (dana)",
+    "organizational_unit": "šifra posla",
+    "work_category": "vrsta rada / odsustva",
+    "work_conditions": "uslovi rada",
+}
+
+
+def greske_cuvanja_radne_liste(header_form, line_formset):
+    """Šta je sprečilo čuvanje ili predaju — prikazuje se u prozoru sa obaveštenjem (od 02.11.2026.)."""
+    greske = [str(poruka) for poruka in line_formset.non_form_errors()]
+    for polje, poruke in header_form.errors.items():
+        naziv = NAZIVI_POLJA_RADNE_LISTE.get(polje)
+        greske += [f"{naziv}: {poruka}" if naziv else str(poruka) for poruka in poruke]
+    for i, forma in enumerate(line_formset.forms, start=1):
+        broj = forma.instance.line_number or i
+        for polje, poruke in forma.errors.items():
+            naziv = (f"dan {polje[4:]}" if polje.startswith("day_") else NAZIVI_POLJA_RADNE_LISTE.get(polje))
+            greske += [f"Red {broj}" + (f", {naziv}" if naziv else "") + f": {poruka}" for poruka in poruke]
+    return greske
+
+
 class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
     template_name = "hr/work_time_sheet.html"
     MONTH_LABELS = [
@@ -802,7 +827,10 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
             "datum_predaje": pravila_radne_liste.prvi_radni_dan_predaje(year, month),
             "prefill": prefill,
             # Prazna lista u pripremi dobija predlog odmah; inače se predlog primenjuje dugmetom.
-            "prefill_auto": prefill["ima_predlog"] and sheet_is_empty and sheet.status == WorkTimeSheet.Status.DRAFT,
+            # Posle neuspelog čuvanja forma nosi ono što je korisnik uneo — predlog se tada ne upisuje ponovo.
+            "prefill_auto": (prefill["ima_predlog"] and sheet_is_empty and sheet.status == WorkTimeSheet.Status.DRAFT
+                             and not line_formset.is_bound),
+            "greske_cuvanja": greske_cuvanja_radne_liste(header_form, line_formset) if line_formset.is_bound else [],
             "has_work_categories": WorkTimeElement.objects.filter(
                 recipient_type__code=employee.recipient_code, recipient_type__is_active=True,
                 is_active=True, category__is_active=True, category__employee_selectable=True,
