@@ -1,6 +1,6 @@
 from core.models import PermissionCode, Role, RolePermission
 
-PERMISSIONS = ("dashboard", "partner_detail", "table_data", "sync_status", "view_all", "export", "print", "review_update", "notice_import") + tuple(
+PERMISSIONS = ("dashboard", "partner_detail", "table_data", "sync_status", "view_all", "export", "print", "review_update", "notice_import", "alta_banka") + tuple(
     f'{kind}_{action}' for kind in ('contact', 'activity', 'notice', 'legal') for action in ('create', 'update', 'archive'))
 
 

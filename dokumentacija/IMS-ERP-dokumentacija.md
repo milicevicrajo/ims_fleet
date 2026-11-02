@@ -149,6 +149,7 @@
     - [15. Validacije i kontrole](#15-validacije-i-kontrole)
     - [16. Poznati izuzeci i granični slučajevi](#16-poznati-izuzeci-i-granični-slučajevi)
     - [17. Šta nije moguće objasniti bez dodatnih podataka](#17-šta-nije-moguće-objasniti-bez-dodatnih-podataka)
+    - [18. Alta banka — kupci (od 02.11.2026.) [P]](#18-alta-banka--kupci-od-02112026-p)
     - [Gde dalje](#gde-dalje)
 - [3.6. Ugovori i partneri](#36-ugovori-i-partneri)
     - [1. Naziv modula](#1-naziv-modula)
@@ -346,6 +347,7 @@
     - [6.1.23. Nazivi konta i otvaranje po dubini (od 05.10.2026.)](#6123-nazivi-konta-i-otvaranje-po-dubini-od-05102026)
     - [6.1.24. Izvoz u Excel i PDF (od 05.10.2026.)](#6124-izvoz-u-excel-i-pdf-od-05102026)
     - [6.1.25. Bilans stanja i Bilans uspeha (od 30.10.2026.)](#6125-bilans-stanja-i-bilans-uspeha-od-30102026)
+    - [6.1.26. Izveštaj za nadzorni odbor (od 02.11.2026.)](#6126-izveštaj-za-nadzorni-odbor-od-02112026)
 - [6.2. Flota — obračuni goriva](#62-flota--obračuni-goriva)
     - [Zajednička osnova: šta se uopšte smatra gorivom](#zajednička-osnova-šta-se-uopšte-smatra-gorivom)
     - [V-03 — Neto iznos goriva iz bruto iznosa](#v-03--neto-iznos-goriva-iz-bruto-iznosa)
@@ -2966,6 +2968,7 @@ dozvolama, a ne samo trenutno prikazana stranica tabele.
 | **Bilans stanja** (od 30.10.2026.) | `/finansije/bilans-stanja/` — obrazac AOP na dan, uporedo sa 31.12. prethodne godine ([6.1.25](#61-finansijska-analitika--obračuni)) |
 | **Bilans uspeha** (od 30.10.2026.) | `/finansije/bilans-uspeha/` — obrazac AOP za period, uporedo sa istim periodom prethodne godine |
 | Metodologija bilansa (od 30.10.2026.) | `/finansije/bilansi/metodologija/?izvestaj=BB\|BS\|BU` — kako se računa svaki bilans; tabele pozicija iz istog obrasca kao obračun |
+| **Izveštaj za nadzorni odbor** (od 02.11.2026.) | `/finansije/nadzorni-odbor/?prikaz=firma\|centri` — prihodi i rashodi po pozicijama, cela firma i po profitnim centrima, Excel i PDF ([6.1.26](#61-finansijska-analitika--obračuni)); plan, centri i broj zaposlenih: `/finansije/nadzorni-odbor/podesavanja/` |
 
 ---
 
@@ -4331,6 +4334,27 @@ Raniji plan Naplate opisuje `v_duplikati` sasvim drugačije — **IF iz svih god
 > tog registra. Podudaranje po PIB/MB je **kandidat za proveru, ne automatski dokaz**.
 
 ---
+
+### 18. Alta banka — kupci (od 02.11.2026.) [P]
+
+Poseban slučaj naplate: kupci koji su nam plaćali preko Alta banke i njihovi računi, sačuvani dok NBS još
+prikazuje račune te banke. Ekran **Potraživanja → Alta banka — kupci** (`/potrazivanja/alta-banka/`, dozvola
+`potrazivanja:alta_banka` uz pristup svim potraživanjima), izvoz u Excel (listovi „Kupci” i „Računi (NBS)”).
+
+| Podatak | Izvor |
+|---|---|
+| Uplate preko Alta banke | Izvod Stankovog programa (`izvod`, samo čitanje): kupci (grupa 1), od 2024, račun uplatioca počinje sa `190` |
+| Računi kupca | NBS registar tekućih računa rezidenata (webappcenter.nbs.rs, pretraga po matičnom broju, bez njega po PIB-u), dinarski i devizni |
+
+Za kupce koji su plaćali preko Alta banke čuvaju se **svi računi u svim bankama** (gde još može da se naplati),
+a za ostale kupce koji su nam plaćali od 2024. samo računi u Alta banci. Snimak računa je stanje na dan
+preuzimanja (`RacunKupcaNbs.preuzeto`); greška NBS ne briše raniji snimak. Uz kupca se prikazuje i trenutni dug
+iz objavljenog snimka Potraživanja.
+
+Komanda: `manage.py alta_banka` (upiti ka NBS jedan po jedan sa pauzom; nastavlja od kupaca bez snimka,
+`--iznova` pretražuje sve) ili `manage.py alta_banka --fajl <jsonl>` (upis ranije snimljenih rezultata, bez
+upita ka NBS). Prvo preuzimanje je urađeno 02.11.2026. Kod: `potrazivanja/services/alta_banka.py`,
+`potrazivanja/views_alta.py`, testovi `potrazivanja/test_alta_banka.py`, migracija 0009.
 
 ### Gde dalje
 
@@ -10207,6 +10231,39 @@ odloženi poreski prihod 7.799.547,54, neto 27.438.610,46 = prenos na 34100; Bil
 ravnoteži (2.216.111.343,77). 2022 (iz `nalog_z` izvora, prema probi SMS-a): 99 od 117 pozicija Bilansa stanja i
 59 od 62 Bilansa uspeha jednake su SMS-u; razlike su samo „deo” konta koja SMS nije rasporedio i greške znaka
 SMS-a, a naš dobitak pre oporezivanja (22.181.593,09) jednak je zaključnom nalogu, dok SMS proba nije u ravnoteži.
+
+### 6.1.26. Izveštaj za nadzorni odbor (od 02.11.2026.)
+
+Ekran: Finansije → **Izveštaj za nadzorni odbor**, dva prikaza; preuzimanje u Excel i PDF. Kod:
+`finansije/services/nadzorni_odbor.py`, testovi `finansije/test_nadzorni_odbor.py`. Izgled i mapiranje konta
+su iz fajla „Izgled izvestaja i mapiranja.xlsx” (Finansije, 30.10.2026.).
+
+**Pozicije.** 4 pozicije prihoda i 23 pozicije rashoda; konto ide na poziciju po prve tri cifre (`MAPIRANJE`).
+Prihod je `potražuje − duguje`, rashod `duguje − potražuje`. Konto 631 (smanjenje zaliha, znak −1 u
+mapiranju) svojim dugovnim saldom umanjuje Ostale prihode; znak se ne primenjuje dvaput. Konta klasa 5 i 6
+bez pozicije ne ulaze u izveštaj i navode se u kontrolama. Knjiženja su bez POC i zatvaranja (ZAT,
+59900/69900), kao Bilans uspeha.
+
+**Cela firma** (list „izvestaj IMS”): za izabrani period i isti period prethodnih godina — godišnji plan,
+plan za period (`godišnji × broj meseci / 12`), ostvarenje, učešće u ukupnom prihodu, indeks prema planu i
+prema prethodnoj godini; broj zaposlenih. Iznosi u hiljadama dinara (može i u dinarima).
+
+**Po profitnim centrima** (list „izvestaj oj”): centar je `LedgerEntry.org_centar` (registar na datum
+knjiženja; naučni blok je centar `3`). Profitni centri godine i koeficijenti raspodele (%) upisuju se na ekranu
+podešavanja; knjiženja svih ostalih centara (službe, centar 11, bez centra) su zajednička. Centar dobija
+`zajednički prihodi × koef / 100` i `zajednički troškovi × koef / 100`; rezultat centra = prihod − rashod,
+dobit = prihod − (rashod + deo zajedničkih troškova). Kontrola: zbir koeficijenata 100% i zbir centara posle
+raspodele = rezultat firme.
+
+**Broj zaposlenih:** upisan za godinu (firma i centar); za tekuću godinu bez upisa — aktivni zaposleni iz
+Kadrova danas, po centru iz registra. Kadrovi ne čuvaju istoriju, pa se za protekle godine broj upisuje.
+
+**Provera (02.11.2026., 2025. godina):** cela firma 1–6/2025 jednaka je listu „izvestaj IMS” do dinara
+(ukupan prihod 852.796.437, rashod 759.197.956). Po centrima: zajednički troškovi 386.817.129,30, rashodi
+centara 42, 43, 44 i 70 i prihodi na ino tržištu i iz budžeta jednaki su listu „izvestaj oj”. Razlike su u
+Excelu: ostali prihodi profitnih centara (oko 7,4 mil. din.) tamo nisu ni kod centra ni u zajedničkim prihodima
+(red sadrži samo konto 631); stavka 614 od 1.321.100 din. centra 11 je u Excelu kod centra 41; 4.192,57 din.
+rashoda je u Excelu kod centra 3 umesto 41. Knjiženja pre 2025. nisu preuzeta, pa za 2023–2024 nema kolona.
 
 ---
 

@@ -472,6 +472,27 @@ Raniji plan Naplate opisuje `v_duplikati` sasvim drugačije — **IF iz svih god
 
 ---
 
+## 18. Alta banka — kupci (od 02.11.2026.) [P]
+
+Poseban slučaj naplate: kupci koji su nam plaćali preko Alta banke i njihovi računi, sačuvani dok NBS još
+prikazuje račune te banke. Ekran **Potraživanja → Alta banka — kupci** (`/potrazivanja/alta-banka/`, dozvola
+`potrazivanja:alta_banka` uz pristup svim potraživanjima), izvoz u Excel (listovi „Kupci” i „Računi (NBS)”).
+
+| Podatak | Izvor |
+|---|---|
+| Uplate preko Alta banke | Izvod Stankovog programa (`izvod`, samo čitanje): kupci (grupa 1), od 2024, račun uplatioca počinje sa `190` |
+| Računi kupca | NBS registar tekućih računa rezidenata (webappcenter.nbs.rs, pretraga po matičnom broju, bez njega po PIB-u), dinarski i devizni |
+
+Za kupce koji su plaćali preko Alta banke čuvaju se **svi računi u svim bankama** (gde još može da se naplati),
+a za ostale kupce koji su nam plaćali od 2024. samo računi u Alta banci. Snimak računa je stanje na dan
+preuzimanja (`RacunKupcaNbs.preuzeto`); greška NBS ne briše raniji snimak. Uz kupca se prikazuje i trenutni dug
+iz objavljenog snimka Potraživanja.
+
+Komanda: `manage.py alta_banka` (upiti ka NBS jedan po jedan sa pauzom; nastavlja od kupaca bez snimka,
+`--iznova` pretražuje sve) ili `manage.py alta_banka --fajl <jsonl>` (upis ranije snimljenih rezultata, bez
+upita ka NBS). Prvo preuzimanje je urađeno 02.11.2026. Kod: `potrazivanja/services/alta_banka.py`,
+`potrazivanja/views_alta.py`, testovi `potrazivanja/test_alta_banka.py`, migracija 0009.
+
 ## Gde dalje
 
 | Poglavlje | Sadržaj |

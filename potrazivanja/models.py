@@ -546,3 +546,55 @@ class CollectionFileImport(models.Model):
     filename = models.CharField(max_length=255)
     row_count = models.PositiveIntegerField()
     notice_ids = models.JSONField(default=list)
+
+
+class KupacAltaBanka(Timestamped):
+    """Kupac koji nam je plaćao preko Alta banke ili ima račun u njoj (od 02.11.2026., poseban slučaj naplate).
+
+    Uplate su iz izvoda Stankovog programa (račun uplatioca 190-…, od 2024), a računi su snimak NBS
+    registra računa — sačuvan dok NBS još prikazuje račune Alta banke.
+    """
+    company = models.PositiveIntegerField(default=1)
+    partner_code = models.IntegerField("Šifra partnera")
+    naziv = models.CharField("Naziv", max_length=255)
+    maticni_broj = models.CharField("Matični broj", max_length=20, blank=True)
+    pib = models.CharField("PIB", max_length=20, blank=True)
+    broj_uplata = models.PositiveIntegerField("Broj uplata preko Alta banke", default=0)
+    iznos_uplata = models.DecimalField("Iznos uplata preko Alta banke", max_digits=18, decimal_places=2, default=0)
+    prva_uplata = models.DateField("Prva uplata", null=True, blank=True)
+    poslednja_uplata = models.DateField("Poslednja uplata", null=True, blank=True)
+    racuni_uplata = models.TextField("Računi Alta banke iz izvoda", blank=True)
+    nbs_obuhvat = models.CharField("Pretraga NBS", max_length=12, blank=True,
+                                   choices=[("sve_banke", "Svi računi"), ("alta", "Samo Alta banka")])
+    nbs_preuzeto = models.DateTimeField("NBS preuzeto", null=True, blank=True)
+    nbs_greska = models.CharField(max_length=300, blank=True)
+
+    class Meta:
+        ordering = ["naziv"]
+        constraints = [models.UniqueConstraint(fields=["company", "partner_code"], name="col_alta_kupac")]
+
+    def __str__(self):
+        return f"{self.partner_code} {self.naziv}"
+
+
+class RacunKupcaNbs(models.Model):
+    """Račun kupca iz NBS registra tekućih računa rezidenata, kako je bio na dan preuzimanja."""
+    kupac = models.ForeignKey(KupacAltaBanka, on_delete=models.CASCADE, related_name="racuni")
+    racun = models.CharField("Račun", max_length=30)
+    banka_sifra = models.CharField("Šifra banke", max_length=3)
+    banka = models.CharField("Banka", max_length=255)
+    tip = models.CharField("Tip računa", max_length=10)
+    status = models.CharField("Status", max_length=50, blank=True)
+    blokada = models.CharField("Blokada", max_length=50, blank=True)
+    datum_otvaranja = models.DateField("Datum otvaranja", null=True, blank=True)
+    naziv_nbs = models.CharField("Naziv u NBS", max_length=255, blank=True)
+    mesto = models.CharField("Mesto", max_length=100, blank=True)
+    preuzeto = models.DateTimeField("Preuzeto")
+
+    class Meta:
+        ordering = ["banka_sifra", "racun"]
+        constraints = [models.UniqueConstraint(fields=["kupac", "racun"], name="col_alta_racun")]
+
+    @property
+    def alta(self):
+        return self.banka_sifra == "190"

@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from . import views_operations as ops
 from . import views_files
+from . import views_alta
 
 app_name = "potrazivanja"
 urlpatterns = [
@@ -24,4 +25,5 @@ urlpatterns = [
     path('dokument/<int:pk>/stampa/', ops.notice_print, name='notice_print'),
     path('izvoz/', views_files.export_table, name='export'),
     path('uvoz-opomena/', views_files.import_notices, name='notice_import'),
+    path('alta-banka/', views_alta.alta_banka, name='alta_banka'),
 ]
