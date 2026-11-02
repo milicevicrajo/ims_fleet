@@ -87,6 +87,10 @@ Vodi **zaposlene i njihovo radno vreme**:
 radnih lista, tuđa radna lista, štampa i prilozi, odobravanje, vraćanje u pripremu i oba CSV-a. Obuhvat daje dodela
 uloge (09.10.2026.: Snežana Simić — cela firma).
 
+**Uloga Bolovanja** (`bolovanja`, `sync_permission_codes` → `BOLOVANJA_CODES` u `core/permissions.py`, od 02.11.2026.):
+samo pregled bolovanja (`hr:sick_leave_list`), bez uvoza iz RFZO. Obuhvat daje dodela uloge (02.11.2026.: Snežana
+Simić — cela firma).
+
 **CSV za obračun zarada** (`hr/services/obracun_csv.py`): knjigovodstvo ga učitava u bazu zarada (`bazaldims`);
 aplikacija tamo ništa ne upisuje. Kolone `sif_pred;god;mesec;br_obr;rasif;elsif;sati;sif_pos;oj` (UTF-8 sa BOM, `;`,
 CRLF — kao CSV obustava za mobilne). Red radne liste daje element zarade vrste rada za **vrstu primaoca** radnika

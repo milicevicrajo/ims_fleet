@@ -152,6 +152,14 @@ class SickLeaveViewTests(TestCase):
         self.assertContains(response,'Zaposleni 1')
         self.assertNotContains(response,'0000000000001')
 
+    def test_uloga_bolovanja_daje_pregled_bez_uvoza(self):
+        from core.permissions import BOLOVANJA_CODES,sync_bolovanja_role
+        uloga=sync_bolovanja_role()
+        self.assertEqual(set(uloga.permissions.values_list('code',flat=True)),set(BOLOVANJA_CODES))
+        self.user.roles.add(uloga)
+        self.assertContains(self.client.get(reverse('hr:sick_leave_list')),'Zaposleni 1')
+        self.assertEqual(self.client.post(reverse('hr:sick_leave_import'),{}).status_code,403)
+
     def test_authorized_upload_updates_without_duplicates(self):
         self.grant('hr:sick_leave_import','hr:sick_leave_list')
         response=self.client.post(reverse('hr:sick_leave_import'),{

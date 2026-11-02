@@ -191,6 +191,26 @@ def sync_radne_liste_role():
     return role
 
 
+# Bolovanja (od 02.11.2026.): samo pregled bolovanja, bez uvoza iz RFZO. Obuhvat daje dodela uloge.
+BOLOVANJA_CODES = ("hr:sick_leave_list",)
+
+
+def sync_bolovanja_role():
+    """Uloga Bolovanja; dozvole se samo dopunjuju."""
+    role, _ = Role.objects.get_or_create(
+        slug="bolovanja",
+        defaults={"name": "Bolovanja", "is_active": True,
+                  "description": "Pregled bolovanja (bez uvoza iz RFZO), za obuhvat iz dodele uloge."},
+    )
+    if not role.is_active:
+        role.is_active = True
+        role.save(update_fields=["is_active"])
+    for code in BOLOVANJA_CODES:
+        permission, _ = PermissionCode.objects.get_or_create(code=code)
+        RolePermission.objects.get_or_create(role=role, permission=permission)
+    return role
+
+
 def sync_rukovodilac_role():
     """Uloga Rukovodilac; dozvole se samo dopunjuju, kao kod Sekretarijata."""
     role, _ = Role.objects.get_or_create(
@@ -507,6 +527,7 @@ def sync_permission_codes():
     ).delete()
     rukovodilac_role = sync_rukovodilac_role()
     radne_liste_role = sync_radne_liste_role()
+    sync_bolovanja_role()
 
     sekretarijat_group_users_synced = 0
     sekretarijat_group = Group.objects.filter(name__iexact="Sekretarijat").first()
