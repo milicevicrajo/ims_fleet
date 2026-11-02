@@ -32,6 +32,17 @@ class ReportDateField(forms.DateField):
                          error_messages={"invalid": "Unesite datum u formatu DD.MM.GGGG.", "required": "Unesite datum."}, **kwargs)
 
 
+def klase_polja(form):
+    """Izgled polja kao u ostalim izveštajima Finansija: datum kroz Flatpickr (`js-date`), izbor kroz select2."""
+    for field in form.fields.values():
+        if isinstance(field, ReportDateField):
+            field.widget.attrs["class"] = "form-control js-date"
+        elif isinstance(field, forms.ChoiceField):
+            field.widget.attrs["class"] = "form-select form-control select2-method"
+        else:
+            field.widget.attrs["class"] = "form-control"
+
+
 class SyncForm(forms.Form):
     scope = forms.ChoiceField(label="Obuhvat sinhronizacije", initial="current",
                              widget=forms.Select(attrs={"class": "form-select form-control"}))
@@ -161,9 +172,7 @@ class BrutoBilansForm(forms.Form):
         self.fields["datum_od"].initial = date(godina, 1, 1)
         self.fields["datum_do"].initial = date(godina, 12, 31)
         self.fields["nivo"].choices = NIVOI
-        for naziv, field in self.fields.items():
-            # Izbor nivoa kao ostale padajuće liste u Finansijama (select2).
-            field.widget.attrs["class"] = "form-select form-control select2-method" if naziv == "nivo" else "form-control"
+        klase_polja(self)
         for naziv in ("oj_od", "oj_do", "konto_od", "konto_do"):
             self.fields[naziv].widget.attrs["placeholder"] = "sve"
 
@@ -181,7 +190,7 @@ class BilansStanjaForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["na_dan"].initial = timezone.localdate()
-        self.fields["na_dan"].widget.attrs["class"] = "form-control"
+        klase_polja(self)
 
 
 class BilansUspehaForm(forms.Form):
@@ -193,8 +202,7 @@ class BilansUspehaForm(forms.Form):
         danas = timezone.localdate()
         self.fields["datum_od"].initial = date(danas.year, 1, 1)
         self.fields["datum_do"].initial = danas
-        for field in self.fields.values():
-            field.widget.attrs["class"] = "form-control"
+        klase_polja(self)
 
     def clean(self):
         values = super().clean()
@@ -214,7 +222,7 @@ class NadzorniOdborForm(BilansUspehaForm):
         super().__init__(*args, **kwargs)
         self.podrazumevana_jedinica = jedinica
         self.fields["jedinica"].initial = jedinica
-        self.fields["jedinica"].widget.attrs["class"] = "form-select"
+        klase_polja(self)
 
     def clean_jedinica(self):
         return self.cleaned_data.get("jedinica") or self.podrazumevana_jedinica

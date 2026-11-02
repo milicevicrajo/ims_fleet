@@ -14,7 +14,7 @@
   .bilans-tabela .bilans-grupa { color: #64748b; font-size: .8rem; }
 </style>
 <div class="card"><div class="card-body finance-filter">
-  <form method="get" class="finance-period">
+  <form method="get" class="fleet-list-filter finance-period">
     {% for field in form %}<div class="finance-period-field"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}
     <button class="btn btn-primary" type="submit" name="generisi" value="1"><i class="mdi mdi-play" aria-hidden="true"></i> Generiši izveštaj</button>
     <button class="btn btn-outline-success" type="submit" name="izvoz" value="xlsx" data-no-preloader><i class="mdi mdi-file-excel" aria-hidden="true"></i> Preuzmi Excel</button>

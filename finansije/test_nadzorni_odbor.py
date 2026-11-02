@@ -124,6 +124,8 @@ class EkranTests(TestCase):
         self.assertContains(odgovor, "UKUPAN PRIHOD")
         self.assertContains(odgovor, izvoz.prikaz(D("1500"), "iznos"))
         self.assertContains(odgovor, "Po profitnim centrima")
+        self.assertContains(odgovor, 'class="form-control js-date"', count=2)  # Flatpickr kao ostali izveštaji
+        self.assertContains(odgovor, 'class="form-select form-control select2-method"')
         odgovor = self.client.get(url, {"datum_od": "01.01.2026", "datum_do": "30.06.2026", "broj_godina": "1",
                                         "izvoz": "xlsx"})
         vrednosti = [c for r in load_workbook(BytesIO(odgovor.content)).active.iter_rows(values_only=True) for c in r

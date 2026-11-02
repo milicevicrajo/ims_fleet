@@ -4,9 +4,9 @@
 {% block hero_description %}Godišnji plan po pozicijama, profitni centri sa koeficijentima raspodele zajedničkih prihoda i troškova i broj zaposlenih, za {{ godina }}.{% endblock %}
 {% block finance_content %}
 <div class="card"><div class="card-body finance-filter">
-  <form method="get" class="finance-period">
+  <form method="get" class="fleet-list-filter finance-period">
     <div class="finance-period-field"><label class="form-label" for="no-godina">Godina</label>
-      <select name="godina" id="no-godina" class="form-select" onchange="this.form.submit()">
+      <select name="godina" id="no-godina" class="form-select form-control select2-method" onchange="this.form.submit()">
         {% for g in godine %}<option value="{{ g }}"{% if g == godina %} selected{% endif %}>{{ g }}</option>{% endfor %}
       </select></div>
     <a class="btn btn-outline-secondary" href="{% url 'finansije:nadzorni_odbor' %}"><i class="mdi mdi-arrow-left" aria-hidden="true"></i> Nazad na izveštaj</a>
