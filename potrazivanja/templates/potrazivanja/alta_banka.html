@@ -1,34 +1,64 @@
 {% extends "potrazivanja/base.html" %}
 {% block hero_title %}Alta banka — kupci{% endblock %}
 {% block collections_content %}
+<style>
+  .alta-otvori { border: 0; background: none; padding: 0 .35rem 0 0; color: #1f6fb2; }
+  .alta-otvori .mdi { transition: transform .15s; display: inline-block; }
+  tr.shown .alta-otvori .mdi { transform: rotate(90deg); }
+  .alta-detalji { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: .75rem 1.5rem; padding: .5rem .75rem; }
+  .alta-detalji dt { font-size: .75rem; color: #64748b; font-weight: 600; }
+  .alta-detalji dd { margin: 0; }
+  .alta-detalji table { font-size: .82rem; }
+</style>
 <div class="card"><div class="card-body">
   <p class="mb-2">Kupci koji su nam od 2024. plaćali sa računa u Alta banci (račun uplatioca 190-…, iz izvoda) i kupci kojima
-    NBS registar računa prikazuje račun u Alta banci. Za platioce preko Alta banke sačuvani su <strong>svi računi u svim bankama</strong>,
-    da se zna gde još može da se naplati; za ostale kupce samo računi u Alta banci. Računi su snimak NBS registra na dan preuzimanja
-    {% if poslednje %}(poslednje {{ poslednje|date:"d.m.Y. H:i" }}){% endif %} — ostaju i kada NBS ukloni podatke Alta banke.</p>
+    NBS registar računa prikazuje račun u Alta banci. Računi su snimak NBS registra na dan preuzimanja
+    {% if poslednje %}(poslednje {{ poslednje|date:"d.m.Y. H:i" }}){% endif %} — ostaju i kada NBS ukloni podatke Alta banke.
+    Klikom na strelicu otvaraju se ostali podaci o kupcu.</p>
   <div class="d-flex flex-wrap gap-2 align-items-center">
     {% for kljuc, naziv in prikazi.items %}<a class="btn btn-sm {% if kljuc == prikaz %}btn-primary{% else %}btn-outline-primary{% endif %}" href="?prikaz={{ kljuc }}">{{ naziv }}</a>{% endfor %}
-    <a class="btn btn-sm btn-outline-success ms-auto" href="?prikaz={{ prikaz }}&izvoz=xlsx" data-no-preloader><i class="mdi mdi-file-excel"></i> Preuzmi Excel (kupci i računi)</a>
+    <a class="btn btn-sm btn-outline-success ms-auto" href="?prikaz={{ prikaz }}&izvoz=xlsx" data-no-preloader><i class="mdi mdi-file-excel"></i> Preuzmi Excel</a>
   </div>
-  <p class="small text-muted mt-2 mb-0">{{ kupci|length }} kupaca · uplate preko Alta banke ukupno {{ ukupno|floatformat:"2g" }} RSD{% if bez_snimka %} · <span class="text-danger">{{ bez_snimka }} bez snimka iz NBS</span>{% endif %}.
-    Dopuna: <code>manage.py alta_banka</code> (nastavlja od kupaca bez snimka).</p>
+  <p class="small text-muted mt-2 mb-0">{{ kupci|length }} kupaca · uplate preko Alta banke ukupno {{ ukupno|floatformat:"2g" }} RSD{% if bez_snimka %} · <span class="text-danger">{{ bez_snimka }} bez snimka iz NBS</span>{% endif %}.</p>
 </div></div>
 <div class="card"><div class="card-body"><div class="table-responsive">
-  <table class="display compact collections-simple-table collections-static">
-    <thead><tr><th>Šifra</th><th>Kupac</th><th>MB / PIB</th><th>Uplate preko Alta</th><th>Iznos</th><th>Poslednja uplata</th>
-      <th>Računi u Alta banci (NBS)</th><th>Računi u drugim bankama</th><th>Dug</th></tr></thead>
+  <table class="display compact collections-simple-table collections-static" id="alta-tabela">
+    <thead><tr><th>Partner</th><th>Uplate preko Alte</th><th>Iznos uplata</th><th>Račun u Alta banci</th><th>Dug</th></tr></thead>
     <tbody>{% for k in kupci %}<tr>
-      <td>{{ k.partner_code }}</td>
-      <td>{% if k.identitet %}<a href="{% url 'potrazivanja:partner_detail' k.identitet %}">{{ k.naziv }}</a>{% else %}{{ k.naziv }}{% endif %}
-        {% if k.nbs_greska %}<div class="small text-danger">{{ k.nbs_greska }}</div>{% endif %}</td>
-      <td class="text-nowrap">{{ k.maticni_broj }}<br><small class="text-muted">{{ k.pib }}</small></td>
+      <td data-order="{{ k.naziv }}"><button type="button" class="alta-otvori" aria-expanded="false" aria-label="Prikaži detalje za {{ k.naziv }}"><i class="mdi mdi-chevron-right"></i></button>{{ k.naziv }}
+        <div class="d-none alta-sadrzaj"><dl class="alta-detalji">
+          <div><dt>Šifra partnera</dt><dd>{% if k.identitet %}<a href="{% url 'potrazivanja:partner_detail' k.identitet %}">{{ k.partner_code }} · kartica partnera</a>{% else %}{{ k.partner_code }}{% endif %}</dd></div>
+          <div><dt>Matični broj / PIB</dt><dd>{{ k.maticni_broj|default:"—" }} / {{ k.pib|default:"—" }}</dd></div>
+          <div><dt>Prva / poslednja uplata preko Alte</dt><dd>{{ k.prva_uplata|date:"d.m.Y."|default:"—" }} / {{ k.poslednja_uplata|date:"d.m.Y."|default:"—" }}</dd></div>
+          <div><dt>Računi sa kojih je plaćao (izvod)</dt><dd>{% for racun in k.racuni_uplata_lista %}<div class="text-nowrap">{{ racun }}</div>{% empty %}—{% endfor %}</dd></div>
+          <div><dt>Preuzeto iz NBS</dt><dd>{{ k.nbs_preuzeto|date:"d.m.Y. H:i"|default:"—" }}{% if k.nbs_greska %} <span class="text-danger">· {{ k.nbs_greska }}</span>{% endif %}</dd></div>
+          {% if k.racuni_alta %}<div style="grid-column: 1 / -1"><dt>Računi u Alta banci (NBS)</dt><dd><table class="table table-sm mb-0">
+            <thead><tr><th>Račun</th><th>Tip</th><th>Status</th><th>Blokada</th><th>Otvoren</th><th>Naziv u NBS</th><th>Mesto</th></tr></thead>
+            <tbody>{% for r in k.racuni_alta %}<tr><td class="text-nowrap">{{ r.racun }}</td><td>{{ r.tip }}</td><td>{{ r.status }}</td><td>{{ r.blokada }}</td><td>{{ r.datum_otvaranja|date:"d.m.Y."|default:"—" }}</td><td>{{ r.naziv_nbs }}</td><td>{{ r.mesto }}</td></tr>{% endfor %}</tbody>
+          </table></dd></div>{% endif %}
+        </dl></div></td>
       <td class="text-end" data-order="{{ k.broj_uplata }}">{{ k.broj_uplata|default:"—" }}</td>
       <td class="text-end text-nowrap" data-order="{{ k.iznos_uplata|stringformat:'f' }}">{{ k.iznos_uplata|floatformat:"2g" }}</td>
-      <td data-order="{{ k.poslednja_uplata|date:'Y-m-d' }}">{{ k.poslednja_uplata|date:"d.m.Y."|default:"—" }}</td>
-      <td class="small">{% for r in k.racuni_alta %}<div class="text-nowrap" title="{{ r.tip }} · otvoren {{ r.datum_otvaranja|date:'d.m.Y.' }}">{{ r.racun }} · {{ r.status }}{% if r.blokada %} · {{ r.blokada|lower }}{% endif %}</div>{% empty %}{% if k.racuni_uplata %}<span class="text-muted">iz izvoda: {{ k.racuni_uplata }}</span>{% else %}—{% endif %}{% endfor %}</td>
-      <td class="small">{% for r in k.racuni_ostali %}<div class="text-nowrap" title="{{ r.banka }} · {{ r.tip }}">{{ r.racun }}{% if r.status != "Uključen" %} · {{ r.status }}{% endif %}</div>{% empty %}{% if k.nbs_obuhvat == "alta" %}<span class="text-muted">nije traženo</span>{% else %}—{% endif %}{% endfor %}</td>
+      <td class="small">{% for r in k.racuni_alta %}<div class="text-nowrap">{{ r.racun }}</div>{% empty %}{% for racun in k.racuni_uplata_lista %}<div class="text-nowrap text-muted" title="NBS više ne prikazuje račun; račun je iz našeg izvoda">{{ racun }}</div>{% empty %}—{% endfor %}{% endfor %}</td>
       <td class="text-end text-nowrap" data-order="{{ k.dug|default_if_none:0|stringformat:'f' }}">{% if k.dug is not None %}{{ k.dug|floatformat:"2g" }}{% else %}—{% endif %}</td>
     </tr>{% endfor %}</tbody>
   </table>
 </div></div></div>
+<script>
+// Detalji kupca ispod reda (DataTables child row); tabelu pokreće zajednički skript Potraživanja.
+document.addEventListener("click", function (event) {
+  var dugme = event.target.closest(".alta-otvori");
+  if (!dugme || !window.jQuery) return;
+  var tr = dugme.closest("tr"), red = jQuery("#alta-tabela").DataTable().row(tr);
+  if (red.child.isShown()) {
+    red.child.hide();
+    tr.classList.remove("shown");
+    dugme.setAttribute("aria-expanded", "false");
+  } else {
+    red.child(tr.querySelector(".alta-sadrzaj").innerHTML).show();
+    tr.classList.add("shown");
+    dugme.setAttribute("aria-expanded", "true");
+  }
+});
+</script>
 {% endblock %}

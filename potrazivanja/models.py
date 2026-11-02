@@ -576,6 +576,10 @@ class KupacAltaBanka(Timestamped):
     def __str__(self):
         return f"{self.partner_code} {self.naziv}"
 
+    @property
+    def racuni_uplata_lista(self):
+        return [r.strip() for r in self.racuni_uplata.split(",") if r.strip()]
+
 
 class RacunKupcaNbs(models.Model):
     """Račun kupca iz NBS registra tekućih računa rezidenata, kako je bio na dan preuzimanja."""

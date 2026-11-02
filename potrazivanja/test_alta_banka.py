@@ -108,10 +108,13 @@ class EkranTests(TestCase):
         url = reverse("potrazivanja:alta_banka")
         odgovor = self.client.get(url)
         self.assertContains(odgovor, "KUPAC DOO")
-        self.assertContains(odgovor, "325-9500600043776-60")
+        self.assertContains(odgovor, "190-0000000011200-46")
+        self.assertContains(odgovor, 'class="alta-otvori"')
+        self.assertEqual(KupacAltaBanka(racuni_uplata="190-1-11, 190-2-22").racuni_uplata_lista, ["190-1-11", "190-2-22"])
+        self.assertNotContains(odgovor, "325-9500600043776-60")  # računi u drugim bankama se ne prikazuju
         self.assertNotContains(odgovor, "SAMO RAČUN DOO")
         self.assertContains(self.client.get(url, {"prikaz": "racun"}), "SAMO RAČUN DOO")
         odgovor = self.client.get(url, {"prikaz": "svi", "izvoz": "xlsx"})
         knjiga = load_workbook(BytesIO(odgovor.content))
-        self.assertEqual(knjiga.sheetnames, ["Kupci", "Računi (NBS)"])
-        self.assertEqual(knjiga["Računi (NBS)"].max_row, 4)  # zaglavlje + 2 + 1
+        self.assertEqual(knjiga.sheetnames, ["Kupci", "Računi u Alta banci"])
+        self.assertEqual(knjiga["Računi u Alta banci"].max_row, 3)  # zaglavlje + po jedan Alta račun dva kupca
