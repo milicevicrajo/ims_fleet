@@ -1,3 +1,4 @@
+import time
 from contextlib import contextmanager
 from copy import copy
 from datetime import date
@@ -184,3 +185,26 @@ def sync_ledger(year_from=2025, year_to=None, company=None):
         except Exception as exc:
             SyncRun.objects.filter(pk=run.pk).update(status="failed", finished_at=timezone.now(), error=f"{type(exc).__name__}: {str(exc)[:1800]}")
             raise
+
+
+def sync_po_godinu(year_from, year_to, javi=print, cekaj=60, pokusaja=30):
+    """Godinu po godinu, svaka u svojoj transakciji (starije godine se preuzimaju jednokratno).
+
+    Godina od ~95.000 stavki se upisuje 4–5 minuta i za to vreme ekrani Finansija čekaju; ceo opseg u jednoj
+    transakciji bi ih blokirao satima. Zauzeta sinhronizacija (npr. ona u :20) se čeka i pokušava ponovo.
+    """
+    rezultati = []
+    for godina in range(year_from, year_to + 1):
+        for _ in range(pokusaja):
+            try:
+                run = sync_ledger(year_from=godina, year_to=godina)
+                break
+            except SyncBusy:
+                javi(f"{godina}: sinhronizacija je zauzeta, ponovo za {cekaj} s.")
+                time.sleep(cekaj)
+        else:
+            raise SyncBusy(f"{godina}: sinhronizacija je stalno zauzeta; godine od {godina} nisu preuzete.")
+        javi(f"{godina}: preuzeto {run.source_rows}, novo {run.created}, izmenjeno {run.updated}, "
+             f"uklonjeno {run.removed}.")
+        rezultati.append(run)
+    return rezultati

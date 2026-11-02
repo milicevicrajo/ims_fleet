@@ -223,6 +223,9 @@ Svaka godina je posebna transakcija od oko 4–5 minuta (~95.000 stavki; prvi uv
 6 min 48 s). Dok se godina upisuje, ekrani Finansija koji čitaju knjiženja **čekaju** (baza nema
 `READ_COMMITTED_SNAPSHOT`) — pokretati van radnog vremena, a pre noćnih poslova u 01:00. Ako je sinhronizacija
 zauzeta (npr. ona u :20), komanda čeka 60 s i pokušava ponovo. Ponovno pokretanje ne duplira stavke.
+Isto radi Celery zadatak `finansije.tasks.sync_stare_godine_task` (red `sync`), zakazan **jednom** kao
+`ClockedSchedule` / `one_off` (02.11.2026. u 20:00) — nije u `EXPECTED_PERIODIC_TASKS`; rezultat po godini je u
+istoriji zadataka. Solo radnik je za to vreme zauzet, pa sinhronizacija u :20 čeka i ide posle njega.
 
 | Skup | Izvor | Način |
 |---|---|---|

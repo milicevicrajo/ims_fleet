@@ -80,15 +80,23 @@ class SyncTests(TestCase):
         from django.core.management import call_command
 
         run = SyncRun(source_rows=1, created=1, updated=0, unchanged=0, removed=0)
-        komanda = "finansije.management.commands.sync_finansije"
-        with patch(f"{komanda}.sync_ledger", side_effect=[run, SyncBusy("zauzeto"), run, run]) as sync, \
-                patch(f"{komanda}.time.sleep") as spavaj:
+        from .tasks import sync_stare_godine_task
+
+        with patch("finansije.services.sync.sync_ledger", side_effect=[run, SyncBusy("zauzeto"), run, run]) as sync, \
+                patch("finansije.services.sync.time.sleep") as spavaj:
             izlaz = StringIO()
             call_command("sync_finansije", "--year-from", "2016", "--year-to", "2018", "--po-godinu", stdout=izlaz)
         self.assertEqual([c.kwargs for c in sync.call_args_list],
                          [{"year_from": g, "year_to": g} for g in (2016, 2017, 2017, 2018)])
         spavaj.assert_called_once_with(60)
-        self.assertIn("2018: Preuzeto 1", izlaz.getvalue())
+        self.assertIn("2017: sinhronizacija je zauzeta", izlaz.getvalue())
+        self.assertIn("2018: preuzeto 1, novo 1", izlaz.getvalue())
+        # Celery zadatak (jednokratno zakazan) radi isto i vraća poruku po godini za istoriju zadataka.
+        with patch("finansije.services.sync.sync_ledger", return_value=run) as sync:
+            poruka = sync_stare_godine_task(2016, 2017)
+        self.assertEqual(sync.call_count, 2)
+        self.assertEqual(poruka, "Finansije, starije godine: 2016: preuzeto 1, novo 1, izmenjeno 0, uklonjeno 0. "
+                                 "2017: preuzeto 1, novo 1, izmenjeno 0, uklonjeno 0.")
 
     def test_empty_source_does_not_erase_existing_scope(self):
         self.run_sync([posting()])

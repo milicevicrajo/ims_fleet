@@ -29,6 +29,22 @@ def sync_all_years():
     return _sync(2025)
 
 
+@shared_task(name="finansije.tasks.sync_stare_godine_task")
+def sync_stare_godine_task(year_from=2016, year_to=2024):
+    """Jednokratno (02.11.2026.): knjiženja starijih godina, svaka godina u svojoj transakciji (~4–5 min).
+
+    Zakazuje se jednom, van radnog vremena (ClockedSchedule, one_off) — nije u EXPECTED_PERIODIC_TASKS.
+    """
+    from .services.sync import sync_po_godinu
+
+    poruke = []
+    try:
+        sync_po_godinu(year_from, year_to, javi=poruke.append)
+    except SyncBusy as exc:
+        poruke.append(f"Task skipped: {exc}")
+    return "Finansije, starije godine: " + " ".join(poruke)
+
+
 @shared_task(name="finansije.tasks.sync_sef_task")
 def sync_sef_task():
     """SEF fakture (ulazne i izlazne, poslednjih 45 dana), promene statusa i PDF-ovi; ujutru, posle nocne pauze SEF-a."""
