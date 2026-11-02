@@ -26,6 +26,7 @@
  06:10  Gorivo OMV teretna             ← Selenium, do 4 h
  07:10  Roba (Nabavka)
  07:30  Fiskalni računi koji čekaju proveru (Nabavka)   ← od 28.09.2026.
+ 08:40  Srednji kurs NBS (Finansije)      ← od 02.11.2026.
  ────────────────── radni dan ──────────────────
  10:00  Osvežavanje lokalnog nalog_z
  11:00  Osvežavanje lokalnog nalog_z
@@ -33,7 +34,7 @@
  :20    Svakog sata — Finansije, tekuća godina
 ```
 
-**Ukupno 25 zakazanih poslova** (ugovori zaposlenih u 01:15 i opomene za gorivo u 07:45, od 29.09.2026.; SEF fakture u 06:50, od 30.09.2026.; šifarnik banaka u 01:55 i banke sa NBS prvog u mesecu u 06:30, od 29.10.2026.). [P] Stara sinhronizacija šifara i OJ (01:30) ugašena je 28.09.2026. — `sync_celery_periodic_tasks` je briše iz rasporeda.
+**Ukupno 26 zakazanih poslova** (srednji kurs NBS u 08:40, od 02.11.2026.; ugovori zaposlenih u 01:15 i opomene za gorivo u 07:45, od 29.09.2026.; SEF fakture u 06:50, od 30.09.2026.; šifarnik banaka u 01:55 i banke sa NBS prvog u mesecu u 06:30, od 29.10.2026.). [P] Stara sinhronizacija šifara i OJ (01:30) ugašena je 28.09.2026. — `sync_celery_periodic_tasks` je briše iz rasporeda.
 
 ---
 
@@ -62,6 +63,7 @@
 | 07:10 | Nabavka — roba | `nabavka.tasks.sync_goods_task` | `sync` | — |
 | 07:30 | Nabavka — fiskalni računi koji čekaju proveru (stranica Poreske uprave nije bila dostupna) | `nabavka.tasks.fiskalni_ponovi_task` | `sync` | 60 min |
 | 07:45 | Flota — opomene za gorivo | `fleet.tasks.opomene_goriva_task` | `sync` | 30 min |
+| 08:40 | Finansije — srednji kurs NBS (sve valute; dok se istorija od 2016. ne popuni, i do 500 starijih dana) | `finansije.tasks.kursna_lista_nbs_task` | `sync` | 90 min |
 | **10:00 i 11:00** | **Finansije — osvežavanje `nalog_z`** | `finansije.tasks.refresh_nalog_z_task` | `sync` | SQL lock |
 | 12:30 | Putni nalozi — isplaćeno | `fleet.tasks.sync_putni_nalozi_isplaceno_task` | `sync` | 90 min |
 | svaki sat u :20 | Finansije — tekuća godina | `finansije.tasks.sync_current_year` | `sync` | SQL lock |

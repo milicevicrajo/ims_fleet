@@ -383,5 +383,49 @@ class NadzorniCentar(models.Model):
         constraints = [models.UniqueConstraint(fields=["godina", "centar"], name="finansije_nadzorni_centar_jedinstven")]
 
 
+class KursnaLista(models.Model):
+    """Kursna lista NBS za zvanični srednji kurs dinara (od 02.11.2026., `services/kursna_lista`).
+
+    NBS je formira radnim danom; broj liste kreće od 1 svake godine. Godina je godina datuma formiranja.
+    """
+    godina = models.PositiveSmallIntegerField()
+    broj = models.PositiveSmallIntegerField()
+    datum_formiranja = models.DateField(db_index=True)
+    preuzeto = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-datum_formiranja"]
+        constraints = [models.UniqueConstraint(fields=["godina", "broj"], name="finansije_kursna_lista_jedinstvena")]
+
+    def __str__(self):
+        return f"{self.broj}/{self.godina} ({self.datum_formiranja:%d.%m.%Y.})"
+
+
+class KursValute(models.Model):
+    """Srednji kurs jedne valute na kursnoj listi; kurs važi za `vazi_za` jedinica (npr. 100 JPY)."""
+    lista = models.ForeignKey(KursnaLista, related_name="kursevi", on_delete=models.CASCADE)
+    oznaka = models.CharField(max_length=3)          # EUR
+    sifra = models.CharField(max_length=3)           # 978
+    zemlja = models.CharField(max_length=100)
+    vazi_za = models.PositiveIntegerField()
+    srednji_kurs = models.DecimalField(max_digits=14, decimal_places=4)
+
+    class Meta:
+        ordering = ["lista", "pk"]
+        constraints = [models.UniqueConstraint(fields=["lista", "oznaka"], name="finansije_kurs_valute_jedinstven")]
+
+
+class KursniDan(models.Model):
+    """Kalendarski dan → lista koja tog dana važi (za vikend i praznik poslednja formirana, kao na sajtu NBS).
+
+    Radni dan sa sopstvenom listom je dan kada je `datum == lista.datum_formiranja`.
+    """
+    datum = models.DateField(unique=True)
+    lista = models.ForeignKey(KursnaLista, related_name="dani", on_delete=models.PROTECT)
+
+    class Meta:
+        ordering = ["-datum"]
+
+
 # SEF fakture (samo citanje, od 30.09.2026.) — modeli u posebnom fajlu.
 from .sef_models import SefFaktura, SefPrilog, SefPromena, SefSinhronizacija  # noqa: E402,F401

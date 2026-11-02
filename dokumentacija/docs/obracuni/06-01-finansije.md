@@ -1390,3 +1390,26 @@ Excelu: ostali prihodi profitnih centara (oko 7,4 mil. din.) tamo nisu ni kod ce
 (red sadrži samo konto 631); stavka 614 od 1.321.100 din. centra 11 je u Excelu kod centra 41; 4.192,57 din.
 rashoda je u Excelu kod centra 3 umesto 41. Od 02.11.2026. preuzeta su i knjiženja 2016–2024, pa se prikazuju i
 kolone prethodnih godina.
+
+## 6.1.27. Srednji kurs NBS (od 02.11.2026.)
+
+Zvanični srednji kurs dinara za **sve valute**, sa stranice NBS „Kursna lista — na željeni dan”
+(`webappcenter.nbs.rs/ExchangeRateWebApp/ExchangeRate/IndexByDate?…&Date=dd.mm.gggg.&ExchangeRateListTypeID=3`,
+latinica). Samo čitanje; servis `finansije/services/kursna_lista.py`.
+
+| Tabela | Sadržaj |
+|---|---|
+| `KursnaLista` | broj liste, godina (godina datuma formiranja), datum formiranja — jedinstveno po godini i broju |
+| `KursValute` | oznaka (EUR), šifra (978), naziv zemlje, „važi za” (npr. 100 JPY), srednji kurs (4 decimale) |
+| `KursniDan` | kalendarski dan → lista koja tog dana važi |
+
+Za vikend i praznik NBS prikazuje poslednju formiranu listu (npr. 01.11.2026. → lista 208 od 30.10.2026.;
+01.01.2016. → lista 252 od 31.12.2015.), pa se dan vezuje za nju. **Radni dan sa sopstvenom listom** je dan kada je
+`KursniDan.datum = KursnaLista.datum_formiranja` — po tome se računa prosek srednjeg kursa za period po radnim danima.
+
+Preuzimanje dopunjuje dane bez liste od **01.01.2016.**, najnovije prvo, uz pauzu 0,5 s između stranica. Zakazano
+svakog dana u **08:40** (`finansije.tasks.kursna_lista_nbs_task`, red `sync`), najviše 500 dana po pokretanju
+(~7 min), dok se istorija ne popuni (~8 dana). Celu istoriju odjednom (~4.000 stranica, oko sat vremena) puni
+komanda `manage.py kursna_lista_nbs` (`--od`, `--do`, `--najvise`). Dani iz poslednjih 7 dana vezani za raniju
+listu proveravaju se ponovo (dan preuzet pre nego što je NBS formirala listu). Greška jednog dana (NBS ne odgovara)
+ne zaustavlja ostale — dan ostaje bez liste i preuzima se sledeći put. Lista se upisuje jednom; NBS je ne menja.

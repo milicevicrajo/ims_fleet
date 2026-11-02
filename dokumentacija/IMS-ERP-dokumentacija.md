@@ -348,6 +348,7 @@
     - [6.1.24. Izvoz u Excel i PDF (od 05.10.2026.)](#6124-izvoz-u-excel-i-pdf-od-05102026)
     - [6.1.25. Bilans stanja i Bilans uspeha (od 30.10.2026.)](#6125-bilans-stanja-i-bilans-uspeha-od-30102026)
     - [6.1.26. Izveštaj za nadzorni odbor (od 02.11.2026.)](#6126-izveštaj-za-nadzorni-odbor-od-02112026)
+    - [6.1.27. Srednji kurs NBS (od 02.11.2026.)](#6127-srednji-kurs-nbs-od-02112026)
 - [6.2. Flota — obračuni goriva](#62-flota--obračuni-goriva)
     - [Zajednička osnova: šta se uopšte smatra gorivom](#zajednička-osnova-šta-se-uopšte-smatra-gorivom)
     - [V-03 — Neto iznos goriva iz bruto iznosa](#v-03--neto-iznos-goriva-iz-bruto-iznosa)
@@ -10285,6 +10286,29 @@ Excelu: ostali prihodi profitnih centara (oko 7,4 mil. din.) tamo nisu ni kod ce
 rashoda je u Excelu kod centra 3 umesto 41. Od 02.11.2026. preuzeta su i knjiženja 2016–2024, pa se prikazuju i
 kolone prethodnih godina.
 
+### 6.1.27. Srednji kurs NBS (od 02.11.2026.)
+
+Zvanični srednji kurs dinara za **sve valute**, sa stranice NBS „Kursna lista — na željeni dan”
+(`webappcenter.nbs.rs/ExchangeRateWebApp/ExchangeRate/IndexByDate?…&Date=dd.mm.gggg.&ExchangeRateListTypeID=3`,
+latinica). Samo čitanje; servis `finansije/services/kursna_lista.py`.
+
+| Tabela | Sadržaj |
+|---|---|
+| `KursnaLista` | broj liste, godina (godina datuma formiranja), datum formiranja — jedinstveno po godini i broju |
+| `KursValute` | oznaka (EUR), šifra (978), naziv zemlje, „važi za” (npr. 100 JPY), srednji kurs (4 decimale) |
+| `KursniDan` | kalendarski dan → lista koja tog dana važi |
+
+Za vikend i praznik NBS prikazuje poslednju formiranu listu (npr. 01.11.2026. → lista 208 od 30.10.2026.;
+01.01.2016. → lista 252 od 31.12.2015.), pa se dan vezuje za nju. **Radni dan sa sopstvenom listom** je dan kada je
+`KursniDan.datum = KursnaLista.datum_formiranja` — po tome se računa prosek srednjeg kursa za period po radnim danima.
+
+Preuzimanje dopunjuje dane bez liste od **01.01.2016.**, najnovije prvo, uz pauzu 0,5 s između stranica. Zakazano
+svakog dana u **08:40** (`finansije.tasks.kursna_lista_nbs_task`, red `sync`), najviše 500 dana po pokretanju
+(~7 min), dok se istorija ne popuni (~8 dana). Celu istoriju odjednom (~4.000 stranica, oko sat vremena) puni
+komanda `manage.py kursna_lista_nbs` (`--od`, `--do`, `--najvise`). Dani iz poslednjih 7 dana vezani za raniju
+listu proveravaju se ponovo (dan preuzet pre nego što je NBS formirala listu). Greška jednog dana (NBS ne odgovara)
+ne zaustavlja ostale — dan ostaje bez liste i preuzima se sledeći put. Lista se upisuje jednom; NBS je ne menja.
+
 ---
 
 ## 6.2. Flota — obračuni goriva
@@ -20190,6 +20214,7 @@ chrome-for-testing/  Chrome za Selenium
  06:10  Gorivo OMV teretna             ← Selenium, do 4 h
  07:10  Roba (Nabavka)
  07:30  Fiskalni računi koji čekaju proveru (Nabavka)   ← od 28.09.2026.
+ 08:40  Srednji kurs NBS (Finansije)      ← od 02.11.2026.
  ────────────────── radni dan ──────────────────
  10:00  Osvežavanje lokalnog nalog_z
  11:00  Osvežavanje lokalnog nalog_z
@@ -20197,7 +20222,7 @@ chrome-for-testing/  Chrome za Selenium
  :20    Svakog sata — Finansije, tekuća godina
 ```
 
-**Ukupno 25 zakazanih poslova** (ugovori zaposlenih u 01:15 i opomene za gorivo u 07:45, od 29.09.2026.; SEF fakture u 06:50, od 30.09.2026.; šifarnik banaka u 01:55 i banke sa NBS prvog u mesecu u 06:30, od 29.10.2026.). [P] Stara sinhronizacija šifara i OJ (01:30) ugašena je 28.09.2026. — `sync_celery_periodic_tasks` je briše iz rasporeda.
+**Ukupno 26 zakazanih poslova** (srednji kurs NBS u 08:40, od 02.11.2026.; ugovori zaposlenih u 01:15 i opomene za gorivo u 07:45, od 29.09.2026.; SEF fakture u 06:50, od 30.09.2026.; šifarnik banaka u 01:55 i banke sa NBS prvog u mesecu u 06:30, od 29.10.2026.). [P] Stara sinhronizacija šifara i OJ (01:30) ugašena je 28.09.2026. — `sync_celery_periodic_tasks` je briše iz rasporeda.
 
 ---
 
@@ -20226,6 +20251,7 @@ chrome-for-testing/  Chrome za Selenium
 | 07:10 | Nabavka — roba | `nabavka.tasks.sync_goods_task` | `sync` | — |
 | 07:30 | Nabavka — fiskalni računi koji čekaju proveru (stranica Poreske uprave nije bila dostupna) | `nabavka.tasks.fiskalni_ponovi_task` | `sync` | 60 min |
 | 07:45 | Flota — opomene za gorivo | `fleet.tasks.opomene_goriva_task` | `sync` | 30 min |
+| 08:40 | Finansije — srednji kurs NBS (sve valute; dok se istorija od 2016. ne popuni, i do 500 starijih dana) | `finansije.tasks.kursna_lista_nbs_task` | `sync` | 90 min |
 | **10:00 i 11:00** | **Finansije — osvežavanje `nalog_z`** | `finansije.tasks.refresh_nalog_z_task` | `sync` | SQL lock |
 | 12:30 | Putni nalozi — isplaćeno | `fleet.tasks.sync_putni_nalozi_isplaceno_task` | `sync` | 90 min |
 | svaki sat u :20 | Finansije — tekuća godina | `finansije.tasks.sync_current_year` | `sync` | SQL lock |

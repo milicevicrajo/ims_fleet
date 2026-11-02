@@ -1,0 +1,26 @@
+import sys
+from datetime import datetime
+
+from django.core.management.base import BaseCommand
+
+from finansije.services import kursna_lista
+
+
+def _datum(tekst):
+    return datetime.strptime(tekst.rstrip("."), "%d.%m.%Y").date()
+
+
+class Command(BaseCommand):
+    help = ("Srednji kurs NBS za sve valute, dan po dan: dopunjuje dane koji nedostaju od 01.01.2016. "
+            "Cela istorija (~4.000 stranica) traje oko sat vremena.")
+
+    def add_arguments(self, parser):
+        parser.add_argument("--od", type=_datum, default=kursna_lista.PRVI_DAN, help="dd.mm.gggg")
+        parser.add_argument("--do", type=_datum, help="dd.mm.gggg; podrazumevano danas")
+        parser.add_argument("--najvise", type=int, help="Najviše dana u ovom pokretanju.")
+
+    def handle(self, *args, **options):
+        sys.stdout.reconfigure(encoding="utf-8")  # Windows konzola
+        rezultat = kursna_lista.preuzmi(options["od"], options["do"], najvise=options["najvise"],
+                                        javi=self.stdout.write)
+        self.stdout.write(self.style.SUCCESS(kursna_lista.poruka(rezultat)))
