@@ -2974,6 +2974,7 @@ dozvolama, a ne samo trenutno prikazana stranica tabele.
 | **Bilans uspeha** (od 30.10.2026.) | `/finansije/bilans-uspeha/` — obrazac AOP za period, uporedo sa istim periodom prethodne godine |
 | Metodologija bilansa (od 30.10.2026.) | `/finansije/bilansi/metodologija/?izvestaj=BB\|BS\|BU` — kako se računa svaki bilans; tabele pozicija iz istog obrasca kao obračun |
 | **Izveštaj za nadzorni odbor** (od 02.11.2026.) | `/finansije/nadzorni-odbor/?prikaz=firma\|centri` — prihodi i rashodi po pozicijama, cela firma i po profitnim centrima, Excel i PDF ([6.1.26](#61-finansijska-analitika--obračuni)); plan, centri i broj zaposlenih: `/finansije/nadzorni-odbor/podesavanja/` |
+| **Srednji kurs NBS** (od 02.11.2026.) | `/finansije/srednji-kurs/?datum_od=&datum_do=&valuta=` — prosek svih valuta po radnim danima ili jedna valuta po danima, Excel ([6.1.27](#61-finansijska-analitika--obračuni)) |
 
 ---
 
@@ -10302,12 +10303,17 @@ Za vikend i praznik NBS prikazuje poslednju formiranu listu (npr. 01.11.2026. �
 01.01.2016. → lista 252 od 31.12.2015.), pa se dan vezuje za nju. **Radni dan sa sopstvenom listom** je dan kada je
 `KursniDan.datum = KursnaLista.datum_formiranja` — po tome se računa prosek srednjeg kursa za period po radnim danima.
 
-Preuzimanje dopunjuje dane bez liste od **01.01.2016.**, najnovije prvo, uz pauzu 0,5 s između stranica. Zakazano
-svakog dana u **08:40** (`finansije.tasks.kursna_lista_nbs_task`, red `sync`), najviše 500 dana po pokretanju
-(~7 min), dok se istorija ne popuni (~8 dana). Celu istoriju odjednom (~4.000 stranica, oko sat vremena) puni
-komanda `manage.py kursna_lista_nbs` (`--od`, `--do`, `--najvise`). Dani iz poslednjih 7 dana vezani za raniju
-listu proveravaju se ponovo (dan preuzet pre nego što je NBS formirala listu). Greška jednog dana (NBS ne odgovara)
-ne zaustavlja ostale — dan ostaje bez liste i preuzima se sledeći put. Lista se upisuje jednom; NBS je ne menja.
+Zakazano svakog dana u **08:40** (`finansije.tasks.kursna_lista_nbs_task`, red `sync`): ponovo se čita
+**poslednjih 5 dana** (5 stranica), pa se ispravi i dan preuzet pre nego što je NBS formirala listu. Istorija od
+**01.01.2016.** puni se jednom komandom `manage.py kursna_lista_nbs` (~4.000 stranica uz pauzu 0,5 s, oko sat
+vremena; `--od`, `--do`, `--svi`) — dopunjuje samo dane bez liste, najnovije prvo, pa ponovno pokretanje nastavlja
+gde je stalo. Greška jednog dana (NBS ne odgovara) ne zaustavlja ostale. Lista se upisuje jednom; NBS je ne menja.
+
+**Ekran** Finansije → Srednji kurs NBS (`/finansije/srednji-kurs/`, dozvola `finansije:kursna_lista`): period (može
+više godina, podrazumevano tekući mesec) i valuta. Bez valute — za svaku valutu prosek, najniži i najviši srednji
+kurs i broj lista formiranih u periodu (radni dani). Sa valutom — svaki kalendarski dan sa brojem liste, datumom
+formiranja i kursom (vikend i praznik prigušeno), i prosek iz radnih dana. Excel sa kursom na 4 decimale. Ako se u
+periodu promenila jedinica „važi za”, ekran upozorava (prosek mešanih jedinica nema smisla).
 
 ---
 
@@ -20251,7 +20257,7 @@ chrome-for-testing/  Chrome za Selenium
 | 07:10 | Nabavka — roba | `nabavka.tasks.sync_goods_task` | `sync` | — |
 | 07:30 | Nabavka — fiskalni računi koji čekaju proveru (stranica Poreske uprave nije bila dostupna) | `nabavka.tasks.fiskalni_ponovi_task` | `sync` | 60 min |
 | 07:45 | Flota — opomene za gorivo | `fleet.tasks.opomene_goriva_task` | `sync` | 30 min |
-| 08:40 | Finansije — srednji kurs NBS (sve valute; dok se istorija od 2016. ne popuni, i do 500 starijih dana) | `finansije.tasks.kursna_lista_nbs_task` | `sync` | 90 min |
+| 08:40 | Finansije — srednji kurs NBS (sve valute, ponovo poslednjih 5 dana; istorija od 2016. komandom `kursna_lista_nbs`) | `finansije.tasks.kursna_lista_nbs_task` | `sync` | 30 min |
 | **10:00 i 11:00** | **Finansije — osvežavanje `nalog_z`** | `finansije.tasks.refresh_nalog_z_task` | `sync` | SQL lock |
 | 12:30 | Putni nalozi — isplaćeno | `fleet.tasks.sync_putni_nalozi_isplaceno_task` | `sync` | 90 min |
 | svaki sat u :20 | Finansije — tekuća godina | `finansije.tasks.sync_current_year` | `sync` | SQL lock |

@@ -777,6 +777,41 @@ def nadzorni_odbor(request):
     return render(request, "finansije/nadzorni_odbor.html", context)
 
 
+@require_GET
+@login_required
+@role_permission_required()
+def kursna_lista(request):
+    """Srednji kurs NBS (services/kursna_lista.py): proseci svih valuta za period ili jedna valuta po danima."""
+    from .forms import KursnaListaForm
+    from .services import kursna_lista as kl
+
+    request.session["current_app"] = "finansije"
+    danas = timezone.localdate()
+    podaci = request.GET.copy()
+    podaci.setdefault("datum_od", f"{danas.replace(day=1):%d.%m.%Y}")
+    podaci.setdefault("datum_do", f"{danas:%d.%m.%Y}")
+    form = KursnaListaForm(podaci, valute=kl.valute())
+    context = {"form": form, "stanje": kl.stanje(), "tabela": None, "sazetak": None, "valuta": ""}
+    if form.is_valid():
+        od, do, valuta = form.cleaned_data["datum_od"], form.cleaned_data["datum_do"], form.cleaned_data["valuta"]
+        if valuta:
+            redovi = kl.po_danima(od, do, valuta)
+            tabela, sazetak = kl.tabela_dana(redovi, valuta), kl.sazetak_dana(redovi)
+        else:
+            tabela, sazetak = kl.tabela_proseka(kl.proseci(od, do)), None
+        if request.GET.get("izvoz") == "xlsx":
+            dokument = izvoz.Dokument("Srednji kurs NBS", izvoz.period_tekst(od, do), tabele=[tabela], sazetak=[
+                ("Prosek srednjeg kursa (radni dani)", sazetak["prosek"], "kurs"), ("Najniži", sazetak["najnizi"], "kurs"),
+                ("Najviši", sazetak["najvisi"], "kurs"), ("Broj radnih dana", sazetak["dana"], "broj")] if sazetak else [])
+            return izvoz.excel_odgovor(dokument, f"srednji_kurs_{valuta or 'sve'}_{od:%Y%m%d}_{do:%Y%m%d}")
+        radni = tabela.kolone[1].naziv == "Radni dan"
+        context.update(valuta=valuta, sazetak=sazetak, opis=izvoz.period_tekst(od, do), tabela={
+            "naslov": tabela.naslov, "opis": tabela.opis, "kolone": tabela.kolone,
+            "redovi": [{"celije": [(izvoz.prikaz(v, k.vrsta), izvoz.klasa(v, k)) for k, v in zip(tabela.kolone, red)],
+                        "prigusen": radni and red[1] == "ne"} for red in tabela.redovi]})
+    return render(request, "finansije/kursna_lista.html", context)
+
+
 @login_required
 @role_permission_required()
 def nadzorni_odbor_podesavanja(request):

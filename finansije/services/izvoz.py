@@ -21,16 +21,17 @@ ADRESA = "Bulevar vojvode Mišića 43, 11000 Beograd"
 PLAVA = "14395B"
 IZNOS = "#,##0.00;[Red]-#,##0.00;0.00"
 PROCENAT = '0.00"%";[Red]-0.00"%";0.00"%"'
+KURS = "#,##0.0000"
 
 
 @dataclass
 class Kolona:
     naziv: str
-    vrsta: str = "tekst"  # tekst, iznos, procenat, broj, datum
+    vrsta: str = "tekst"  # tekst, iznos, procenat, broj, datum, kurs (4 decimale)
 
     @property
     def broj(self):
-        return self.vrsta in ("iznos", "procenat", "broj")
+        return self.vrsta in ("iznos", "procenat", "broj", "kurs")
 
 
 @dataclass
@@ -64,6 +65,8 @@ def prikaz(vrednost, vrsta):
         return number_format(vrednost, decimal_pos=2, use_l10n=True, force_grouping=True)
     if vrsta == "procenat":
         return number_format(vrednost, decimal_pos=2, use_l10n=True, force_grouping=True) + "%"
+    if vrsta == "kurs":
+        return number_format(vrednost, decimal_pos=4, use_l10n=True, force_grouping=True)
     if vrsta == "broj":
         return number_format(vrednost, decimal_pos=0, use_l10n=True, force_grouping=True)
     if vrsta == "datum" and isinstance(vrednost, (date, datetime)):
@@ -82,7 +85,7 @@ def klasa(vrednost, kolona):
 def _excel_vrednost(vrednost, vrsta):
     if vrednost is None:
         return None
-    if vrsta in ("iznos", "procenat", "broj"):
+    if vrsta in ("iznos", "procenat", "broj", "kurs"):
         return float(vrednost) if not isinstance(vrednost, int) else vrednost
     if vrsta == "datum" and isinstance(vrednost, (date, datetime)):
         return vrednost
@@ -109,6 +112,8 @@ def excel_odgovor(dokument, ime_fajla):
             celija.number_format = IZNOS
         elif vrsta == "procenat":
             celija.number_format = PROCENAT
+        elif vrsta == "kurs":
+            celija.number_format = KURS
         elif vrsta == "datum":
             celija.number_format = "DD.MM.YYYY"
         if font:

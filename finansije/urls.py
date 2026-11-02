@@ -45,4 +45,5 @@ urlpatterns = [
     path("bilansi/metodologija/", views.bilansi_metodologija, name="bilansi_metodologija"),
     path("nadzorni-odbor/", views.nadzorni_odbor, name="nadzorni_odbor"),
     path("nadzorni-odbor/podesavanja/", views.nadzorni_odbor_podesavanja, name="nadzorni_odbor_podesavanja"),
+    path("srednji-kurs/", views.kursna_lista, name="kursna_lista"),
 ]

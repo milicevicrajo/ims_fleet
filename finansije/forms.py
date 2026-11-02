@@ -230,6 +230,25 @@ class NadzorniOdborForm(BilansUspehaForm):
         return self.cleaned_data.get("jedinica") or self.podrazumevana_jedinica
 
 
+class KursnaListaForm(forms.Form):
+    """Srednji kurs NBS: period (može i više godina) i valuta; bez valute — proseci svih valuta."""
+    datum_od = ReportDateField(label="Datum od")
+    datum_do = ReportDateField(label="Datum do")
+    valuta = forms.ChoiceField(label="Valuta", required=False)
+
+    def __init__(self, *args, valute=(), **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["valuta"].choices = [("", "Sve valute — proseci")] + [(o, f"{o} — {z}") for o, z in valute]
+        klase_polja(self)
+
+    def clean(self):
+        values = super().clean()
+        od, do = values.get("datum_od"), values.get("datum_do")
+        if od and do and od > do:
+            raise forms.ValidationError("Datum od ne može biti posle datuma do.")
+        return values
+
+
 class NadzorniGodinaForm(forms.Form):
     """Podešavanja izveštaja za nadzorni odbor za jednu godinu: broj zaposlenih i godišnji plan po poziciji."""
     broj_zaposlenih = forms.IntegerField(label="Broj zaposlenih (ostvareno)", min_value=0, required=False)

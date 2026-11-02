@@ -34,7 +34,7 @@ def finance_sidebar_section(request):
             "finansije:konto_tabela": "konto_tabela", "finansije:bruto_bilans": "bruto_bilans",
             "finansije:bilans_stanja": "bilans_stanja", "finansije:bilans_uspeha": "bilans_uspeha",
             "finansije:bilansi_metodologija": "bilansi_metodologija", "finansije:nadzorni_odbor": "nadzorni_odbor",
-            "finansije:nadzorni_odbor_podesavanja": "nadzorni_odbor"}.get(view, "")
+            "finansije:nadzorni_odbor_podesavanja": "nadzorni_odbor", "finansije:kursna_lista": "kursna_lista"}.get(view, "")
 
 
 @register.simple_tag

@@ -1407,9 +1407,14 @@ Za vikend i praznik NBS prikazuje poslednju formiranu listu (npr. 01.11.2026. �
 01.01.2016. → lista 252 od 31.12.2015.), pa se dan vezuje za nju. **Radni dan sa sopstvenom listom** je dan kada je
 `KursniDan.datum = KursnaLista.datum_formiranja` — po tome se računa prosek srednjeg kursa za period po radnim danima.
 
-Preuzimanje dopunjuje dane bez liste od **01.01.2016.**, najnovije prvo, uz pauzu 0,5 s između stranica. Zakazano
-svakog dana u **08:40** (`finansije.tasks.kursna_lista_nbs_task`, red `sync`), najviše 500 dana po pokretanju
-(~7 min), dok se istorija ne popuni (~8 dana). Celu istoriju odjednom (~4.000 stranica, oko sat vremena) puni
-komanda `manage.py kursna_lista_nbs` (`--od`, `--do`, `--najvise`). Dani iz poslednjih 7 dana vezani za raniju
-listu proveravaju se ponovo (dan preuzet pre nego što je NBS formirala listu). Greška jednog dana (NBS ne odgovara)
-ne zaustavlja ostale — dan ostaje bez liste i preuzima se sledeći put. Lista se upisuje jednom; NBS je ne menja.
+Zakazano svakog dana u **08:40** (`finansije.tasks.kursna_lista_nbs_task`, red `sync`): ponovo se čita
+**poslednjih 5 dana** (5 stranica), pa se ispravi i dan preuzet pre nego što je NBS formirala listu. Istorija od
+**01.01.2016.** puni se jednom komandom `manage.py kursna_lista_nbs` (~4.000 stranica uz pauzu 0,5 s, oko sat
+vremena; `--od`, `--do`, `--svi`) — dopunjuje samo dane bez liste, najnovije prvo, pa ponovno pokretanje nastavlja
+gde je stalo. Greška jednog dana (NBS ne odgovara) ne zaustavlja ostale. Lista se upisuje jednom; NBS je ne menja.
+
+**Ekran** Finansije → Srednji kurs NBS (`/finansije/srednji-kurs/`, dozvola `finansije:kursna_lista`): period (može
+više godina, podrazumevano tekući mesec) i valuta. Bez valute — za svaku valutu prosek, najniži i najviši srednji
+kurs i broj lista formiranih u periodu (radni dani). Sa valutom — svaki kalendarski dan sa brojem liste, datumom
+formiranja i kursom (vikend i praznik prigušeno), i prosek iz radnih dana. Excel sa kursom na 4 decimale. Ako se u
+periodu promenila jedinica „važi za”, ekran upozorava (prosek mešanih jedinica nema smisla).

@@ -47,15 +47,15 @@ def sync_stare_godine_task(year_from=2016, year_to=2024):
 
 @shared_task(name="finansije.tasks.kursna_lista_nbs_task")
 def kursna_lista_nbs_task():
-    """Srednji kurs NBS svakog jutra; dok se istorija od 2016. ne popuni, i do 500 starijih dana po pokretanju."""
+    """Srednji kurs NBS svakog jutra: ponovo poslednjih 5 dana. Istorija od 2016. puni se komandom `kursna_lista_nbs`."""
     from core.tasks import _run_with_singleton_lock
 
     def _runner():
         from .services import kursna_lista
 
-        return kursna_lista.poruka(kursna_lista.preuzmi(najvise=kursna_lista.NAJVISE_DANA))
+        return kursna_lista.poruka(kursna_lista.preuzmi_poslednje())
 
-    return _run_with_singleton_lock(task_name="finansije_kursna_lista_nbs_task", lock_ttl_seconds=90 * 60, fn=_runner)
+    return _run_with_singleton_lock(task_name="finansije_kursna_lista_nbs_task", lock_ttl_seconds=30 * 60, fn=_runner)
 
 
 @shared_task(name="finansije.tasks.sync_sef_task")

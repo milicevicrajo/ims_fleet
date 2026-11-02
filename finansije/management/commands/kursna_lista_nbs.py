@@ -11,16 +11,15 @@ def _datum(tekst):
 
 
 class Command(BaseCommand):
-    help = ("Srednji kurs NBS za sve valute, dan po dan: dopunjuje dane koji nedostaju od 01.01.2016. "
-            "Cela istorija (~4.000 stranica) traje oko sat vremena.")
+    help = ("Srednji kurs NBS za sve valute, dan po dan: dopunjuje dane bez liste od 01.01.2016. "
+            "Cela istorija (~4.000 stranica) traje oko sat vremena; ponovno pokretanje nastavlja gde je stalo.")
 
     def add_arguments(self, parser):
         parser.add_argument("--od", type=_datum, default=kursna_lista.PRVI_DAN, help="dd.mm.gggg")
         parser.add_argument("--do", type=_datum, help="dd.mm.gggg; podrazumevano danas")
-        parser.add_argument("--najvise", type=int, help="Najviše dana u ovom pokretanju.")
+        parser.add_argument("--svi", action="store_true", help="Ponovo i dane koji već imaju listu.")
 
     def handle(self, *args, **options):
         sys.stdout.reconfigure(encoding="utf-8")  # Windows konzola
-        rezultat = kursna_lista.preuzmi(options["od"], options["do"], najvise=options["najvise"],
-                                        javi=self.stdout.write)
+        rezultat = kursna_lista.preuzmi(options["od"], options["do"], svi=options["svi"], javi=self.stdout.write)
         self.stdout.write(self.style.SUCCESS(kursna_lista.poruka(rezultat)))

@@ -1,0 +1,49 @@
+{% extends "finansije/base.html" %}
+{% block title %}Srednji kurs NBS{% endblock %}
+{% block hero_title %}Srednji kurs NBS{% endblock %}
+{% block hero_description %}Zvanični srednji kurs dinara za sve valute, po kursnim listama NBS od 2016. — prosek za period po radnim danima ili kurs jedne valute po danima{% endblock %}
+{% block hero_period %}{% if opis %}<div class="finance-hero-period"><i class="mdi mdi-calendar-range me-1" aria-hidden="true"></i><strong>{{ opis }}</strong></div>{% endif %}{% endblock %}
+{% block finance_content %}
+<style>
+  .kurs-tabela { font-size: .85rem; }
+  .kurs-tabela thead th { background: #14395b; color: #fff; white-space: nowrap; }
+  .kurs-tabela td.n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .kurs-tabela tr.kurs-neradni td { color: #94a3b8; }
+</style>
+<div class="card"><div class="card-body finance-filter">
+  <form method="get" class="fleet-list-filter finance-period">
+    {% for field in form %}<div class="finance-period-field"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}
+    <button class="btn btn-primary" type="submit"><i class="mdi mdi-play" aria-hidden="true"></i> Prikaži</button>
+    <button class="btn btn-outline-success" type="submit" name="izvoz" value="xlsx" data-no-preloader><i class="mdi mdi-file-excel" aria-hidden="true"></i> Preuzmi Excel</button>
+    <div class="finance-period-errors text-danger">{{ form.non_field_errors }}</div>
+  </form>
+  <p class="finance-accounting-note mb-0">Izvor: kursna lista NBS „na željeni dan” (srednji kurs), preuzima se svakog jutra u 08:40.
+    {% if stanje.poslednja %}Poslednja preuzeta lista: <strong>{{ stanje.poslednja.broj }}/{{ stanje.poslednja.godina }}</strong> od {{ stanje.poslednja.datum_formiranja|date:"d.m.Y." }}.{% else %}Liste još nisu preuzete.{% endif %}
+    {% if stanje.nedostaje %}<span class="text-warning">Od 01.01.2016. nedostaje {{ stanje.nedostaje }} dana — istorija se puni komandom <code>kursna_lista_nbs</code>.</span>{% endif %}</p>
+</div></div>
+{% if sazetak %}
+<div class="card"><div class="card-body">
+  <div class="row g-3">
+    <div class="col-sm-3"><div class="text-muted small">Prosek srednjeg kursa (radni dani)</div><div class="fs-4 fw-bold">{{ sazetak.prosek|floatformat:"4g" }}</div></div>
+    <div class="col-sm-3"><div class="text-muted small">Najniži</div><div class="fs-5">{{ sazetak.najnizi|floatformat:"4g" }}</div></div>
+    <div class="col-sm-3"><div class="text-muted small">Najviši</div><div class="fs-5">{{ sazetak.najvisi|floatformat:"4g" }}</div></div>
+    <div class="col-sm-3"><div class="text-muted small">Broj radnih dana (lista)</div><div class="fs-5">{{ sazetak.dana }}</div></div>
+  </div>
+  {% if sazetak.jedinice|length > 1 %}<div class="alert alert-warning mt-3 mb-0">U periodu se menjala jedinica „važi za” ({{ sazetak.jedinice|join:", " }}) — prosek mešanih jedinica nema smisla; izaberite kraći period.</div>{% endif %}
+</div></div>
+{% endif %}
+{% if tabela %}
+<div class="card"><div class="card-body">
+  <h2 class="finance-job-heading">{{ tabela.naslov }}</h2>
+  <p class="text-muted small">{{ tabela.opis }}</p>
+  {% if tabela.redovi %}
+  <div class="table-responsive"><table class="table table-sm table-bordered kurs-tabela mb-0">
+    <thead><tr>{% for kolona in tabela.kolone %}<th{% if kolona.broj %} class="text-end"{% endif %}>{{ kolona.naziv }}</th>{% endfor %}</tr></thead>
+    <tbody>{% for red in tabela.redovi %}<tr{% if red.prigusen %} class="kurs-neradni"{% endif %}>
+      {% for tekst, klasa in red.celije %}<td class="{{ klasa }}">{% if forloop.first and not valuta %}<a href="?datum_od={{ form.cleaned_data.datum_od|date:'d.m.Y' }}&amp;datum_do={{ form.cleaned_data.datum_do|date:'d.m.Y' }}&amp;valuta={{ tekst|urlencode }}">{{ tekst }}</a>{% else %}{{ tekst }}{% endif %}</td>{% endfor %}
+    </tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="text-muted mb-0">Za izabrani period nema preuzetih kursnih lista.</p>{% endif %}
+</div></div>
+{% endif %}
+{% endblock %}
