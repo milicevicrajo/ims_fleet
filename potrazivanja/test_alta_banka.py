@@ -39,6 +39,26 @@ class SnimakTests(TestCase):
         self.assertEqual((racuni[0]["banka"], racuni[0]["blokada"], racuni[0]["datum_otvaranja"]),
                          ("ALTA BANKA A.D. BEOGRAD", "Podleže blokadi", "5.7.2013."))
 
+    @patch.object(alta_banka, "RAZMAK", 0)
+    def test_sifra_banke_se_ne_salje_nbs_nego_se_racuni_biraju_posle(self):
+        # NBS bez celog broja računa za šifru banke vraća prazno (02.11.2026.).
+        class Odgovor:
+            status_code, text = 200, STRANA_NBS
+
+        class Sesija:
+            parametri = []
+
+            def get(self, url, params, timeout):
+                self.parametri.append(params)
+                return Odgovor()
+
+        sesija = Sesija()
+        racuni = alta_banka.racuni_iz_nbs(sesija, "17511068", "", alta_banka.ALTA)
+        self.assertEqual([(r["racun"], r["tip"]) for r in racuni],
+                         [("190-0000000011200-46", "dinarski"), ("190-0000000011200-46", "devizni")])
+        self.assertEqual({p["BankCode"] for p in sesija.parametri}, {""})
+        self.assertEqual(len(alta_banka.racuni_iz_nbs(sesija, "17511068", "")), 4)
+
     def test_cuvaju_se_platioci_i_kupci_sa_racunom_u_alta_banci(self):
         racuni = alta_banka.citaj_stranu(STRANA_NBS)
         zapis = alta_banka.sacuvaj(kupac(), racuni, "sve_banke")

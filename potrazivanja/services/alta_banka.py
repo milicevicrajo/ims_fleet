@@ -98,12 +98,16 @@ def citaj_stranu(html):
 
 
 def racuni_iz_nbs(sesija, mb, pib, banka=""):
-    """Svi računi (dinarski i devizni, sve strane) za matični broj, a bez njega za PIB; `banka` sužava na šifru banke."""
+    """Svi računi (dinarski i devizni, sve strane) za matični broj, a bez njega za PIB; `banka` sužava na šifru banke.
+
+    Šifra banke se ne šalje NBS-u: bez celog broja računa pretraga sa šifrom banke vraća prazan rezultat
+    (provereno 02.11.2026.), pa se računi biraju posle preuzimanja.
+    """
     racuni = []
     for tip, naziv_tipa in TIPOVI.items():
         strana = 1
         while True:
-            parametri = {"isSearchExecuted": "true", "BankCode": banka, "AccountNumber": "", "ControlNumber": "",
+            parametri = {"isSearchExecuted": "true", "BankCode": "", "AccountNumber": "", "ControlNumber": "",
                          "CompanyNationalCode": mb, "CompanyTaxCode": "" if mb else pib, "CompanyName": "", "City": "",
                          "TypeID": str(tip), "OrderBy": "", "Pagging.CurrentPage": str(strana),
                          "Pagging.PageSize": str(STRANA)}
@@ -128,7 +132,7 @@ def racuni_iz_nbs(sesija, mb, pib, banka=""):
             if len(redovi) < STRANA:
                 break
             strana += 1
-    return racuni
+    return [r for r in racuni if r["racun"].startswith(banka)]
 
 
 def _datum_nbs(tekst):

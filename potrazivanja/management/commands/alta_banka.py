@@ -1,3 +1,5 @@
+import sys
+
 from django.core.management.base import BaseCommand
 
 from potrazivanja.services.alta_banka import preuzmi
@@ -11,6 +13,8 @@ class Command(BaseCommand):
         parser.add_argument("--iznova", action="store_true", help="Pretraži ponovo i kupce koji već imaju snimak")
 
     def handle(self, *args, **options):
+        if hasattr(sys.stdout, "reconfigure"):  # Windows konzola (cp1252) ne ispisuje č, ć, š, ž
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
         if not options["fajl"]:
             try:  # sertifikat NBS se na nekim računarima proverava samo kroz Windows skladište sertifikata
                 import truststore
