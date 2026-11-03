@@ -4,6 +4,8 @@ from decimal import Decimal as D
 from io import BytesIO
 from unittest.mock import patch
 
+from redis.exceptions import RedisError
+
 from django.contrib.auth import get_user_model
 from django.db.models import F
 from django.test import SimpleTestCase, TestCase
@@ -100,6 +102,24 @@ class PreuzimanjeTests(TestCase):
         zadatak = next(s for s in EXPECTED_PERIODIC_TASKS if s["task"] == "finansije.tasks.kursna_lista_nbs_task")
         self.assertEqual((zadatak["hour"], zadatak["minute"]), ("8", "40"))
         self.assertEqual(settings.CELERY_TASK_ROUTES["finansije.tasks.kursna_lista_nbs_task"], {"queue": "sync"})
+
+    def test_jednokratni_zadatak_istorije_dopunjuje_dane_bez_liste(self):
+        from django.conf import settings
+
+        from core.management.commands.sync_celery_periodic_tasks import EXPECTED_PERIODIC_TASKS
+        from .tasks import kursna_lista_istorija_task
+
+        with patch.object(kursna_lista, "sesija", return_value=object()), \
+                patch.object(kursna_lista, "PRVI_DAN", date(2026, 10, 30)), \
+                patch("finansije.services.kursna_lista.timezone.localdate", return_value=date(2026, 11, 2)), \
+                patch("core.tasks.Redis.from_url") as redis:
+            redis.return_value.lock.return_value.acquire.side_effect = RedisError("bez Redisa")  # fail-open
+            with patch.object(kursna_lista, "preuzmi_dan", side_effect=lambda _s, d: kursna_lista.procitaj(STRANE[d])), \
+                    patch.object(kursna_lista.time, "sleep"):
+                poruka = kursna_lista_istorija_task()
+        self.assertIn("dana 4, novih lista 2, grešaka 0", poruka)
+        self.assertEqual(settings.CELERY_TASK_ROUTES["finansije.tasks.kursna_lista_istorija_task"], {"queue": "sync"})
+        self.assertNotIn("finansije.tasks.kursna_lista_istorija_task", {s["task"] for s in EXPECTED_PERIODIC_TASKS})
 
 
 class EkranTests(TestCase):

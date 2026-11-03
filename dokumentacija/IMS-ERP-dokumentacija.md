@@ -10310,6 +10310,10 @@ sata; `--od`, `--do`, `--svi`) — dopunjuje samo dane bez liste, najnovije prvo
 gde je stalo; može i u delovima (npr. `--od 01.01.2024.`). Greška jednog dana (NBS ne odgovara) ne zaustavlja
 ostale. **Zaštita od botova NBS** (umesto liste stranica F5 „TSPD”) zaustavlja preuzimanje odmah — 03.11.2026.
 uključila se uz pauzu od 0,5 s i trajala satima; pokreće se ponovo kasnije. Lista se upisuje jednom; NBS je ne menja.
+Isto radi Celery zadatak `finansije.tasks.kursna_lista_istorija_task` (red `sync`), zakazan **jednom** kao
+„Finansije - srednji kurs NBS, istorija (jednokratno)” (03.11.2026. u 21:00, `ClockedSchedule`, `one_off`) — nije u
+`EXPECTED_PERIODIC_TASKS`; deli zaključavanje sa jutarnjim zadatkom. Worker radi `-P solo`, pa za ~3,5 h čeka i
+sinhronizacija u :20.
 
 **Ekran** Finansije → Srednji kurs NBS (`/finansije/srednji-kurs/`, dozvola `finansije:kursna_lista`): period (može
 više godina, podrazumevano tekući mesec) i valuta. Bez valute — za svaku valutu prosek, najniži i najviši srednji

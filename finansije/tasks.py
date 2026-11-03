@@ -58,6 +58,23 @@ def kursna_lista_nbs_task():
     return _run_with_singleton_lock(task_name="finansije_kursna_lista_nbs_task", lock_ttl_seconds=30 * 60, fn=_runner)
 
 
+@shared_task(name="finansije.tasks.kursna_lista_istorija_task")
+def kursna_lista_istorija_task():
+    """Jednokratno (03.11.2026.): istorija srednjeg kursa od 2016, dani bez liste (~4.000 stranica, ~3,5 h).
+
+    Zakazuje se jednom, uveče (ClockedSchedule, one_off) — nije u EXPECTED_PERIODIC_TASKS. Isto zaključavanje kao
+    jutarnji zadatak, da se ne preklope.
+    """
+    from core.tasks import _run_with_singleton_lock
+
+    def _runner():
+        from .services import kursna_lista
+
+        return kursna_lista.poruka(kursna_lista.preuzmi(od=kursna_lista.PRVI_DAN))
+
+    return _run_with_singleton_lock(task_name="finansije_kursna_lista_nbs_task", lock_ttl_seconds=5 * 60 * 60, fn=_runner)
+
+
 @shared_task(name="finansije.tasks.sync_sef_task")
 def sync_sef_task():
     """SEF fakture (ulazne i izlazne, poslednjih 45 dana), promene statusa i PDF-ovi; ujutru, posle nocne pauze SEF-a."""
