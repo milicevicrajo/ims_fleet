@@ -97,7 +97,7 @@ def _money(value):
 @login_required
 def vehicle_datatable_data(request):
     base_qs = _vehicle_list_base_queryset(request)
-    filtered_qs = VehicleFilter(request.GET, queryset=base_qs).qs
+    filtered_qs = VehicleFilter(request.GET, queryset=base_qs, request=request).qs
 
     def search(value):
         return (

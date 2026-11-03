@@ -58,6 +58,27 @@ class FlotaNaRegistruTests(ImportTestCase):
         self.assertEqual(podaci["recordsTotal"], 0)
         self.assertEqual(len(self.client.get(reverse("vehicle_list")).context["vehicles"]), 0)
 
+    def test_spisak_vozila_se_otvara_na_obuhvatu(self):
+        self.dodeli(cvor_id=centar("43"))
+        self.client.force_login(self.korisnik)
+        odgovor = self.client.get(reverse("vehicle_list"))
+        self.assertRedirects(odgovor, reverse("vehicle_list") + "?center_code=obuhvat")
+        odgovor = self.client.get(odgovor.url)
+        self.assertIn(("obuhvat", "Moj obuhvat (43)"), odgovor.context["filter"].form.fields["center_code"].choices)
+        self.assertEqual({v.pk for v in odgovor.context["vehicles"]}, {self.vozilo_43.pk, self.bez_dodele.pk})
+        podaci = self.client.get(reverse("vehicle_data"), {"draw": 1, "start": 0, "length": 10,
+                                                           "center_code": "obuhvat"}).json()
+        self.assertEqual(podaci["recordsFiltered"], 2)
+        # "Svi centri" (prazan izbor) vraca ceo vozni park
+        self.assertEqual(len(self.client.get(reverse("vehicle_list"), {"center_code": ""}).context["vehicles"]), 3)
+
+    def test_cela_firma_otvara_ceo_spisak(self):
+        self.dodeli(cela_firma=True)
+        self.client.force_login(self.korisnik)
+        odgovor = self.client.get(reverse("vehicle_list"))
+        self.assertEqual(odgovor.status_code, 200)
+        self.assertNotIn("obuhvat", dict(odgovor.context["filter"].form.fields["center_code"].choices))
+
     def test_vozila_i_putni_nalozi_po_obuhvatu(self):
         self.dodeli(cvor_id=centar("43"))
         korisnik = self.svez()
@@ -100,7 +121,7 @@ class FlotaNaRegistruTests(ImportTestCase):
         # Spisak vozila je ceo vozni park (odluka 20.10.2026.), karton vozila 41 ostaje van obuhvata.
         podaci = self.client.get(reverse("vehicle_data"), {"draw": 1, "start": 0, "length": 10}).json()
         self.assertEqual(podaci["recordsTotal"], 3)
-        self.assertEqual(len(self.client.get(reverse("vehicle_list")).context["vehicles"]), 3)
+        self.assertEqual(len(self.client.get(reverse("vehicle_list"), {"center_code": ""}).context["vehicles"]), 3)
         from fleet.support.fleet_snapshot import fleet_snapshot
 
         self.assertEqual(fleet_snapshot(self.svez())["totals"]["count"], 2)  # kontrolna tabla: 43 i vozilo bez dodele

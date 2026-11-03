@@ -8,6 +8,7 @@ from django.http import QueryDict
 from django.utils import timezone
 
 from core.models import OrganizationalUnit
+from fleet.support import obuhvat as obuhvat_flote
 from fleet.support.registar import Registar, ogranici_izbor
 from hr.querysets import employees_for_travel_orders
 
@@ -115,6 +116,12 @@ class VehicleFilter(django_filters.FilterSet):
         registar = Registar()
         centers_qs = OrganizationalUnit.objects.exclude(center__isnull=True).values_list("center", flat=True)
         center_choices = registar.izbor_centara(centers_qs, "--- Svi centri ---")
+        # Spisak je ceo vozni park (odluka 20.10.2026.), a karton se otvara samo u obuhvatu:
+        # korisnik sa delom firme dobija izbor "Moj obuhvat" i na njemu se spisak otvara.
+        user = getattr(self.request, "user", None)
+        if user is not None and obuhvat_flote.deo_firme(user):
+            center_choices = [center_choices[0], (obuhvat_flote.MOJ_OBUHVAT, obuhvat_flote.naziv_obuhvata(user)),
+                              *center_choices[1:]]
         self.filters["center_code"].extra["choices"] = center_choices
         self.form.fields["center_code"].choices = center_choices
         if registar.dostupan:
@@ -171,6 +178,9 @@ class VehicleFilter(django_filters.FilterSet):
         center = value.strip()
         if not center:
             return qs
+        if center == obuhvat_flote.MOJ_OBUHVAT:
+            user = getattr(self.request, "user", None)
+            return obuhvat_flote.po_vozilu(qs, user, "pk") if user is not None else qs
         qs = self._ensure_latest_center(qs).annotate(_center_trim=Trim(F("latest_center")))
         return qs.filter(_center_trim=center)
 

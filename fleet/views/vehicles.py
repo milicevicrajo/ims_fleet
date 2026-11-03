@@ -88,6 +88,12 @@ class VehicleListView(LoginRequiredMixin, FilterView):
     context_object_name = "vehicles"
     filterset_class = VehicleFilter
 
+    def get(self, request, *args, **kwargs):
+        # Prvo otvaranje spiska: korisnik sa delom firme vidi svoj obuhvat; "Svi centri" vraca ceo park.
+        if not request.GET and obuhvat_flote.deo_firme(request.user):
+            return redirect(f"{request.path}?center_code={obuhvat_flote.MOJ_OBUHVAT}")
+        return super().get(request, *args, **kwargs)
+
     def get_queryset(self):
         qs = Vehicle.objects.all()
 
@@ -160,7 +166,7 @@ def _vehicle_list_base_queryset(request):
 @role_permission_required()
 def vehicle_export_csv(request):
     base_qs = _vehicle_list_base_queryset(request)
-    vehicle_filter = VehicleFilter(request.GET, queryset=base_qs)
+    vehicle_filter = VehicleFilter(request.GET, queryset=base_qs, request=request)
     qs = vehicle_filter.qs
 
     response = csv_attachment_response("vozila.csv", quoted=True)

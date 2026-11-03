@@ -132,6 +132,20 @@ def spisak_vozila(queryset, user):
     return queryset.none()
 
 
+MOJ_OBUHVAT = "obuhvat"
+
+
+def deo_firme(user):
+    """Da li korisnik ima obuhvat Flote koji nije cela firma (spisak vozila se tada otvara na njemu)."""
+    return aktivno(user) and not obuhvat(user).prazan and vozila(user) is not None
+
+
+def naziv_obuhvata(user):
+    """Oznaka izbora "Moj obuhvat" u filteru spiska vozila, sa centrima koji su u obuhvatu celi."""
+    oznake = sorted(centri(user) or ())
+    return f"Moj obuhvat ({', '.join(oznake)})" if oznake else "Moj obuhvat"
+
+
 def putni_nalozi(queryset, user):
     """Putni nalozi cija je sifra posla u obuhvatu korisnika."""
     if not aktivno(user):
