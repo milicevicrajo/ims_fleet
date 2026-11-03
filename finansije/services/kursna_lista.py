@@ -23,11 +23,15 @@ ADRESA = "https://webappcenter.nbs.rs/ExchangeRateWebApp/ExchangeRate/IndexByDat
 SREDNJI_KURS = "3"  # ExchangeRateListTypeID
 PRVI_DAN = date(2016, 1, 1)
 AUTOMATSKI_DANA = 5
-RAZMAK = 0.5  # sekundi između stranica; NBS je javni servis
+RAZMAK = 3  # sekundi između stranica; na 0,5 s NBS je 03.11.2026. uključio zaštitu od botova
 
 
 class NemaListe(Exception):
     pass
+
+
+class NbsBlokira(Exception):
+    """NBS umesto liste vraća stranicu zaštite od botova (F5 „TSPD”): dalje upite treba prekinuti."""
 
 
 def sesija():
@@ -45,6 +49,8 @@ def _datum(tekst):
 
 def procitaj(html):
     """Stranica „Na željeni dan” → (broj liste, datum formiranja, [kursevi])."""
+    if "/TSPD/" in html or 'window["bobcmn"]' in html:
+        raise NbsBlokira("NBS je uključio zaštitu od botova; preuzimanje je prekinuto, pokušajte kasnije.")
     stranica = BeautifulSoup(html, "html.parser")
     naslovi = [" ".join(h.get_text(" ", strip=True).split()) for h in stranica.find_all(["h5", "h6"])]
     broj = next((re.search(r"LISTA BR\.\s*(\d+)", n) for n in naslovi if "LISTA BR" in n), None)
@@ -85,7 +91,8 @@ def sacuvaj(dan, broj, formirana, kursevi):
 
 
 def preuzmi(od=PRVI_DAN, do=None, svi=False, javi=None, s=None):
-    """Dani bez liste (ili svi dani perioda, `svi`), najnoviji prvo. Greška jednog dana ne zaustavlja ostale."""
+    """Dani bez liste (ili svi dani perioda, `svi`), najnoviji prvo. Greška jednog dana ne zaustavlja ostale,
+    osim zaštite od botova NBS — tada se staje."""
     do = do or timezone.localdate()
     dani = [do - timedelta(days=i) for i in range((do - od).days + 1)]
     if not svi:
@@ -98,6 +105,10 @@ def preuzmi(od=PRVI_DAN, do=None, svi=False, javi=None, s=None):
             time.sleep(RAZMAK)
         try:
             lista, nova = sacuvaj(dan, *preuzmi_dan(s, dan))
+        except NbsBlokira as exc:  # svaki sledeći upit samo produžava blokadu
+            rezultat["gresaka"] += 1
+            rezultat["poslednja_greska"] = f"{dan:%d.%m.%Y.}: {exc}"
+            break
         except Exception as exc:  # NBS ne radi, budući dan, neočekivana stranica — sledeći put ponovo
             rezultat["gresaka"] += 1
             rezultat["poslednja_greska"] = f"{dan:%d.%m.%Y.}: {type(exc).__name__}: {exc}"[:300]

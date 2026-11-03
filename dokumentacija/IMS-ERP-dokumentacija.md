@@ -10305,9 +10305,11 @@ Za vikend i praznik NBS prikazuje poslednju formiranu listu (npr. 01.11.2026. �
 
 Zakazano svakog dana u **08:40** (`finansije.tasks.kursna_lista_nbs_task`, red `sync`): ponovo se čita
 **poslednjih 5 dana** (5 stranica), pa se ispravi i dan preuzet pre nego što je NBS formirala listu. Istorija od
-**01.01.2016.** puni se jednom komandom `manage.py kursna_lista_nbs` (~4.000 stranica uz pauzu 0,5 s, oko sat
-vremena; `--od`, `--do`, `--svi`) — dopunjuje samo dane bez liste, najnovije prvo, pa ponovno pokretanje nastavlja
-gde je stalo. Greška jednog dana (NBS ne odgovara) ne zaustavlja ostale. Lista se upisuje jednom; NBS je ne menja.
+**01.01.2016.** puni se jednom komandom `manage.py kursna_lista_nbs` (~4.000 stranica uz pauzu 3 s, oko 3,5
+sata; `--od`, `--do`, `--svi`) — dopunjuje samo dane bez liste, najnovije prvo, pa ponovno pokretanje nastavlja
+gde je stalo; može i u delovima (npr. `--od 01.01.2024.`). Greška jednog dana (NBS ne odgovara) ne zaustavlja
+ostale. **Zaštita od botova NBS** (umesto liste stranica F5 „TSPD”) zaustavlja preuzimanje odmah — 03.11.2026.
+uključila se uz pauzu od 0,5 s i trajala satima; pokreće se ponovo kasnije. Lista se upisuje jednom; NBS je ne menja.
 
 **Ekran** Finansije → Srednji kurs NBS (`/finansije/srednji-kurs/`, dozvola `finansije:kursna_lista`): period (može
 više godina, podrazumevano tekući mesec) i valuta. Bez valute — za svaku valutu prosek, najniži i najviši srednji

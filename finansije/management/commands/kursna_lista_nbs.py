@@ -12,7 +12,8 @@ def _datum(tekst):
 
 class Command(BaseCommand):
     help = ("Srednji kurs NBS za sve valute, dan po dan: dopunjuje dane bez liste od 01.01.2016. "
-            "Cela istorija (~4.000 stranica) traje oko sat vremena; ponovno pokretanje nastavlja gde je stalo.")
+            "Cela istorija (~4.000 stranica, pauza 3 s) traje oko 3,5 sata; ponovno pokretanje nastavlja gde je stalo. "
+            "Zaštita od botova NBS zaustavlja preuzimanje — pokrenuti ponovo kasnije.")
 
     def add_arguments(self, parser):
         parser.add_argument("--od", type=_datum, default=kursna_lista.PRVI_DAN, help="dd.mm.gggg")

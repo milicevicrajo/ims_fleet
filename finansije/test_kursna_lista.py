@@ -71,6 +71,14 @@ class PreuzimanjeTests(TestCase):
         self.assertEqual((r["dana"], r["gresaka"]), (2, 1))
         self.assertIn("31.10.2026.: ConnectionError", kursna_lista.poruka(r))
 
+    def test_zastita_od_botova_zaustavlja_preuzimanje(self):
+        zastita = '<script>window["bobcmn"] = "...TSPD/..."</script>'
+        r, trazeni = preuzmi({date(2026, 11, 2): zastita, **{d: s for d, s in STRANE.items() if d != date(2026, 11, 2)}},
+                             od=date(2026, 10, 30), do=date(2026, 11, 2))
+        self.assertEqual(trazeni, [date(2026, 11, 2)])  # posle blokade nijedan upit vise
+        self.assertEqual((r["dana"], r["gresaka"]), (0, 1))
+        self.assertIn("zaštitu od botova", kursna_lista.poruka(r))
+
     @patch("finansije.services.kursna_lista.timezone.localdate", return_value=date(2026, 11, 2))
     def test_automatski_ponovo_cita_poslednjih_5_dana_i_ispravlja_rano_preuzet_dan(self, _):
         preuzmi({date(2026, 11, 2): PETAK}, od=date(2026, 11, 2), do=date(2026, 11, 2))  # pre formiranja liste
