@@ -349,6 +349,7 @@
     - [6.1.25. Bilans stanja i Bilans uspeha (od 30.10.2026.)](#6125-bilans-stanja-i-bilans-uspeha-od-30102026)
     - [6.1.26. Izveštaj za nadzorni odbor (od 02.11.2026.)](#6126-izveštaj-za-nadzorni-odbor-od-02112026)
     - [6.1.27. Srednji kurs NBS (od 02.11.2026.)](#6127-srednji-kurs-nbs-od-02112026)
+    - [6.1.28. Racio analiza (od 04.11.2026.)](#6128-racio-analiza-od-04112026)
 - [6.2. Flota — obračuni goriva](#62-flota--obračuni-goriva)
     - [Zajednička osnova: šta se uopšte smatra gorivom](#zajednička-osnova-šta-se-uopšte-smatra-gorivom)
     - [V-03 — Neto iznos goriva iz bruto iznosa](#v-03--neto-iznos-goriva-iz-bruto-iznosa)
@@ -2974,6 +2975,7 @@ dozvolama, a ne samo trenutno prikazana stranica tabele.
 | **Bilans uspeha** (od 30.10.2026.) | `/finansije/bilans-uspeha/` — obrazac AOP za period, uporedo sa istim periodom prethodne godine |
 | Metodologija bilansa (od 30.10.2026.) | `/finansije/bilansi/metodologija/?izvestaj=BB\|BS\|BU` — kako se računa svaki bilans; tabele pozicija iz istog obrasca kao obračun |
 | **Izveštaj za nadzorni odbor** (od 02.11.2026.) | `/finansije/nadzorni-odbor/?prikaz=firma\|centri` — prihodi i rashodi po pozicijama, cela firma i po profitnim centrima, Excel i PDF ([6.1.26](#61-finansijska-analitika--obračuni)); plan, centri i broj zaposlenih: `/finansije/nadzorni-odbor/podesavanja/` |
+| **Racio analiza** (od 04.11.2026.) | `/finansije/racio-analiza/?na_dan=&broj_godina=&pdv=` — likvidnost, solventnost, profitabilnost i obrt po godinama iz bilansa, Excel ([6.1.28](#61-finansijska-analitika--obračuni)) |
 | **Srednji kurs NBS** (od 02.11.2026.) | `/finansije/srednji-kurs/?datum_od=&datum_do=&valuta=` — prosek svih valuta po radnim danima ili jedna valuta po danima, Excel ([6.1.27](#61-finansijska-analitika--obračuni)) |
 
 ---
@@ -5827,8 +5829,8 @@ koje su uklonjene 11.10.2026. (ostaju u git istoriji).
 | Program **Kancelarko** (Paragraf), dopuna 11.10.2026. | Danas se u njemu priprema ono što se do 30. aprila potpisuje i šalje Državnom arhivu. **Aplikacija treba da ga zameni u potpunosti** (O-31). |
 | Mejl o toku (Olivera) | Ceo tok u 14 koraka i 3 segmenta — okvir plana |
 | Propisi (odeljak 3) | Zahtevi za elektronsku overu, formate, metapodatke i čuvanje |
-| `arhiva doc/e-Arhiviranje Oktobar 2026.pptx` (Olga Zorić, „Elektronsko arhiviranje”, 77 slajdova) | Obaveze stvaraoca po Zakonu o arhivskoj građi, obrazac arhivske knjige (11 rubrika), Uredba 116/23, formati, interni akti (odeljak 4.7) |
-| `arhiva doc/eArhiviranje Vojkan Окт2026.pptx` (Vojkan Stanković, 92 slajda) | Obaveze prema eArhiv-u do aprila 2027, praktični postupci, mišljenje MIT od 25.12.2023. Deo je promocija komercijalnog softvera; na naslovnom slajdu piše „Jul 2021”, a sadržaj je dopunjavan (odeljak 4.7) |
+| `podaci/dokumenti/arhiva/e-Arhiviranje Oktobar 2026.pptx` (Olga Zorić, „Elektronsko arhiviranje”, 77 slajdova) | Obaveze stvaraoca po Zakonu o arhivskoj građi, obrazac arhivske knjige (11 rubrika), Uredba 116/23, formati, interni akti (odeljak 4.7) |
+| `podaci/dokumenti/arhiva/eArhiviranje Vojkan Окт2026.pptx` (Vojkan Stanković, 92 slajda) | Obaveze prema eArhiv-u do aprila 2027, praktični postupci, mišljenje MIT od 25.12.2023. Deo je promocija komercijalnog softvera; na naslovnom slajdu piše „Jul 2021”, a sadržaj je dopunjavan (odeljak 4.7) |
 | Kod aplikacije | Dokumenti koji već postoje i koje arhiva **linkuje** (odeljak 8) |
 
 ---
@@ -6216,7 +6218,7 @@ pravilnikom o el. dokumentima, O-23)
 
 #### 4.7 Dopune posle prezentacija e-Arhiviranje (07.10.2026.)
 
-**Izvori.** Dve prezentacije iz foldera `arhiva doc`:
+**Izvori.** Dve prezentacije iz foldera `podaci/dokumenti/arhiva` (lokalno, nije u git-u):
 
 - **Olga Zorić, „Elektronsko arhiviranje”** (ciklus „Digitalna transformacija…”, 77 slajdova): pravni okvir, obaveze
   stvaraoca po Zakonu o arhivskoj građi, obrazac arhivske knjige, Uredba 116/23, ZEDEIUP čl. 61–63, formati, interni
@@ -6874,8 +6876,8 @@ kontrolu i overu, a posle toga je elektronski dokument sa dokaznom snagom.)
 - [Paragraf — Šta je elektronsko arhiviranje, pitanja i odgovori](https://www.paragraf.rs/kancelarko/pitanja-odgovori-elektronsko-arhiviranje.html)
 - [Registar pružalaca kvalifikovanih usluga od poverenja](https://mit.gov.rs/tekst/sr/583/registar-pruzalaca-kvalifikovanih-usluga-od-poverenja-.php)
 - [TIM ERP — elektronsko arhiviranje i arhivska knjiga (primer drugog ERP-a)](https://www.tim-erp.com/ERPX_WEB/L36/helpPage.awp?P1=237)
-- Olga Zorić, „Elektronsko arhiviranje” (`arhiva doc/e-Arhiviranje Oktobar 2026.pptx`) — odeljak 4.7
-- Vojkan Stanković, „eArhiviranje – postupanja i realna rešenja” (`arhiva doc/eArhiviranje Vojkan Окт2026.pptx`;
+- Olga Zorić, „Elektronsko arhiviranje” (`podaci/dokumenti/arhiva/e-Arhiviranje Oktobar 2026.pptx`) — odeljak 4.7
+- Vojkan Stanković, „eArhiviranje – postupanja i realna rešenja” (`podaci/dokumenti/arhiva/eArhiviranje Vojkan Окт2026.pptx`;
   delom promocija softvera, naslovni slajd „Jul 2021”) — odeljak 4.7
 
 ---
@@ -10295,7 +10297,7 @@ latinica). Samo čitanje; servis `finansije/services/kursna_lista.py`.
 
 | Tabela | Sadržaj |
 |---|---|
-| `KursnaLista` | broj liste, godina (godina datuma formiranja), datum formiranja — jedinstveno po godini i broju |
+| `KursnaLista` | broj liste (prazan za listu unetu iz CSV-a), godina (godina datuma formiranja), datum formiranja — jedinstveno po datumu formiranja |
 | `KursValute` | oznaka (EUR), šifra (978), naziv zemlje, „važi za” (npr. 100 JPY), srednji kurs (4 decimale) |
 | `KursniDan` | kalendarski dan → lista koja tog dana važi |
 
@@ -10303,9 +10305,22 @@ Za vikend i praznik NBS prikazuje poslednju formiranu listu (npr. 01.11.2026. �
 01.01.2016. → lista 252 od 31.12.2015.), pa se dan vezuje za nju. **Radni dan sa sopstvenom listom** je dan kada je
 `KursniDan.datum = KursnaLista.datum_formiranja` — po tome se računa prosek srednjeg kursa za period po radnim danima.
 
-Zakazano svakog dana u **08:40** (`finansije.tasks.kursna_lista_nbs_task`, red `sync`): ponovo se čita
-**poslednjih 5 dana** (5 stranica), pa se ispravi i dan preuzet pre nego što je NBS formirala listu. Istorija od
-**01.01.2016.** puni se jednom komandom `manage.py kursna_lista_nbs` (~4.000 stranica uz pauzu 3 s, oko 3,5
+Zakazano svakog dana u **08:40** (`finansije.tasks.kursna_lista_nbs_task`, red `sync`): od 04.11.2026. čita se
+**samo taj dan — jedna stranica** (ranije poslednjih 5 dana; NBS je 03.11.2026. blokirao adresu Instituta zbog niza
+upita, a blokada je trajala i sutradan). Dan preuzet pre nego što je NBS formirala listu ostaje vezan za prethodnu
+listu; ispravlja se komandom `kursna_lista_nbs --od dd.mm.gggg. --do dd.mm.gggg. --svi`.
+
+**Istorija iz CSV izvoza NBS** (od 04.11.2026.): `manage.py kursna_lista_csv podaci/unos/kursna_lista` (fajlovi ili folder; `podaci/` je lokalni folder van git-a). Izvoz NBS
+za devize daje po kalendarskom danu datum formiranja, datum primene, kupovni i prodajni kurs jedne valute — bez
+srednjeg kursa i broja liste. Srednji kurs je kurs za koji su kupovni i prodajni tačno srednji ∓ 0,3 % (zaokruženo
+na 4 decimale); obično (kupovni + prodajni) / 2, a kad zbir nije paran u četvrtoj decimali, uzima se onaj od dva
+susedna kursa koji daje oba objavljena (14.03.2022.: 117,2971 / 118,0030 → **117,6500**). Kontrola: 03.11.2026.
+117,2171 / 117,9225 → 117,5698 = lista 210 na sajtu NBS. Uneta lista je **bez broja** (ekran: „bez broja”) i
+samo sa valutama iz CSV-a; kad se taj dan pročita sa sajta, lista dobija broj i ostale valute, a kurs iz CSV-a
+ostaje. Uvoz ne menja postojeće dane i kurseve (razliku samo prijavi), ponovno pokretanje ne duplira, a loš red
+poništava ceo uvoz. Prvi uvoz 04.11.2026.: EUR od 01.11.2017. do 04.11.2026.
+
+Dopuna sa sajta od **01.01.2016.**, dan po dan, ostaje komanda `manage.py kursna_lista_nbs` (~4.000 stranica uz pauzu 3 s, oko 3,5
 sata; `--od`, `--do`, `--svi`) — dopunjuje samo dane bez liste, najnovije prvo, pa ponovno pokretanje nastavlja
 gde je stalo; može i u delovima (npr. `--od 01.01.2024.`). Greška jednog dana (NBS ne odgovara) ne zaustavlja
 ostale. **Zaštita od botova NBS** (umesto liste stranica F5 „TSPD”) zaustavlja preuzimanje odmah — 03.11.2026.
@@ -10320,6 +10335,62 @@ više godina, podrazumevano tekući mesec) i valuta. Bez valute — za svaku val
 kurs i broj lista formiranih u periodu (radni dani). Sa valutom — svaki kalendarski dan sa brojem liste, datumom
 formiranja i kursom (vikend i praznik prigušeno), i prosek iz radnih dana. Excel sa kursom na 4 decimale. Ako se u
 periodu promenila jedinica „važi za”, ekran upozorava (prosek mešanih jedinica nema smisla).
+
+### 6.1.28. Racio analiza (od 04.11.2026.)
+
+Pokazatelji likvidnosti, solventnosti, profitabilnosti i aktivnosti po godinama, po dokumentu finansija „Racio
+analiza” (formule iz AOP pozicija). Servis `finansije/services/racio.py`; iznosi pozicija su iz Bilansa stanja i
+Bilansa uspeha (6.1.25, `bilansi.izracunaj`) — iste brojke kao na tim ekranima, bez novih podataka.
+
+**Pomoćne veličine** (AOP po obrascu iz `bilansi_obrazac.py`):
+
+| Veličina | AOP | Napomena |
+|---|---|---|
+| Stalna imovina / Obrtna imovina | 0002 / 0030 | |
+| Zalihe | 0031 | bez 0037 (stalna imovina za prodaju) — odluka 04.11.2026. |
+| Kupci / Kratkoročni fin. plasmani / Gotovina | 0038 / 0048 / 0057 | |
+| Ukupna aktiva | 0059 | |
+| Kapital | 0401 − 0455 | stvarni kapital, može biti negativan (0401 u obrascu nije) |
+| Dugoročna rezervisanja i obaveze | 0415 + 0429 + 0430 | uključuje odložene poreske obaveze i donacije, kao u dokumentu |
+| Kratkoročne obaveze / Dobavljači | 0431 / 0442 | |
+| Ukupne obaveze | dugoročne + kratkoročne | |
+| Kamatonosni dug | 0420 + 0433 | |
+| Prihodi od prodaje / Poslovni prihodi / Poslovni rashodi | 1002 + 1005 / 1001 / 1013 | |
+| Poslovni rezultat | 1025 − 1026 | |
+| Rashodi kamata | 1034 | kamate povezanim licima (u 1033) se ne izdvajaju |
+| Rezultat pre oporezivanja / Neto rezultat | 1049 − 1050 / 1055 − 1056 | |
+| EBIT / EBITDA | pre oporezivanja + 1034 / EBIT + 1020 | |
+
+**Pokazatelji** (23): likvidnost — opšti (≥ 1,5–2), rigorozni (≥ 1), gotovine (≥ 0,2), neto obrtni kapital (> 0);
+solventnost — učešće kapitala, zaduženost, D/E, pokriće stalne imovine kapitalom, zlatno bilansno pravilo (≥ 1),
+pokriće kamata, neto dug / EBITDA; profitabilnost — bruto marža na robi (samo kad ima prodaje robe, 1002 > 0),
+EBITDA, poslovna i neto marža, ROA, ROE; aktivnost — obrt imovine, obrt zaliha ((1014 + 1015) / prosečne zalihe),
+dani zaliha, DSO (365 × prosečni kupci / (prihodi od prodaje × PDV)), DPO (365 × prosečni dobavljači /
+((1014 + 1015 + 1022) × PDV)), ciklus konverzije gotovine. Formule su u `POKAZATELJI` i na ekranu ispod naziva.
+Orijentiri samo gde ih dokument daje; vrednost ispod orijentira je crvena, iznad zelena.
+
+**Pravila:**
+
+* kolona = godina: stanje na 31.12. (poslednja kolona na izabrani dan), tok od 01.01. do istog dana;
+* „prosečno” = (stanje na kraju kolone + stanje na 31.12. prethodne godine) / 2; bez stanja prethodne godine
+  pokazatelji sa prosekom su „—”;
+* nepuna godina: iznosi Bilansa uspeha se za pokazatelje množe sa (dana u godini / dana perioda); marže i
+  pokriće kamata se time ne menjaju, a pomoćne veličine ostaju stvarne. Ekran upozorava da pokazatelji nepune
+  godine **nisu uporedivi** sa zaključenim godinama — deo troškova i obaveza knjiži se tek na kraju godine
+  (probni obračun 04.11.2026.: kratkoročne obaveze 35 mil. prema 246 mil. na 31.12.2025., poslovna marža 25 %);
+* pokazatelj čiji je imenilac nula ili negativan je „—” (npr. D/E i ROE uz negativan kapital); dani vezivanja zaliha
+  su 0 kad zaliha nema;
+* faktor PDV-a za DSO i DPO je polje na ekranu (1,00–1,50, podrazumevano 1,20). **Otvoreno:** finansije nisu
+  odlučile koji faktor važi za Institut (deo prometa je bez PDV-a ili izvoz).
+
+**Ekran** Finansije → Racio analiza (`/finansije/racio-analiza/`, dozvola `finansije:racio_analiza` + pristup celoj
+firmi): dan, broj godina (1–10, podrazumevano 5), faktor PDV-a. Kontrole po godini (aktiva ≠ pasiva, konta bez
+pozicije, nepuna godina), pokazatelji po odeljcima i pomoćne veličine u dinarima. Excel: obe tabele, procenti kao
+broj sa „(%)” u nazivu.
+
+**Kontrolni primer** (`finansije/test_racio.py`): obrtna imovina 1.200, kratkoročne obaveze 600 → opšti racio 2;
+neto 400, aktiva 2.200 i 1.600 na 31.12. prethodne godine → ROA = 400 / 1.900 = 21,05 %; kupci 400 i 200, prihodi
+2.000, PDV 1,2 → DSO = 365 × 300 / 2.400 = 45,6 dana.
 
 ---
 
@@ -20263,7 +20334,7 @@ chrome-for-testing/  Chrome za Selenium
 | 07:10 | Nabavka — roba | `nabavka.tasks.sync_goods_task` | `sync` | — |
 | 07:30 | Nabavka — fiskalni računi koji čekaju proveru (stranica Poreske uprave nije bila dostupna) | `nabavka.tasks.fiskalni_ponovi_task` | `sync` | 60 min |
 | 07:45 | Flota — opomene za gorivo | `fleet.tasks.opomene_goriva_task` | `sync` | 30 min |
-| 08:40 | Finansije — srednji kurs NBS (sve valute, ponovo poslednjih 5 dana; istorija od 2016. komandom `kursna_lista_nbs`) | `finansije.tasks.kursna_lista_nbs_task` | `sync` | 30 min |
+| 08:40 | Finansije — srednji kurs NBS (sve valute, samo taj dan — od 04.11.2026.; istorija iz CSV-a komandom `kursna_lista_csv`) | `finansije.tasks.kursna_lista_nbs_task` | `sync` | 30 min |
 | **10:00 i 11:00** | **Finansije — osvežavanje `nalog_z`** | `finansije.tasks.refresh_nalog_z_task` | `sync` | SQL lock |
 | 12:30 | Putni nalozi — isplaćeno | `fleet.tasks.sync_putni_nalozi_isplaceno_task` | `sync` | 90 min |
 | svaki sat u :20 | Finansije — tekuća godina | `finansije.tasks.sync_current_year` | `sync` | SQL lock |

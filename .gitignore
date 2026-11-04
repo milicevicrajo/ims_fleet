@@ -97,3 +97,6 @@ tmp*.csv
 ~$*
 
 chrome-for-testing/
+
+# Lokalni radni fajlovi: podaci za unos, analize, izvorni dokumenti (podaci/README.md)
+podaci/

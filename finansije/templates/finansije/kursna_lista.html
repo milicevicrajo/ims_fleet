@@ -17,9 +17,9 @@
     <button class="btn btn-outline-success" type="submit" name="izvoz" value="xlsx" data-no-preloader><i class="mdi mdi-file-excel" aria-hidden="true"></i> Preuzmi Excel</button>
     <div class="finance-period-errors text-danger">{{ form.non_field_errors }}</div>
   </form>
-  <p class="finance-accounting-note mb-0">Izvor: kursna lista NBS „na željeni dan” (srednji kurs), preuzima se svakog jutra u 08:40.
-    {% if stanje.poslednja %}Poslednja preuzeta lista: <strong>{{ stanje.poslednja.broj }}/{{ stanje.poslednja.godina }}</strong> od {{ stanje.poslednja.datum_formiranja|date:"d.m.Y." }}.{% else %}Liste još nisu preuzete.{% endif %}
-    {% if stanje.nedostaje %}<span class="text-warning">Od 01.01.2016. nedostaje {{ stanje.nedostaje }} dana — istorija se puni komandom <code>kursna_lista_nbs</code>.</span>{% endif %}</p>
+  <p class="finance-accounting-note mb-0">Izvor: kursna lista NBS „na željeni dan” (srednji kurs), preuzima se svakog jutra u 08:40 (samo taj dan).
+    {% if stanje.poslednja %}Poslednja preuzeta lista: <strong>{{ stanje.poslednja.broj_liste }}</strong> od {{ stanje.poslednja.datum_formiranja|date:"d.m.Y." }}.{% else %}Liste još nisu preuzete.{% endif %}
+    {% if stanje.nedostaje %}<span class="text-warning">Od 01.01.2016. nedostaje {{ stanje.nedostaje }} dana — istorija se unosi iz CSV izvoza NBS komandom <code>kursna_lista_csv</code>.</span>{% endif %}</p>
 </div></div>
 {% if sazetak %}
 <div class="card"><div class="card-body">

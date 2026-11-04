@@ -1,5 +1,6 @@
 from calendar import monthrange
 from datetime import date, datetime
+from decimal import Decimal
 
 from django import forms
 from django.utils import timezone
@@ -192,6 +193,31 @@ class BilansStanjaForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["na_dan"].initial = timezone.localdate()
+        klase_polja(self)
+
+
+class DecimalniZarezField(forms.DecimalField):
+    """Decimalni broj sa zarezom ili tačkom (1,20 ili 1.20), nezavisno od jezika."""
+    widget = forms.TextInput(attrs={"inputmode": "decimal"})
+
+    def widget_attrs(self, widget):
+        return {}  # bez min/max/step: polje nije type=number
+
+    def to_python(self, value):
+        return super().to_python(value.replace(",", ".").strip() if isinstance(value, str) else value)
+
+
+class RacioForm(BilansStanjaForm):
+    """Racio analiza: kolone za godine do izabranog dana; faktor PDV-a za dane naplate i plaćanja (DSO, DPO)."""
+    broj_godina = forms.IntegerField(label="Broj godina", min_value=1, max_value=10, initial=5,
+                                     error_messages={"min_value": "Najmanje 1.", "max_value": "Najviše 10 godina."})
+    pdv = DecimalniZarezField(label="Faktor PDV-a (DSO/DPO)", min_value=1, max_value=Decimal("1.5"), decimal_places=2,
+                              initial="1,20", help_text="1,20 = promet sa PDV-om 20%; 1,00 = bez PDV-a.",
+                              error_messages={"invalid": "Unesite broj, npr. 1,20.", "min_value": "Najmanje 1,00.",
+                                              "max_value": "Najviše 1,50."})
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         klase_polja(self)
 
 

@@ -703,6 +703,37 @@ def _bilans(request, izvestaj):
 @require_GET
 @login_required
 @role_permission_required()
+def racio_analiza(request):
+    """Racio analiza po godinama iz Bilansa stanja i Bilansa uspeha (services/racio.py)."""
+    from .forms import RacioForm
+    from .services import racio
+
+    if not can_view_all(request.user):
+        raise PermissionDenied("Racio analiza zahteva pristup celoj firmi.")
+    request.session["current_app"] = "finansije"
+    pokrenut = "generisi" in request.GET or "izvoz" in request.GET
+    form = RacioForm(request.GET if pokrenut else None)
+    context = {"form": form, "pokrenut": pokrenut, "racio": None, "greska": "",
+               "sync_run": SyncRun.objects.filter(company=getattr(settings, "FINANSIJE_COMPANY", 1), status="success")
+                                         .only("finished_at").first()}
+    if pokrenut and form.is_valid():
+        na_dan, broj_godina, pdv = (form.cleaned_data[k] for k in ("na_dan", "broj_godina", "pdv"))
+        opis = f"Godine {na_dan.year - broj_godina + 1}–{na_dan.year}, poslednja do {na_dan:%d.%m.%Y.}"
+        try:
+            rezultat = racio.izradi(na_dan, broj_godina, pdv)
+        except DatabaseError:
+            logger.exception("Racio analiza nije izrađena")
+            context["greska"] = "Racio analizu trenutno nije moguće izraditi. Pokušajte ponovo."
+        else:
+            if request.GET.get("izvoz") == "xlsx":
+                return izvoz.excel_odgovor(racio.dokument(rezultat, opis), f"racio_analiza_{na_dan:%Y%m%d}")
+            context.update(racio=rezultat, opis=opis)
+    return render(request, "finansije/racio_analiza.html", context)
+
+
+@require_GET
+@login_required
+@role_permission_required()
 def bilansi_metodologija(request):
     """Kako se računaju Bruto bilans, Bilans stanja i Bilans uspeha; tabele pozicija iz istog obrasca kao obračun."""
     from .services import bilansi

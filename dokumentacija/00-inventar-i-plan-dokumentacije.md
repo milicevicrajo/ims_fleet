@@ -82,7 +82,7 @@ ims_fleet/
 ├── menice/                       Ulazne i izlazne menice (uz preuzimanje iz registra NBS)
 ├── mobilni/                      Mobilna telefonija: paketi, dodele, potrošnja, obustave
 ├── isplate/                      Generisanje virmana i konverzija za neoporeziva primanja
-├── izvestaji/                    Prazan direktorijum (nije Django aplikacija)      [P]
+├── podaci/                       Lokalni podaci za unos i analize — nije u git-u    [P]
 │
 ├── templates/                    Globalni šabloni (osnovni izgled, bočni meniji, prijava)
 ├── media/                        Otpremljeni fajlovi (slike vozila, dokumenti ugovora, saobraćajne)

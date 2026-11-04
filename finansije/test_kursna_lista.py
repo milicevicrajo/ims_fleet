@@ -82,16 +82,15 @@ class PreuzimanjeTests(TestCase):
         self.assertIn("zaštitu od botova", kursna_lista.poruka(r))
 
     @patch("finansije.services.kursna_lista.timezone.localdate", return_value=date(2026, 11, 2))
-    def test_automatski_ponovo_cita_poslednjih_5_dana_i_ispravlja_rano_preuzet_dan(self, _):
-        preuzmi({date(2026, 11, 2): PETAK}, od=date(2026, 11, 2), do=date(2026, 11, 2))  # pre formiranja liste
+    def test_automatski_cita_samo_danasnji_dan_jednim_upitom(self, _):
         trazeni = []
 
         def dan_html(_s, dan):
             trazeni.append(dan)
-            return kursna_lista.procitaj(STRANE.get(dan, PETAK))
+            return kursna_lista.procitaj(STRANE[dan])
         with patch.object(kursna_lista, "preuzmi_dan", side_effect=dan_html), patch.object(kursna_lista.time, "sleep"):
             kursna_lista.preuzmi_poslednje(s=object())
-        self.assertEqual(trazeni, [date(2026, 11, d) for d in (2, 1)] + [date(2026, 10, d) for d in (31, 30, 29)])
+        self.assertEqual(trazeni, [date(2026, 11, 2)])
         self.assertEqual(KursniDan.objects.get(datum=date(2026, 11, 2)).lista.broj, 209)
 
     def test_zakazano_svakog_jutra_na_redu_sync(self):
@@ -120,6 +119,61 @@ class PreuzimanjeTests(TestCase):
         self.assertIn("dana 4, novih lista 2, grešaka 0", poruka)
         self.assertEqual(settings.CELERY_TASK_ROUTES["finansije.tasks.kursna_lista_istorija_task"], {"queue": "sync"})
         self.assertNotIn("finansije.tasks.kursna_lista_istorija_task", {s["task"] for s in EXPECTED_PERIODIC_TASKS})
+
+
+CSV_ZAGLAVLJE = "﻿Датум формирања, Датум примене, Валута, Назив земље, Ознака, Важи за, Куповни, Продајни\n"
+CSV_REDOVI = ("30.10.2026,30.10.2026,978,EMU,EUR,1,117.1841,117.8893\n"
+              "30.10.2026,31.10.2026,978,EMU,EUR,1,117.1841,117.8893\n"
+              "30.10.2026,01.11.2026,978,EMU,EUR,1,117.1841,117.8893\n"
+              "02.11.2026,02.11.2026,978,EMU,EUR,1,117.1891,117.8943\n")
+
+
+class CsvTests(TestCase):
+    def csv(self, sadrzaj):
+        import tempfile
+        from pathlib import Path
+
+        folder = Path(tempfile.mkdtemp())
+        self.addCleanup(__import__("shutil").rmtree, folder)
+        putanja = folder / "kl.csv"
+        putanja.write_text(sadrzaj, encoding="utf-8")
+        return putanja
+
+    def test_srednji_kurs_iz_kupovnog_i_prodajnog(self):
+        self.assertEqual(kursna_lista.srednji_iz_kupovnog_i_prodajnog(D("117.2171"), D("117.9225")), D("117.5698"))
+        # 14.03.2022.: zbir nije paran u 4. decimali; samo 117,6500 daje oba objavljena kursa
+        self.assertEqual(kursna_lista.srednji_iz_kupovnog_i_prodajnog(D("117.2971"), D("118.0030")), D("117.6500"))
+        with self.assertRaises(kursna_lista.LosCsv):
+            kursna_lista.srednji_iz_kupovnog_i_prodajnog(D("100.0000"), D("110.0000"))
+
+    def test_uvoz_vikend_na_listu_petka_bez_broja_i_bez_dupliranja(self):
+        putanja = self.csv(CSV_ZAGLAVLJE + CSV_REDOVI)
+        r = kursna_lista.uvezi_csv([putanja])
+        self.assertEqual((r["novih_lista"], r["novih_kurseva"], r["novih_dana"]), (2, 2, 4))
+        nedelja = KursniDan.objects.get(datum=date(2026, 11, 1))
+        self.assertEqual((nedelja.lista.datum_formiranja, nedelja.lista.broj), (date(2026, 10, 30), None))
+        self.assertEqual(nedelja.lista.kursevi.get().srednji_kurs, D("117.5367"))
+        r = kursna_lista.uvezi_csv([putanja, putanja])
+        self.assertEqual((r["novih_lista"], r["novih_kurseva"], r["novih_dana"], r["razlika"]), (0, 0, 0, []))
+
+    def test_preuzimanje_sa_sajta_dopunjuje_listu_iz_csv_brojem_i_valutama(self):
+        kursna_lista.uvezi_csv([self.csv(CSV_ZAGLAVLJE + CSV_REDOVI)])
+        preuzmi(STRANE, od=date(2026, 11, 2), do=date(2026, 11, 2), svi=True)  # kao jutarnji zadatak
+        lista = KursnaLista.objects.get(datum_formiranja=date(2026, 11, 2))
+        self.assertEqual(lista.broj, 209)
+        self.assertEqual(dict(lista.kursevi.values_list("oznaka", "srednji_kurs")), {"EUR": D("117.5417"), "JPY": D("66.5959")})
+
+    def test_postojeci_kurs_se_ne_menja_a_razlika_se_prijavi(self):
+        preuzmi(STRANE, od=date(2026, 11, 2), do=date(2026, 11, 2))
+        r = kursna_lista.uvezi_csv([self.csv(CSV_ZAGLAVLJE + "02.11.2026,02.11.2026,978,EMU,EUR,1,116.9999,117.7041\n")])
+        self.assertEqual(len(r["razlika"]), 1)
+        self.assertEqual(KursValute.objects.get(oznaka="EUR").srednji_kurs, D("117.5417"))
+
+    def test_los_fajl_ne_unosi_nista(self):
+        with self.assertRaises(kursna_lista.LosCsv):
+            kursna_lista.uvezi_csv([self.csv(CSV_ZAGLAVLJE + CSV_REDOVI),
+                                    self.csv(CSV_ZAGLAVLJE + "02.11.2026,02.11.2026,978,EMU,EUR,1,abc,117\n")])
+        self.assertFalse(KursnaLista.objects.exists())
 
 
 class EkranTests(TestCase):

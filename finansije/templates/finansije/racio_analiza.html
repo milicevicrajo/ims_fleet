@@ -1,0 +1,61 @@
+{% extends "finansije/base.html" %}
+{% block title %}Racio analiza{% endblock %}
+{% block hero_title %}Racio analiza{% endblock %}
+{% block hero_description %}Likvidnost, solventnost, profitabilnost i obrt po godinama, iz Bilansa stanja i Bilansa uspeha{% endblock %}
+{% block hero_period %}{% if racio %}<div class="finance-hero-period"><i class="mdi mdi-calendar-range me-1" aria-hidden="true"></i><strong>{{ opis }}</strong></div>{% endif %}{% endblock %}
+{% block finance_content %}
+<style>
+  .racio-tabela td, .racio-tabela th { vertical-align: top; }
+  .racio-tabela .racio-odeljak td { background: #14395b; color: #fff; font-weight: 700; letter-spacing: .04em; }
+  .racio-tabela .racio-formula { color: #64748b; font-size: .8rem; }
+  .racio-tabela .racio-dobro { color: #15803d; font-weight: 600; }
+  .racio-tabela .racio-lose { color: #b91c1c; font-weight: 600; }
+</style>
+<div class="card"><div class="card-body finance-filter">
+  <form method="get" class="fleet-list-filter finance-period">
+    {% for field in form %}<div class="finance-period-field"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}
+    <button class="btn btn-primary" type="submit" name="generisi" value="1"><i class="mdi mdi-play" aria-hidden="true"></i> Generiši izveštaj</button>
+    <button class="btn btn-outline-success" type="submit" name="izvoz" value="xlsx" data-no-preloader><i class="mdi mdi-file-excel" aria-hidden="true"></i> Preuzmi Excel</button>
+    <div class="finance-period-errors text-danger">{{ form.non_field_errors }}</div>
+  </form>
+  <p class="finance-accounting-note mb-0">Iznosi pozicija su isti kao na ekranima Bilans stanja i Bilans uspeha (knjiženja Finansija{% if sync_run %}, poslednje preuzimanje {{ sync_run.finished_at|date:"d.m.Y. H:i" }}{% endif %}).
+    Svaka kolona je jedna godina: stanje na 31.12. (poslednja na izabrani dan), tok od 01.01. „Prosečno” = (kraj godine + 31.12. prethodne godine) / 2.
+    Za nepunu godinu Bilans uspeha se za pokazatelje preračunava na celu godinu. Faktor PDV-a važi samo za dane naplate i plaćanja.
+    „—” znači da se pokazatelj ne računa: imenilac je nula ili negativan, ili nema stanja prethodne godine.</p>
+</div></div>
+{% if greska %}<div class="alert alert-danger" role="alert">{{ greska }}</div>{% endif %}
+{% if racio %}
+{% with kolone=racio.kolone %}
+<div class="card"><div class="card-body">
+  <h2 class="finance-job-heading">Kontrole</h2>
+  <ul class="list-unstyled mb-0">{% for kolona in kolone %}{% for poruka, u_redu in kolona.kontrole %}
+    <li class="{% if u_redu is None %}text-muted{% elif u_redu %}text-success{% else %}text-danger{% endif %}"><i class="mdi {% if u_redu is None %}mdi-information-outline{% elif u_redu %}mdi-check-circle{% else %}mdi-alert-circle{% endif %}" aria-hidden="true"></i> <strong>{{ kolona.naslov }}:</strong> {{ poruka }}</li>
+  {% empty %}<li class="text-success"><i class="mdi mdi-check-circle" aria-hidden="true"></i> <strong>{{ kolona.naslov }}:</strong> bilans u ravnoteži.</li>{% endfor %}{% endfor %}</ul>
+</div></div>
+<div class="card"><div class="card-body">
+  <h2 class="finance-job-heading">Pokazatelji <small class="text-muted">· faktor PDV-a {{ racio.pdv|floatformat:"2" }}</small></h2>
+  <div class="table-responsive"><table class="table table-sm table-bordered racio-tabela" style="width:100%">
+    <thead><tr><th>Pokazatelj</th><th class="text-nowrap">Orijentir</th>{% for kolona in kolone %}<th class="text-end text-nowrap">{{ kolona.naslov }}</th>{% endfor %}</tr></thead>
+    <tbody>{% for odeljak, stavke in racio.odeljci %}
+      <tr class="racio-odeljak"><td colspan="{{ kolone|length|add:2 }}">{{ odeljak }}</td></tr>
+      {% for s in stavke %}<tr>
+        <td>{{ s.naziv }}<div class="racio-formula">{{ s.formula }}</div></td>
+        <td class="text-nowrap">{{ s.orijentir }}</td>
+        {% for vrednost, u_redu in s.vrednosti %}<td class="text-end text-nowrap{% if u_redu is True %} racio-dobro{% elif u_redu is False %} racio-lose{% endif %}">{% if vrednost is None %}—{% elif s.vrsta == "procenat" %}{{ vrednost|floatformat:"2g" }}%{% elif s.vrsta == "dani" %}{{ vrednost|floatformat:"0g" }}{% else %}{{ vrednost|floatformat:"2g" }}{% endif %}</td>{% endfor %}
+      </tr>{% endfor %}
+    {% endfor %}</tbody>
+  </table></div>
+</div></div>
+<div class="card"><div class="card-body">
+  <h2 class="finance-job-heading">Pomoćne veličine <small class="text-muted">· u dinarima; Bilans uspeha za stvarni period, bez preračuna</small></h2>
+  <div class="table-responsive"><table class="table table-sm table-bordered racio-tabela" style="width:100%">
+    <thead><tr><th>Veličina</th><th>AOP</th>{% for kolona in kolone %}<th class="text-end text-nowrap">{{ kolona.naslov }}</th>{% endfor %}</tr></thead>
+    <tbody>{% for p in racio.pomocne %}<tr>
+      <td>{{ p.naziv }}{% if p.tok %} <span class="racio-formula">(period)</span>{% endif %}</td><td class="racio-formula text-nowrap">{{ p.formula }}</td>
+      {% for iznos in p.vrednosti %}<td class="text-end text-nowrap{% if iznos is not None and iznos < 0 %} text-danger{% endif %}">{% if iznos is None %}—{% else %}{{ iznos|floatformat:"2g" }}{% endif %}</td>{% endfor %}
+    </tr>{% endfor %}</tbody>
+  </table></div>
+</div></div>
+{% endwith %}
+{% endif %}
+{% endblock %}

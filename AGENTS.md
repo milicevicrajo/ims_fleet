@@ -213,7 +213,7 @@ Puna tabela rasporeda: [`dokumentacija/docs/09-odrzavanje.md`](dokumentacija/doc
 | 1 | Modeli iz `core/models.py` i `hr/models.py` imaju `app_label = "fleet"` — tabele su `fleet_employee`, `fleet_activity_log`, `fleet_task_history`, ne `core_*` ni `hr_*` |
 | 2 | `hr/models.py` definiše `Employee`, ali ga `fleet` uvozi kao `from hr.models import Employee`, dok `CustomUser.employee` pokazuje na `"fleet.Employee"` — isti model, dva imena |
 | 3 | Aplikacija `fleet` drži i korenske rute: prijavu, kontrolnu tablu, korisnike, log rada |
-| 4 | `izvestaji/` je **prazan direktorijum**, nije Django aplikacija |
+| 4 | `podaci/` nije deo aplikacije i nije u git-u: lokalni podaci za unos (`podaci/unos/`), analize i izvorni dokumenti (od 04.11.2026.; bivši `izvestaji/`, `outputs/`, `arhiva doc/`). Aplikacija ga ne čita — ne oslanjaj se na njega u kodu |
 | 5 | Bočni meni `kadrovi` nije Django aplikacija — koristi `hr`. Meni `pravna` jeste aplikacija `pravna`, ali uz nju prikazuje i `ugovori` |
 | 6 | U obračunu obustava mobilnih jedan broj (`381637781481`) ima poseban tretman upisan u kod |
 | 7 | Registarske oznake se normalizuju kroz `fleet/support/vehicle.py: format_license_plate` — nikad ne poredi tablice sirovo |

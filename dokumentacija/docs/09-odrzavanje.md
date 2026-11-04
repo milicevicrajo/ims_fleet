@@ -63,7 +63,7 @@
 | 07:10 | Nabavka — roba | `nabavka.tasks.sync_goods_task` | `sync` | — |
 | 07:30 | Nabavka — fiskalni računi koji čekaju proveru (stranica Poreske uprave nije bila dostupna) | `nabavka.tasks.fiskalni_ponovi_task` | `sync` | 60 min |
 | 07:45 | Flota — opomene za gorivo | `fleet.tasks.opomene_goriva_task` | `sync` | 30 min |
-| 08:40 | Finansije — srednji kurs NBS (sve valute, ponovo poslednjih 5 dana; istorija od 2016. komandom `kursna_lista_nbs`) | `finansije.tasks.kursna_lista_nbs_task` | `sync` | 30 min |
+| 08:40 | Finansije — srednji kurs NBS (sve valute, samo taj dan — od 04.11.2026.; istorija iz CSV-a komandom `kursna_lista_csv`) | `finansije.tasks.kursna_lista_nbs_task` | `sync` | 30 min |
 | **10:00 i 11:00** | **Finansije — osvežavanje `nalog_z`** | `finansije.tasks.refresh_nalog_z_task` | `sync` | SQL lock |
 | 12:30 | Putni nalozi — isplaćeno | `fleet.tasks.sync_putni_nalozi_isplaceno_task` | `sync` | 90 min |
 | svaki sat u :20 | Finansije — tekuća godina | `finansije.tasks.sync_current_year` | `sync` | SQL lock |

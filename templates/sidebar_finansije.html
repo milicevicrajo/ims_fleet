@@ -11,6 +11,7 @@
 {% url 'finansije:bilans_stanja' as bilans_stanja_url %}
 {% url 'finansije:bilans_uspeha' as bilans_uspeha_url %}
 {% url 'finansije:bilansi_metodologija' as bilansi_metodologija_url %}
+{% url 'finansije:racio_analiza' as racio_analiza_url %}
 {% url 'finansije:nadzorni_odbor' as nadzorni_odbor_url %}
 {% url 'finansije:kursna_lista' as kursna_lista_url %}
 <aside class="left-sidebar" data-sidebarbg="skin5"><div class="scroll-sidebar"><nav class="sidebar-nav"><ul id="sidebarnav" class="pt-4">
@@ -25,6 +26,9 @@
   {% endif %}
   {% if finansije_permissions.bilans_uspeha and finansije_permissions.view_all %}
     {% include "finansije/_sidebar_item.html" with section="bilans_uspeha" label="Bilans uspeha" icon="mdi-chart-line" href=bilans_uspeha_url %}
+  {% endif %}
+  {% if finansije_permissions.racio_analiza and finansije_permissions.view_all %}
+    {% include "finansije/_sidebar_item.html" with section="racio_analiza" label="Racio analiza" icon="mdi-percent-outline" href=racio_analiza_url %}
   {% endif %}
   {% if finansije_permissions.nadzorni_odbor and finansije_permissions.view_all %}
     {% include "finansije/_sidebar_item.html" with section="nadzorni_odbor" label="Izveštaj za nadzorni odbor" icon="mdi-account-tie" href=nadzorni_odbor_url %}

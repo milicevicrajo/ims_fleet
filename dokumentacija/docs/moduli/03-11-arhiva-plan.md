@@ -25,8 +25,8 @@ koje su uklonjene 11.10.2026. (ostaju u git istoriji).
 | Program **Kancelarko** (Paragraf), dopuna 11.10.2026. | Danas se u njemu priprema ono što se do 30. aprila potpisuje i šalje Državnom arhivu. **Aplikacija treba da ga zameni u potpunosti** (O-31). |
 | Mejl o toku (Olivera) | Ceo tok u 14 koraka i 3 segmenta — okvir plana |
 | Propisi (odeljak 3) | Zahtevi za elektronsku overu, formate, metapodatke i čuvanje |
-| `arhiva doc/e-Arhiviranje Oktobar 2026.pptx` (Olga Zorić, „Elektronsko arhiviranje”, 77 slajdova) | Obaveze stvaraoca po Zakonu o arhivskoj građi, obrazac arhivske knjige (11 rubrika), Uredba 116/23, formati, interni akti (odeljak 4.7) |
-| `arhiva doc/eArhiviranje Vojkan Окт2026.pptx` (Vojkan Stanković, 92 slajda) | Obaveze prema eArhiv-u do aprila 2027, praktični postupci, mišljenje MIT od 25.12.2023. Deo je promocija komercijalnog softvera; na naslovnom slajdu piše „Jul 2021”, a sadržaj je dopunjavan (odeljak 4.7) |
+| `podaci/dokumenti/arhiva/e-Arhiviranje Oktobar 2026.pptx` (Olga Zorić, „Elektronsko arhiviranje”, 77 slajdova) | Obaveze stvaraoca po Zakonu o arhivskoj građi, obrazac arhivske knjige (11 rubrika), Uredba 116/23, formati, interni akti (odeljak 4.7) |
+| `podaci/dokumenti/arhiva/eArhiviranje Vojkan Окт2026.pptx` (Vojkan Stanković, 92 slajda) | Obaveze prema eArhiv-u do aprila 2027, praktični postupci, mišljenje MIT od 25.12.2023. Deo je promocija komercijalnog softvera; na naslovnom slajdu piše „Jul 2021”, a sadržaj je dopunjavan (odeljak 4.7) |
 | Kod aplikacije | Dokumenti koji već postoje i koje arhiva **linkuje** (odeljak 8) |
 
 ---
@@ -414,7 +414,7 @@ pravilnikom o el. dokumentima, O-23)
 
 ### 4.7 Dopune posle prezentacija e-Arhiviranje (07.10.2026.)
 
-**Izvori.** Dve prezentacije iz foldera `arhiva doc`:
+**Izvori.** Dve prezentacije iz foldera `podaci/dokumenti/arhiva` (lokalno, nije u git-u):
 
 - **Olga Zorić, „Elektronsko arhiviranje”** (ciklus „Digitalna transformacija…”, 77 slajdova): pravni okvir, obaveze
   stvaraoca po Zakonu o arhivskoj građi, obrazac arhivske knjige, Uredba 116/23, ZEDEIUP čl. 61–63, formati, interni
@@ -1072,6 +1072,6 @@ kontrolu i overu, a posle toga je elektronski dokument sa dokaznom snagom.)
 - [Paragraf — Šta je elektronsko arhiviranje, pitanja i odgovori](https://www.paragraf.rs/kancelarko/pitanja-odgovori-elektronsko-arhiviranje.html)
 - [Registar pružalaca kvalifikovanih usluga od poverenja](https://mit.gov.rs/tekst/sr/583/registar-pruzalaca-kvalifikovanih-usluga-od-poverenja-.php)
 - [TIM ERP — elektronsko arhiviranje i arhivska knjiga (primer drugog ERP-a)](https://www.tim-erp.com/ERPX_WEB/L36/helpPage.awp?P1=237)
-- Olga Zorić, „Elektronsko arhiviranje” (`arhiva doc/e-Arhiviranje Oktobar 2026.pptx`) — odeljak 4.7
-- Vojkan Stanković, „eArhiviranje – postupanja i realna rešenja” (`arhiva doc/eArhiviranje Vojkan Окт2026.pptx`;
+- Olga Zorić, „Elektronsko arhiviranje” (`podaci/dokumenti/arhiva/e-Arhiviranje Oktobar 2026.pptx`) — odeljak 4.7
+- Vojkan Stanković, „eArhiviranje – postupanja i realna rešenja” (`podaci/dokumenti/arhiva/eArhiviranje Vojkan Окт2026.pptx`;
   delom promocija softvera, naslovni slajd „Jul 2021”) — odeljak 4.7

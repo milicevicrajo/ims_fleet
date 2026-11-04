@@ -387,18 +387,22 @@ class KursnaLista(models.Model):
     """Kursna lista NBS za zvanični srednji kurs dinara (od 02.11.2026., `services/kursna_lista`).
 
     NBS je formira radnim danom; broj liste kreće od 1 svake godine. Godina je godina datuma formiranja.
+    Jedna lista po datumu formiranja. Lista uneta iz CSV izvoza NBS (od 04.11.2026.) nema broj — izvoz ga ne sadrži.
     """
     godina = models.PositiveSmallIntegerField()
-    broj = models.PositiveSmallIntegerField()
-    datum_formiranja = models.DateField(db_index=True)
+    broj = models.PositiveSmallIntegerField(null=True, blank=True)
+    datum_formiranja = models.DateField(unique=True)
     preuzeto = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-datum_formiranja"]
-        constraints = [models.UniqueConstraint(fields=["godina", "broj"], name="finansije_kursna_lista_jedinstvena")]
 
     def __str__(self):
-        return f"{self.broj}/{self.godina} ({self.datum_formiranja:%d.%m.%Y.})"
+        return f"{self.broj_liste} ({self.datum_formiranja:%d.%m.%Y.})"
+
+    @property
+    def broj_liste(self):
+        return f"{self.broj}/{self.godina}" if self.broj else "bez broja"
 
 
 class KursValute(models.Model):

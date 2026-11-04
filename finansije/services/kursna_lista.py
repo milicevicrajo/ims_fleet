@@ -4,13 +4,15 @@ Za svaki kalendarski dan čita se stranica „Na željeni dan” (latinica) i up
 formiranja i srednji kurs svih valuta. Za vikend i praznik NBS prikazuje poslednju formiranu listu,
 pa se dan vezuje za nju (`KursniDan`); prosek po radnim danima računa se iz lista formiranih u periodu.
 
-Zakazano preuzimanje svakog jutra ponovo čita poslednjih `AUTOMATSKI_DANA` dana (i dan preuzet pre nego
-što je NBS formirala listu se tako ispravi). Istorija od `PRVI_DAN` puni se jednom, komandom `kursna_lista_nbs`.
+Zakazano preuzimanje svakog jutra čita samo taj dan — jednu stranicu (od 04.11.2026.; više upita zaredom
+NBS blokira). Istorija se unosi iz CSV izvoza NBS (`uvezi_csv`, komanda `kursna_lista_csv`); dopuna sa sajta,
+dan po dan, ostaje komanda `kursna_lista_nbs`.
 """
+import csv
 import re
 import time
 from datetime import date, timedelta
-from decimal import Decimal
+from decimal import ROUND_CEILING, ROUND_FLOOR, ROUND_HALF_UP, Decimal
 
 from bs4 import BeautifulSoup
 from django.db import transaction
@@ -22,7 +24,7 @@ from finansije.models import KursnaLista, KursniDan, KursValute
 ADRESA = "https://webappcenter.nbs.rs/ExchangeRateWebApp/ExchangeRate/IndexByDate"
 SREDNJI_KURS = "3"  # ExchangeRateListTypeID
 PRVI_DAN = date(2016, 1, 1)
-AUTOMATSKI_DANA = 5
+AUTOMATSKI_DANA = 1  # samo današnji dan, jedan upit
 RAZMAK = 3  # sekundi između stranica; na 0,5 s NBS je 03.11.2026. uključio zaštitu od botova
 
 
@@ -81,11 +83,17 @@ def preuzmi_dan(s, dan):
 
 @transaction.atomic
 def sacuvaj(dan, broj, formirana, kursevi):
-    """Lista se upisuje jednom (NBS je ne menja); dan se vezuje za listu koju je NBS prikazala."""
-    lista, nova = KursnaLista.objects.get_or_create(godina=formirana.year, broj=broj,
-                                                    defaults={"datum_formiranja": formirana})
-    if nova:
-        KursValute.objects.bulk_create([KursValute(lista=lista, **k) for k in kursevi])
+    """Lista se upisuje jednom (NBS je ne menja); dan se vezuje za listu koju je NBS prikazala.
+
+    Lista uneta iz CSV-a (bez broja, samo EUR) dobija broj i ostale valute kad se taj dan pročita sa sajta.
+    """
+    lista, nova = KursnaLista.objects.get_or_create(datum_formiranja=formirana,
+                                                    defaults={"godina": formirana.year, "broj": broj})
+    if lista.broj is None:
+        lista.broj = broj
+        lista.save(update_fields=["broj"])
+    postoje = set(lista.kursevi.values_list("oznaka", flat=True))
+    KursValute.objects.bulk_create([KursValute(lista=lista, **k) for k in kursevi if k["oznaka"] not in postoje])
     KursniDan.objects.update_or_create(datum=dan, defaults={"lista": lista})
     return lista, nova
 
@@ -116,7 +124,7 @@ def preuzmi(od=PRVI_DAN, do=None, svi=False, javi=None, s=None):
         rezultat["dana"] += 1
         rezultat["novih_lista"] += nova
         if javi and (nova or i % 50 == 0):
-            javi(f"{dan:%d.%m.%Y.} → lista {lista.broj}/{lista.godina} od {lista.datum_formiranja:%d.%m.%Y.}"
+            javi(f"{dan:%d.%m.%Y.} → lista {lista.broj_liste} od {lista.datum_formiranja:%d.%m.%Y.}"
                  + (", nova" if nova else ""))
     return rezultat
 
@@ -124,6 +132,92 @@ def preuzmi(od=PRVI_DAN, do=None, svi=False, javi=None, s=None):
 def preuzmi_poslednje(dana=AUTOMATSKI_DANA, s=None):
     danas = timezone.localdate()
     return preuzmi(danas - timedelta(days=dana - 1), danas, svi=True, s=s)
+
+
+# --- Istorija iz CSV izvoza NBS -----------------------------------------------------------------------
+# Izvoz sa sajta NBS (kursna lista za devize, jedna valuta, period): po kalendarskom danu „Datum formiranja,
+# Datum primene, Valuta, Naziv zemlje, Oznaka, Važi za, Kupovni, Prodajni”. Srednjeg kursa i broja liste nema.
+
+KUPOVNI, PRODAJNI = Decimal("0.997"), Decimal("1.003")  # NBS: kupovni i prodajni = srednji ∓ 0,3 %
+CETIRI = Decimal("0.0001")
+
+
+class LosCsv(Exception):
+    pass
+
+
+def srednji_iz_kupovnog_i_prodajnog(kupovni, prodajni):
+    """Srednji kurs na 4 decimale za koji su kupovni i prodajni tačno srednji ∓ 0,3 % (zaokruženo).
+
+    Obično je to (kupovni + prodajni) / 2; kad zbir nije paran u četvrtoj decimali (14.03.2022.), bira se onaj od
+    dva susedna kursa koji daje oba objavljena kursa. Ako nijedan ili oba — greška, ne pogađa se.
+    """
+    pola = (kupovni + prodajni) / 2
+    kandidati = {pola.quantize(CETIRI, rounding=r) for r in (ROUND_FLOOR, ROUND_CEILING)}
+    dobri = [m for m in kandidati if (m * KUPOVNI).quantize(CETIRI, ROUND_HALF_UP) == kupovni
+             and (m * PRODAJNI).quantize(CETIRI, ROUND_HALF_UP) == prodajni]
+    if len(dobri) != 1:
+        raise LosCsv(f"kupovni {kupovni} i prodajni {prodajni} ne daju jedan srednji kurs")
+    return dobri[0]
+
+
+def _csv_datum(tekst):
+    d, m, g = (int(x) for x in tekst.strip().rstrip(".").split("."))
+    return date(g, m, d)
+
+
+def procitaj_csv(putanja):
+    """[{datum, formirana, oznaka, sifra, zemlja, vazi_za, srednji_kurs}] — jedan red po kalendarskom danu."""
+    redovi = []
+    with open(putanja, encoding="utf-8-sig", newline="") as f:
+        citac = csv.reader(f)
+        zaglavlje = [x.strip().lower() for x in next(citac, [])]
+        if len(zaglavlje) != 8 or not any(r in zaglavlje[6] for r in ("куповни", "kupovni")):
+            raise LosCsv(f"{putanja}: nije CSV izvoz kursne liste NBS (kupovni/prodajni)")
+        for i, red in enumerate(citac, start=2):
+            if not any(x.strip() for x in red):
+                continue
+            try:
+                formirana, primena, sifra, zemlja, oznaka, vazi_za, kupovni, prodajni = (x.strip() for x in red)
+                redovi.append({"datum": _csv_datum(primena), "formirana": _csv_datum(formirana), "oznaka": oznaka,
+                               "sifra": sifra, "zemlja": zemlja, "vazi_za": int(vazi_za),
+                               "srednji_kurs": srednji_iz_kupovnog_i_prodajnog(Decimal(kupovni), Decimal(prodajni))})
+            except (ValueError, ArithmeticError, LosCsv) as exc:
+                raise LosCsv(f"{putanja}, red {i}: {exc}") from exc
+    return redovi
+
+
+@transaction.atomic
+def uvezi_csv(putanje):
+    """Unosi istoriju iz CSV izvoza NBS. Ne menja ništa što već postoji: dan koji već ima listu ostaje na njoj,
+    a valuta koja je već na listi zadržava svoj kurs (razlika se samo prijavi). Ponovno pokretanje ne duplira."""
+    redovi = {}
+    for putanja in putanje:
+        for r in procitaj_csv(putanja):
+            kljuc = (r["datum"], r["oznaka"])
+            if kljuc in redovi and redovi[kljuc] != r:
+                raise LosCsv(f"{r['datum']:%d.%m.%Y.} {r['oznaka']}: fajlovi se ne slažu")
+            redovi[kljuc] = r
+    rezultat = {"redova": len(redovi), "novih_lista": 0, "novih_kurseva": 0, "novih_dana": 0, "razlika": []}
+    liste = {}
+    for r in sorted(redovi.values(), key=lambda r: (r["formirana"], r["datum"])):
+        lista = liste.get(r["formirana"])
+        if lista is None:
+            lista, nova = KursnaLista.objects.get_or_create(datum_formiranja=r["formirana"],
+                                                            defaults={"godina": r["formirana"].year, "broj": None})
+            liste[r["formirana"]] = lista
+            rezultat["novih_lista"] += nova
+        kurs = {k: r[k] for k in ("oznaka", "sifra", "zemlja", "vazi_za", "srednji_kurs")}
+        postojeci = KursValute.objects.filter(lista=lista, oznaka=r["oznaka"]).first()
+        if postojeci is None:
+            KursValute.objects.create(lista=lista, **kurs)
+            rezultat["novih_kurseva"] += 1
+        elif (postojeci.srednji_kurs, postojeci.vazi_za) != (r["srednji_kurs"], r["vazi_za"]):
+            rezultat["razlika"].append(f"{r['formirana']:%d.%m.%Y.} {r['oznaka']}: u bazi {postojeci.srednji_kurs}, "
+                                       f"u CSV-u {r['srednji_kurs']}")
+        _, nov = KursniDan.objects.get_or_create(datum=r["datum"], defaults={"lista": lista})
+        rezultat["novih_dana"] += nov
+    return rezultat
 
 
 def poruka(r):

@@ -40,7 +40,7 @@ EXPECTED_PERIODIC_TASKS = [
         "minute": "30",
     },
     {
-        # Od 02.11.2026.: srednji kurs NBS za sve valute, ponovo poslednjih 5 dana (istorija: komanda kursna_lista_nbs).
+        # Od 02.11.2026.: srednji kurs NBS za sve valute; od 04.11.2026. samo taj dan (istorija: komanda kursna_lista_csv).
         "name": "Finansije - srednji kurs NBS",
         "task": "finansije.tasks.kursna_lista_nbs_task",
         "hour": "8",

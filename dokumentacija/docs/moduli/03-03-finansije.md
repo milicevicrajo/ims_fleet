@@ -95,6 +95,7 @@ dozvolama, a ne samo trenutno prikazana stranica tabele.
 | **Bilans uspeha** (od 30.10.2026.) | `/finansije/bilans-uspeha/` — obrazac AOP za period, uporedo sa istim periodom prethodne godine |
 | Metodologija bilansa (od 30.10.2026.) | `/finansije/bilansi/metodologija/?izvestaj=BB\|BS\|BU` — kako se računa svaki bilans; tabele pozicija iz istog obrasca kao obračun |
 | **Izveštaj za nadzorni odbor** (od 02.11.2026.) | `/finansije/nadzorni-odbor/?prikaz=firma\|centri` — prihodi i rashodi po pozicijama, cela firma i po profitnim centrima, Excel i PDF ([6.1.26](../obracuni/06-01-finansije.md)); plan, centri i broj zaposlenih: `/finansije/nadzorni-odbor/podesavanja/` |
+| **Racio analiza** (od 04.11.2026.) | `/finansije/racio-analiza/?na_dan=&broj_godina=&pdv=` — likvidnost, solventnost, profitabilnost i obrt po godinama iz bilansa, Excel ([6.1.28](../obracuni/06-01-finansije.md)) |
 | **Srednji kurs NBS** (od 02.11.2026.) | `/finansije/srednji-kurs/?datum_od=&datum_do=&valuta=` — prosek svih valuta po radnim danima ili jedna valuta po danima, Excel ([6.1.27](../obracuni/06-01-finansije.md)) |
 
 ---
