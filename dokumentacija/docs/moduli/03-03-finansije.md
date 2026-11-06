@@ -326,10 +326,18 @@ uz pristup celoj firmi): **status** (automatski, aktivna, istorijska, nije banka
 prikazuje se ispod glavne. Ručni status ima prednost nad automatskim.
 
 Kartice banke idu redom: **Osnovni podaci, Podaci sa NBS, Grupa i povezana lica, Kontakti,
-Promet po računima, Menice, Garancije, Oročena sredstva**. Početni period je 1. januar tekuće godine do danas.
+Promet po računima, Izvodi, Menice, Garancije, Oročena sredstva**. Početni period je 1. januar tekuće godine do danas.
 Može se izabrati drugi period unutar jedne godine od 2025. nadalje. Za svaki račun
 odvojeno se prikazuju promet izabranog perioda i povećanja/smanjenja od početka
 izabrane godine do danas, odnosno do 31. decembra za završene godine.
+
+Kartica **Izvodi** (od 06.11.2026., posle Prometa po računima) prikazuje spisak izvoda banke za **izabranu
+godinu** (od 2026.): datum, broj naloga, duguje (priliv) i potražuje (odliv), sa zbirom. Izvor je pogled
+`dbo.v_izvodi_banka` u `IMS_ERP` (vlasnik je knjigovodstvo; aplikacija ga samo čita, `finansije/services/izvodi.py`):
+stavke `nalog_z` konta `24100`, grupe partnera 11, od 2026., sabrane po godini, datumu, broju naloga i partneru;
+red pripada banci po `sif_par` = šifri banke. Pogled čita **lokalnu kopiju** `IMS_ERP.dbo.nalog_z` (osvežava je
+`sp_AzurirajNalogZ` u 10:00 i 11:00), ne udaljeni izvor, i ne filtrira preduzeće (`sif_pred`). Pogled nema centar,
+pa izvode vide samo korisnici sa celim obuhvatom Finansija (`finansije:view_all`); ostali vide obaveštenje.
 
 ### Podaci sa NBS, bankarske grupe i istorijske banke (od 29.10.2026.)
 

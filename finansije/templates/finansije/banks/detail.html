@@ -38,6 +38,8 @@
   <thead><tr><th>Vrsta posla</th><th>Osoba / funkcija</th><th>Telefon</th><th>Email osobe</th><th>Zajednički emailovi</th><th>Napomena</th><th></th></tr></thead>
   <tbody>{% for item in contacts %}<tr><td>{{ item.segment }}</td><td>{{ item.name|default:"—" }}<small class="d-block text-muted">{{ item.position }}</small></td><td>{{ item.phone|default:"—" }}</td><td>{{ item.email|default:"—" }}</td><td>{{ item.shared_emails|linebreaksbr }}</td><td>{{ item.note|linebreaksbr }}</td><td class="text-nowrap">{% if can_contact_edit %}<a class="btn btn-sm btn-outline-primary" href="{% url 'finansije:bank_contact_edit' bank.code item.pk %}">Izmeni</a>{% endif %} {% if can_contact_delete %}<a class="btn btn-sm btn-outline-danger" href="{% url 'finansije:bank_contact_delete' bank.code item.pk %}">Obriši</a>{% endif %}</td></tr>{% empty %}<tr><td colspan="7">Nema unetih kontakata. Za isti segment možete dodati više osoba, kao i red samo sa zajedničkim emailovima.</td></tr>{% endfor %}</tbody>
   </table></div></div></div>
+{% elif tab == 'statements' %}
+  {% include "finansije/banks/_statements.html" %}
 {% elif tab == 'bills' %}
   {% include "finansije/banks/_bills.html" %}
 {% else %}

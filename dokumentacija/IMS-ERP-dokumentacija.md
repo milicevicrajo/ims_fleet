@@ -3206,10 +3206,18 @@ uz pristup celoj firmi): **status** (automatski, aktivna, istorijska, nije banka
 prikazuje se ispod glavne. Ručni status ima prednost nad automatskim.
 
 Kartice banke idu redom: **Osnovni podaci, Podaci sa NBS, Grupa i povezana lica, Kontakti,
-Promet po računima, Menice, Garancije, Oročena sredstva**. Početni period je 1. januar tekuće godine do danas.
+Promet po računima, Izvodi, Menice, Garancije, Oročena sredstva**. Početni period je 1. januar tekuće godine do danas.
 Može se izabrati drugi period unutar jedne godine od 2025. nadalje. Za svaki račun
 odvojeno se prikazuju promet izabranog perioda i povećanja/smanjenja od početka
 izabrane godine do danas, odnosno do 31. decembra za završene godine.
+
+Kartica **Izvodi** (od 06.11.2026., posle Prometa po računima) prikazuje spisak izvoda banke za **izabranu
+godinu** (od 2026.): datum, broj naloga, duguje (priliv) i potražuje (odliv), sa zbirom. Izvor je pogled
+`dbo.v_izvodi_banka` u `IMS_ERP` (vlasnik je knjigovodstvo; aplikacija ga samo čita, `finansije/services/izvodi.py`):
+stavke `nalog_z` konta `24100`, grupe partnera 11, od 2026., sabrane po godini, datumu, broju naloga i partneru;
+red pripada banci po `sif_par` = šifri banke. Pogled čita **lokalnu kopiju** `IMS_ERP.dbo.nalog_z` (osvežava je
+`sp_AzurirajNalogZ` u 10:00 i 11:00), ne udaljeni izvor, i ne filtrira preduzeće (`sif_pred`). Pogled nema centar,
+pa izvode vide samo korisnici sa celim obuhvatom Finansija (`finansije:view_all`); ostali vide obaveštenje.
 
 #### Podaci sa NBS, bankarske grupe i istorijske banke (od 29.10.2026.)
 
@@ -6904,6 +6912,7 @@ Isplate račun šalju; Knjiženje ga proknjižava ili vraća na doradu. U knjigo
 |---|---|---|
 | **Fiskalni računi** | `/knjizenje/` | Pločice (čeka knjiženje, vraćeno na doradu, proknjiženo ovog meseca), filteri (status, vrsta računa, period računa, period knjiženja), pretraga (i po broju naloga za knjiženje), DataTables sa stranom sa servera. Kolona **Putni nalog / vrsta** (broj naloga, zaposleni, mesto i datum putovanja) i **Šifra posla** sa nazivom — za račun bez šifre šifra putnog naloga, označena „sa putnog naloga”. Označeni računi se **štampaju zajedno** (nova kartica, svaki na svojoj A4 strani). Excel izvoz prati filtere. |
 | Detalj računa | `/knjizenje/racun/<id>/` | Potpuni podaci o računu, isti kao u Isplatama i Nabavci (od 08.10.2026., zajednički `nabavka/_fiskalni_*`): upozorenja (nije na IMS, refundacija, zbir stavki), prodavac, prodajno mesto i adresa, ID kupca, brojač, kasir i ESIR, stavke sa osnovicom i PDV-om, tekst računa; podaci iz Isplata (šifra posla, putni nalog sa vozilom i šifrom naloga ili interni broj i napomena), **Štampaj i proknjiži** / **Štampaj ponovo**, vraćanje na doradu, poništavanje knjiženja i istorija (i štampe). |
+| **Promene šifre posla vozila** (od 06.11.2026.) | `/knjizenje/sifre-vozila/?mesec=GGGG-MM` | Za izabrani mesec (podrazumevano tekući) svaka dodela vozila šifri posla u Floti (`JobCode`) sa datumom u tom mesecu koja **menja** šifru: datum, vozilo (tablica važeća na dan promene), prethodna i nova šifra sa nazivom i centrom, oznaka **promena centra** i koliko je dana meseca vozilo bilo na prethodnoj, odnosno novoj šifri (do sledeće promene ili kraja meseca). Dodela iste šifre kao prethodna nije promena; prva dodela vozila je označena „Prva dodela”. Excel izvoz (`izvoz=xlsx`). Logika: `knjizenje/sifre_vozila.py`. |
 | **Štampa** | `/knjizenje/stampa/?racuni=…` | A4, zaglavlje kao u rešenjima (logo, Institut, adresa, broj računa, vreme štampe); **šifra posla** krupno sa ukupnim iznosom i PDV-om; upozorenja; podaci sa računa; putni nalog (broj, zaposleni, putovanje, vozilo, šifra naloga) ili napomena; stavke; tekst računa; tok — **učitao, poslao na knjiženje, proknjiženo, štampao** — i mesto za potpis. Ova stranica ništa ne menja; knjiži `POST /knjizenje/stampaj/`. |
 
 ### 2. Tok [P]
@@ -6938,7 +6947,7 @@ Logika je u `knjizenje/services.py` (`posalji`, `vrati_na_doradu`, `stampaj`, `p
 
 | Uloga | Šta može |
 |---|---|
-| `knjizenje` (**Knjiženje**) | Sve u modulu: `knjizenje:racuni`, `knjizenje:racun`, `knjizenje:stampaj`, `knjizenje:stampa`, `knjizenje:vrati`, `knjizenje:ponisti`, `knjizenje:izvoz` (od 08.10.2026. `knjizenje:proknjizi` više ne postoji) i **izveštaje o gorivu** iz Flote (`knjizenje/gorivo.py`: NIS i OMV putnička i teretna po šifri posla, kontrola faktura goriva, Gorivo IMS, knjiženi troškovi goriva, transakcije goriva). `sync_permission_codes` joj daje **samo** te kodove. |
+| `knjizenje` (**Knjiženje**) | Sve u modulu: `knjizenje:racuni`, `knjizenje:racun`, `knjizenje:stampaj`, `knjizenje:stampa`, `knjizenje:vrati`, `knjizenje:ponisti`, `knjizenje:izvoz`, `knjizenje:sifre_vozila` (od 06.11.2026.; od 08.10.2026. `knjizenje:proknjizi` više ne postoji) i **izveštaje o gorivu** iz Flote (`knjizenje/gorivo.py`: NIS i OMV putnička i teretna po šifri posla, kontrola faktura goriva, Gorivo IMS, knjiženi troškovi goriva, transakcije goriva). `sync_permission_codes` joj daje **samo** te kodove. |
 | `uprava` | Sve |
 | `blagajna` | Nema pristup modulu — samo šalje račune iz Isplata. |
 
@@ -6948,6 +6957,9 @@ organizacije se ne primenjuje: Knjiženje vidi sve poslate račune.
 **Meni „Gorivo — izveštaji”** (od 08.10.2026.): svaka stavka se vidi uz svoju dozvolu. To su ekrani Flote, pa im
 podatke ograničava obuhvat Flote — korisniku uloge Knjiženje treba dodela uloge **cela firma** (Organizacija → Dodele
 uloga), inače izveštaji koji filtriraju po obuhvatu ostaju prazni.
+
+**Promene šifre posla vozila** (od 06.11.2026.) koriste isti obuhvat Flote: red se vidi ako je prethodna ili nova
+šifra u obuhvatu korisnika; sa dodelom cela firma vide se sve promene.
 
 ---
 

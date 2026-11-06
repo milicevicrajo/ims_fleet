@@ -194,6 +194,36 @@ class BankViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(BankBillPlacement.objects.count(), 2)
 
+    def test_statements_tab_lists_bank_statements_for_year(self, source):
+        from datetime import datetime
+        from django.db import DatabaseError
+        from .services import izvodi
+
+        self.grant("finansije:bank_detail", "finansije:view_all")
+        url = reverse("finansije:bank_detail", args=[2])
+        cursor = patch("finansije.services.izvodi.connections").start().__getitem__.return_value.cursor.return_value.__enter__.return_value
+        self.addCleanup(patch.stopall)
+        cursor.fetchall.return_value = [(datetime(2026, 3, 2), 174, Decimal("1030500.00"), Decimal("59250.00")),
+                                        (datetime(2026, 3, 9), 187, None, Decimal("10.50"))]
+        response = self.client.get(url, {"tab": "statements", "godina": "2026"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(cursor.execute.call_args.args[1], [2, "2026"])
+        self.assertEqual([(i.datum, i.broj_naloga) for i in response.context["statements"]], [(date(2026, 3, 2), "174"), (date(2026, 3, 9), "187")])
+        self.assertEqual(response.context["statement_totals"], {"broj": 2, "duguje": Decimal("1030500.00"), "potrazuje": Decimal("59260.50")})
+        self.assertContains(response, "Izvodi za 2026.")
+        # Godina van ponuđenih — tekuća; greška izvora — poruka umesto 500.
+        self.assertEqual(izvodi.godina("1999"), date.today().year)
+        cursor.execute.side_effect = DatabaseError
+        self.assertContains(self.client.get(url, {"tab": "statements"}), "Izvodi trenutno nisu dostupni")
+
+    def test_statements_need_whole_finance_scope(self, source):
+        self.grant("finansije:bank_detail")
+        with patch("finansije.services.izvodi.izvodi") as izvodi:
+            response = self.client.get(reverse("finansije:bank_detail", args=[2]), {"tab": "statements"})
+        self.assertEqual(response.status_code, 200)
+        izvodi.assert_not_called()
+        self.assertContains(response, "celim obuhvatom Finansija")
+
 
 @patch("finansije.services.kontni_plan.tabela_konta", return_value=[["1", "15030", "Dati avansi u inostranstvu"] + [""] * 12])
 class KontoTabelaTests(TestCase):

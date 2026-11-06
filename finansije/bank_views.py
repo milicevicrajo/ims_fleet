@@ -18,10 +18,11 @@ from .bank_forms import BankPeriodForm, BankContactForm, BankAccountRuleForm, Ba
 from .models import BankaPartner, BankContact, BankAccountRule, BankBillPlacement, BankePreuzimanje, SyncRun
 from .services import banke_nbs
 from .services import banks as service
+from .services import izvodi as izvodi_banke
 
 logger = logging.getLogger(__name__)
 TABS = [("basic", "Osnovni podaci"), ("nbs", "Podaci sa NBS"), ("group", "Grupa i povezana lica"),
-        ("contacts", "Kontakti"), ("turnover", "Promet po računima"),
+        ("contacts", "Kontakti"), ("turnover", "Promet po računima"), ("statements", "Izvodi"),
         ("bills", "Menice"), ("guarantees", "Garancije"), ("deposits", "Oročena sredstva")]
 
 
@@ -204,6 +205,17 @@ def bank_detail(request, bank_code):
         segments = {"dinar", "foreign", "other"} if tab == "turnover" else {"guarantee"} if tab == "guarantees" else {"deposit"}
         context.update(accounts=[row for row in selected["accounts"] if row["segment"] in segments],
                        ytd_end=report["ytd_end"], unresolved_count=len(report["unmapped"]))
+    if tab == "statements":
+        # Izvodi (od 06.11.2026.): pogled nema centar, pa ih vide samo korisnici sa celim obuhvatom Finansija.
+        context.update(statement_year=izvodi_banke.godina(request.GET.get("godina")), statement_years=izvodi_banke.godine())
+        if not context["restricted"]:
+            try:
+                context["statements"] = izvodi_banke.izvodi(bank_code, context["statement_year"])
+            except DatabaseError:
+                logger.exception("Izvodi banke nisu dostupni")
+                context["source_error"] = "Izvodi trenutno nisu dostupni. Pokušajte ponovo."
+            else:
+                context["statement_totals"] = izvodi_banke.zbir(context["statements"])
     if tab == "bills":
         context["can_view_bills"] = can_view_all(request.user) and user_has_role_permission(request.user, "menice:menica_list")
         context["can_view_incoming"] = can_view_all(request.user) and user_has_role_permission(request.user, "menice:ulazna_menica_list")
