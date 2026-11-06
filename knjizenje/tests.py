@@ -179,3 +179,68 @@ class GorivoUMenijuTests(TestCase):
         self.assertContains(strana, "Gorivo — izveštaji")
         self.assertContains(strana, reverse("fuel_job_code_nis_putnicka"))
         self.assertNotContains(strana, reverse("fuel_job_code_nis_teretna"))
+
+
+class PromeneSifreVozilaTests(TestCase):
+    """Promene šifre posla vozila u mesecu (od 06.11.2026.)."""
+
+    def setUp(self):
+        from core.models import OrganizationalUnit
+        from fleet.models import JobCode
+        from fleet.test_vehicle_onboarding import card, vehicle
+
+        self.oj = {kod: OrganizationalUnit.objects.create(code=kod, name=f"Jedinica {kod}", center=kod[:2])
+                   for kod in ("430111", "430222", "410001")}
+        self.prvo, self.drugo, self.trece, self.novo = vehicle("1"), vehicle("2"), vehicle("3"), vehicle("4")
+        card(self.prvo, "1", "BG100-AA", datetime.date(2020, 1, 1))
+        card(self.prvo, "2", "BG200-BB", datetime.date(2026, 10, 15))
+
+        def dodela(vozilo, kod, dan):
+            JobCode.objects.create(vehicle=vozilo, organizational_unit=self.oj[kod], assigned_date=dan)
+
+        # Prvo: 430111 → 410001 (10.10.) → 430222 (25.10.) — dve promene, druga sa novom tablicom.
+        dodela(self.prvo, "430111", datetime.date(2025, 1, 1))
+        dodela(self.prvo, "410001", datetime.date(2026, 10, 10))
+        dodela(self.prvo, "430222", datetime.date(2026, 10, 25))
+        # Drugo: ponovna dodela iste šifre u oktobru nije promena; promena u novembru se ne vidi.
+        dodela(self.drugo, "430111", datetime.date(2025, 1, 1))
+        dodela(self.drugo, "430111", datetime.date(2026, 10, 5))
+        dodela(self.drugo, "410001", datetime.date(2026, 11, 3))
+        # Treće: bez promene u oktobru.
+        dodela(self.trece, "430111", datetime.date(2026, 9, 30))
+        # Novo vozilo: prva dodela 01.10.
+        dodela(self.novo, "430222", datetime.date(2026, 10, 1))
+        self.korisnik = korisnik_sa("knj-sifre", "knjizenje:racuni", "knjizenje:sifre_vozila")
+        self.client.force_login(self.korisnik)
+
+    def test_promene_u_mesecu(self):
+        odgovor = self.client.get(reverse("knjizenje:sifre_vozila"), {"mesec": "2026-10"})
+        self.assertEqual(odgovor.status_code, 200)
+        redovi = [(r.datum.day, r.registracija or r.vozilo.chassis_number, r.stara.code if r.stara else None, r.nova.code,
+                   r.dana_stara, r.dana_nova, r.promena_centra) for r in odgovor.context["redovi"]]
+        self.assertEqual(redovi, [
+            (1, self.novo.chassis_number, None, "430222", 0, 31, False),
+            (10, "BG100-AA", "430111", "410001", 9, 15, True),
+            (25, "BG200-BB", "410001", "430222", 15, 7, True),
+        ])
+        self.assertContains(odgovor, "Prva dodela")
+        self.assertEqual(self.client.get(reverse("knjizenje:sifre_vozila"), {"mesec": "2026-09"}).context["redovi"][0].vozilo,
+                         self.trece)
+
+    def test_izvoz_u_excel(self):
+        odgovor = self.client.get(reverse("knjizenje:sifre_vozila"), {"mesec": "2026-10", "izvoz": "xlsx"})
+        self.assertEqual(odgovor.status_code, 200)
+        self.assertIn("Promene-sifre-posla-vozila-2026-10.xlsx", odgovor["Content-Disposition"])
+
+    def test_obuhvat_flote(self):
+        from fleet.support import obuhvat
+
+        with mock.patch.object(obuhvat, "aktivno", return_value=True),                 mock.patch.object(obuhvat, "sifre", return_value={"410001"}):
+            redovi = self.client.get(reverse("knjizenje:sifre_vozila"), {"mesec": "2026-10"}).context["redovi"]
+        self.assertEqual([r.datum.day for r in redovi], [10, 25])  # 410001 je nova, pa prethodna šifra
+
+    def test_meni_i_dozvola(self):
+        self.client.get(reverse("switch_app", args=["knjizenje"]))
+        self.assertContains(self.client.get(reverse("knjizenje:racuni")), reverse("knjizenje:sifre_vozila"))
+        self.client.force_login(korisnik_sa("bez-sifara", "knjizenje:racuni"))
+        self.assertNotEqual(self.client.get(reverse("knjizenje:sifre_vozila")).status_code, 200)

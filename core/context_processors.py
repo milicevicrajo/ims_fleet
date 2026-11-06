@@ -76,7 +76,7 @@ def current_app(request):
                          "evaluation_list", "resenje_list", "zahtev_list", "ugovor_list", "analitika", "radne_liste")
         },
         "knjizenje_permissions": {
-            code: user_has_role_permission(request.user, f"knjizenje:{code}") for code in ("racuni",)
+            code: user_has_role_permission(request.user, f"knjizenje:{code}") for code in ("racuni", "sifre_vozila")
         },
         # Izveštaji o gorivu u meniju Knjiženja (od 08.10.2026.) — računaju se samo dok je otvoren taj modul.
         "knjizenje_gorivo": _knjizenje_gorivo(request) if app == "knjizenje" else [],

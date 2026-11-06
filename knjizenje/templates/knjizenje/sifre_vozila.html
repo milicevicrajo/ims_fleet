@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% comment %}
+Knjiženje → Promene šifre posla vozila (od 06.11.2026.): dodele vozila šifri posla u izabranom mesecu koje menjaju
+šifru (knjizenje/sifre_vozila.py). Excel je isti URL uz `izvoz=xlsx`.
+{% endcomment %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+{% include "isplate/_stil.html" %}
+<style>
+  .knj-sifra strong { font-variant-numeric: tabular-nums; }
+  .knj-tabela td, .knj-tabela th { vertical-align: top; }
+  .knj-tabela .knj-broj { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .knj-strelica { color: #94a3b8; font-size: 1.2rem; }
+</style>
+
+<div class="isp-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1><i class="mdi mdi-swap-horizontal" aria-hidden="true"></i>{{ title }}</h1>
+    <p>Vozila kojima je u izabranom mesecu promenjena šifra posla (dodela u Floti): prethodna i nova šifra, centar i
+      koliko je dana meseca vozilo bilo na kojoj šifri. Dodela iste šifre nije promena.</p>
+  </div>
+  <div class="isp-zbir">
+    <span>{{ prvi|date:"m.Y." }}</span>
+    <strong>Promena: {{ redovi|length }}</strong>
+    <span>{{ broj_vozila }} vozila · promena centra {{ promena_centra }}</span>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-body">
+    <form method="get" class="isp-filter">
+      <div class="row g-2 align-items-end">
+        <div class="col-6 col-sm-4 col-lg-2">
+          <label class="form-label mb-1" for="id_mesec">Mesec</label>
+          <input id="id_mesec" class="form-control" type="month" name="mesec" value="{{ mesec }}">
+        </div>
+        <div class="col-auto isp-akcije">
+          <button type="submit" class="btn btn-primary"><i class="mdi mdi-filter-outline" aria-hidden="true"></i> Prikaži</button>
+          <a class="btn btn-outline-success" href="?mesec={{ mesec }}&amp;izvoz=xlsx"><i class="mdi mdi-file-excel-outline" aria-hidden="true"></i> Excel</a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    {% if redovi %}
+    <div class="table-responsive">
+      <table class="table table-sm table-hover knj-tabela mb-0">
+        <thead>
+          <tr>
+            <th>Datum promene</th>
+            <th>Vozilo</th>
+            <th>Prethodna šifra</th>
+            <th></th>
+            <th>Nova šifra</th>
+            <th class="knj-broj">Dana na prethodnoj</th>
+            <th class="knj-broj">Dana na novoj</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in redovi %}
+          <tr>
+            <td>{{ r.datum|date:"d.m.Y." }}</td>
+            <td><strong>{{ r.registracija|default:r.vozilo.chassis_number }}</strong>
+              <div class="isp-small">{{ r.vozilo.brand }} {{ r.vozilo.model }} · {{ r.vozilo.get_category_display }}</div></td>
+            <td class="knj-sifra">
+              {% if r.stara %}<strong>{{ r.stara.code }}</strong><div class="isp-small">{{ r.stara.name }} · centar {{ r.stara.center }}</div>
+              {% else %}<span class="isp-badge muted">Prva dodela</span>{% endif %}
+            </td>
+            <td class="knj-strelica"><i class="mdi mdi-arrow-right" aria-hidden="true"></i></td>
+            <td class="knj-sifra"><strong>{{ r.nova.code }}</strong><div class="isp-small">{{ r.nova.name }} · centar {{ r.nova.center }}</div>
+              {% if r.promena_centra %}<span class="isp-badge warn"><i class="mdi mdi-alert-outline" aria-hidden="true"></i> Promena centra</span>{% endif %}
+            </td>
+            <td class="knj-broj">{% if r.stara %}{{ r.dana_stara }}{% else %}—{% endif %}</td>
+            <td class="knj-broj">{{ r.dana_nova }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted mb-0">U mesecu {{ prvi|date:"m.Y." }} nema promena šifre posla vozila.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

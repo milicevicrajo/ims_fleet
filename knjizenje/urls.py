@@ -14,4 +14,6 @@ urlpatterns = [
     path("racun/<int:pk>/", views.racun, name="racun"),
     path("racun/<int:pk>/vrati/", views.vrati, name="vrati"),
     path("racun/<int:pk>/ponisti/", views.ponisti, name="ponisti"),
+    # Od 06.11.2026.: promene šifre posla vozila u mesecu (Excel izvoz je isti URL uz `izvoz=xlsx`).
+    path("sifre-vozila/", views.sifre_vozila, name="sifre_vozila"),
 ]

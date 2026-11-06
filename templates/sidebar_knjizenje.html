@@ -8,6 +8,11 @@
             <i class="mdi mdi-receipt-text-check-outline"></i><span class="hide-menu">Fiskalni računi</span>
           </a>
         </li>{% endif %}
+        {% if knjizenje_permissions.sifre_vozila %}<li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'knjizenje:sifre_vozila' %}">
+            <i class="mdi mdi-swap-horizontal"></i><span class="hide-menu">Promene šifre posla vozila</span>
+          </a>
+        </li>{% endif %}
         {% if knjizenje_gorivo %}
         <li class="sidebar-item"><span class="sidebar-link text-uppercase small opacity-75" style="pointer-events:none">
           <i class="mdi mdi-gas-station"></i><span class="hide-menu">Gorivo — izveštaji</span></span></li>

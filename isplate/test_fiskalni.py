@@ -22,7 +22,7 @@ ISPLATE = ("isplate:fiskalni_putni_nalozi", "isplate:fiskalni_izvoz", "isplate:f
            "isplate:fiskalni_izmena", "isplate:fiskalni_posalji")
 # Modul Knjiženje (od 07.10.2026.): Isplate šalju, Knjiženje knjiži — od 08.10.2026. štampom (bez ručnog knjiženja).
 KNJIZENJE = ("knjizenje:racuni", "knjizenje:racun", "knjizenje:stampaj", "knjizenje:stampa", "knjizenje:vrati",
-             "knjizenje:ponisti", "knjizenje:izvoz")
+             "knjizenje:ponisti", "knjizenje:izvoz", "knjizenje:sifre_vozila")
 NABAVKA = ("nabavka:fiskalni_detail", "nabavka:fiskalni_update", "nabavka:fiskalni_delete")
 
 

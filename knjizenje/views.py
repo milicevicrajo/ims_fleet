@@ -22,7 +22,7 @@ from isplate import tabela
 from nabavka.services import fiskalni
 from nabavka.views.fiskalni import _iznos
 
-from . import services
+from . import services, sifre_vozila as promene_sifara
 from .models import KnjizenjeRacuna
 
 Status = KnjizenjeRacuna.Status
@@ -296,3 +296,30 @@ def izvoz(request):
         ])
     return rows_to_xlsx_response(f"Knjizenje-fiskalnih-racuna-{timezone.localdate():%Y%m%d}.xlsx",
                                  "Knjiženje", zaglavlje, redovi, bold_header=True, auto_width=True)
+
+
+def _jedinica(j):
+    return (j.code, j.name, j.center) if j is not None else ("", "", "")
+
+
+@login_required
+@role_permission_required()
+def sifre_vozila(request):
+    """Promene šifre posla vozila u izabranom mesecu (`mesec=GGGG-MM`); `izvoz=xlsx` — Excel."""
+    prvi, poslednji = promene_sifara.mesec(request.GET.get("mesec"))
+    redovi = promene_sifara.promene(prvi, poslednji, request.user)
+    if request.GET.get("izvoz") == "xlsx":
+        zaglavlje = ["Datum promene", "Registracija", "Vozilo", "Kategorija", "Prethodna šifra", "Naziv prethodne šifre",
+                     "Centar prethodne", "Nova šifra", "Naziv nove šifre", "Centar nove", "Dana na prethodnoj u mesecu",
+                     "Dana na novoj u mesecu", "Promena centra"]
+        podaci = [[r.datum.strftime("%d.%m.%Y"), r.registracija, f"{r.vozilo.brand} {r.vozilo.model}",
+                   r.vozilo.get_category_display(), *_jedinica(r.stara), *_jedinica(r.nova),
+                   r.dana_stara if r.stara else None, r.dana_nova, "Da" if r.promena_centra else ""] for r in redovi]
+        return rows_to_xlsx_response(f"Promene-sifre-posla-vozila-{prvi:%Y-%m}.xlsx", "Promene šifre posla",
+                                     zaglavlje, podaci, bold_header=True, auto_width=True)
+    return render(request, "knjizenje/sifre_vozila.html", {
+        "title": "Promene šifre posla vozila", "sidebar_template": SIDEBAR, "redovi": redovi,
+        "prvi": prvi, "poslednji": poslednji, "mesec": f"{prvi:%Y-%m}",
+        "broj_vozila": len({r.vozilo.pk for r in redovi}),
+        "promena_centra": sum(1 for r in redovi if r.promena_centra),
+    })
