@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% comment %}Tačka 14 Obrasca 1 rodne ravnopravnosti (od 06.11.2026.): spisak članova organa; unos je na `?novi=1`.{% endcomment %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+{% include 'fleet/includes/list_styles.html' %}
+<style>
+  .rr-hero { border-radius: 8px; background: linear-gradient(135deg, #14395b 0%, #6b3f7a 55%, #b0507a 100%); color: #fff;
+    padding: 18px 22px; margin-bottom: 14px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+  .rr-hero h1 { font-size: 1.5rem; margin: 0; }
+  .rr-hero p { margin: 4px 0 0; color: rgba(255,255,255,.88); font-size: .9rem; max-width: 860px; }
+  .rr-akcije { display: flex; flex-wrap: wrap; gap: 10px; }
+  .rr-neaktivan td { color: #94a3b8; }
+  .rr-status { font-size: .75rem; font-weight: 600; border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+  .rr-status.da { background: #e7f7ef; color: #147044; } .rr-status.ne { background: #f1f5f9; color: #64748b; }
+</style>
+<div class="rr-hero">
+  <div><h1><i class="mdi mdi-account-group me-2" aria-hidden="true"></i>Organi upravljanja i nadzora, komisije i druga tela</h1>
+    <p>Tačka 14 Obrasca 1. Članova nema u kadrovskoj bazi, pa se unose ovde; statistika ih broji na dan izveštaja.
+      Zamena člana: postojećem upišite „Član do”, a novog unesite od narednog dana.</p></div>
+  <div class="rr-akcije">
+    <a class="btn btn-outline-light" href="{% url 'hr:rodna_ravnopravnost' %}"><i class="mdi mdi-arrow-left me-1" aria-hidden="true"></i>Statistika</a>
+    <a class="btn btn-light" href="?novi=1"><i class="mdi mdi-account-plus me-1" aria-hidden="true"></i>Dodaj člana</a>
+  </div>
+</div>
+{% if messages %}{% for m in messages %}<div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags }}{% endif %} py-2">{{ m }}</div>{% endfor %}{% endif %}
+
+<div class="card shadow-sm"><div class="card-body">
+  <h2 class="h6 fw-bold mb-3">Danas članova: {{ broj_aktivnih }} · ukupno zapisa: {{ clanovi|length }}</h2>
+  <div class="table-responsive"><table class="table table-sm table-hover align-middle mb-0">
+    <thead><tr><th>Organ</th><th>Ime i prezime</th><th>Pol</th><th>Nivo kvalifikacija</th><th>Godina rođenja</th><th>Član od</th><th>Član do</th><th></th><th></th></tr></thead>
+    <tbody>{% for c in clanovi %}<tr class="{% if not c.aktivan %}rr-neaktivan{% endif %}">
+      <td>{{ c.organ }}</td>
+      <td><strong>{{ c.ime_prezime }}</strong>{% if c.napomena %}<div class="small text-muted">{{ c.napomena }}</div>{% endif %}</td>
+      <td>{{ c.get_pol_display }}</td><td>{{ c.get_sprema_display }}</td><td>{{ c.godina_rodjenja }}</td>
+      <td>{{ c.clan_od|date:"d.m.Y." }}</td><td>{{ c.clan_do|date:"d.m.Y."|default:"—" }}</td>
+      <td>{% if c.aktivan %}<span class="rr-status da">član</span>{% else %}<span class="rr-status ne">nije član</span>{% endif %}</td>
+      <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="?izmena={{ c.pk }}"><i class="mdi mdi-pencil" aria-hidden="true"></i> Izmeni</a></td>
+    </tr>{% empty %}<tr><td colspan="9" class="text-muted">Još nema unetih članova. <a href="?novi=1">Dodajte prvog člana.</a></td></tr>{% endfor %}</tbody>
+  </table></div>
+</div></div>
+{% endblock %}

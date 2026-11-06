@@ -27,6 +27,7 @@
     <p>Evidencija podataka o ostvarivanju rodne ravnopravnosti — Obrazac 1{% if podnaslov %} · {{ podnaslov }}{% endif %}</p></div>
   <div class="an-akcije">
     <a class="btn btn-outline-light" href="{% url 'hr:analitika' %}"><i class="mdi mdi-arrow-left me-1" aria-hidden="true"></i>Analitika</a>
+    {% if moze_organe %}<a class="btn btn-outline-light" href="{% url 'hr:rodna_organi' %}"><i class="mdi mdi-account-group me-1" aria-hidden="true"></i>Organi upravljanja (tačka 14)</a>{% endif %}
     {% if s %}
     <a class="btn btn-light" href="?godina={{ godina }}&amp;izvoz=pdf" download><i class="mdi mdi-file-pdf-box me-1" aria-hidden="true"></i>PDF</a>
     <a class="btn btn-light" href="?godina={{ godina }}&amp;izvoz=xlsx" download><i class="mdi mdi-file-excel me-1" aria-hidden="true"></i>Excel</a>

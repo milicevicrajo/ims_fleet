@@ -9,7 +9,7 @@ from django.utils import timezone
 from core.models import OrganizationalUnit
 from .form_layout import SekcijeMixin
 
-from .models import Employee, EmployeeCVItem, WorkTimeSheet, WorkTimeSheetLine, WorkTimeCategory
+from .models import ClanOrgana, Employee, EmployeeCVItem, WorkTimeSheet, WorkTimeSheetLine, WorkTimeCategory
 from .services.osobe import PRIKAZ_POLJA, sacuvaj_prikaz_zaposlenja
 
 
@@ -415,3 +415,34 @@ WorkTimeSheetLineFormSet = inlineformset_factory(
     validate_min=True,
     validate_max=True,
 )
+
+
+class ClanOrganaForm(SekcijeMixin, forms.ModelForm):
+    """Član organa upravljanja — tačka 14 Obrasca 1 rodne ravnopravnosti (od 06.11.2026.)."""
+    SECTIONS = (
+        ("clan", "Član", "Ko je član organa.", ("ime_prezime", "pol", "godina_rodjenja", "sprema"),
+         "Pol, nivo kvalifikacija i godina rođenja ulaze u tabelu 14 (kvalifikacije × pol × starost). Starost se "
+         "računa kao godina izveštaja minus godina rođenja. Osoba koja je u više organa broji se jednom — upišite "
+         "joj ime isto u svakom.", "mdi-account-tie"),
+        ("clanstvo", "Članstvo", "U kom organu i od kada do kada.", ("organ", "clan_od", "clan_do", "napomena"),
+         "Organ izaberite sa ponuđenog spiska (ranije uneti) ili upišite novi, da se isti organ ne vodi pod dva naziva. "
+         "Kada članstvo prestane, upišite „Član do” — ne brišite člana, jer bi nestao i iz ranijih godina. Zamena: "
+         "kraj članstva jednog i novi član od narednog dana.", "mdi-calendar-range"),
+    )
+
+    class Meta:
+        model = ClanOrgana
+        fields = ["ime_prezime", "pol", "godina_rodjenja", "sprema", "organ", "clan_od", "clan_do", "napomena"]
+        widgets = {
+            "organ": forms.TextInput(attrs={"list": "rr-organi", "autocomplete": "off"}),
+            "godina_rodjenja": forms.NumberInput(attrs={"placeholder": "npr. 1969"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["pol"].choices = [("", "— izaberite —")] + list(ClanOrgana.Pol.choices)
+        self.fields["sprema"].choices = [("", "— izaberite —")] + list(ClanOrgana.SPREMA)
+        for name in ("clan_od", "clan_do"):
+            self.fields[name].input_formats = ["%d.%m.%Y", "%d.%m.%Y.", "%Y-%m-%d"]
+            self.fields[name].widget = forms.DateInput(format="%d.%m.%Y", attrs={
+                "class": "js-date", "autocomplete": "off", "placeholder": "dd.mm.gggg"})

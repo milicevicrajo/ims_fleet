@@ -69,6 +69,35 @@ def tabele(s):
                 "opis": "Razlog odlaska iz kadrovske baze.", "zaglavlje": ["Razlog", "Ukupno", "Žene", "Muškarci"],
                 "redovi": [[r["naziv"], (r["ukupno"], r["udeo"]), r["zene"], r["muski"]] for r in p["razlozi"]],
             })
+    if s.get("organi") is not None:
+        rezultat += _organi(s["organi"], na_dan)
+    return rezultat
+
+
+def _po_polu(z, m):
+    return f"Ž {z} · M {m}" if z or m else "—"
+
+
+def _organi(o, na_dan):
+    """Tačka 14: nivo kvalifikacija × pol × starost (kao u obrascu), pa članovi po organima."""
+    grupe = [g.replace("Od ", "").replace(" godina", "") for g in o["grupe"]]
+    tabela = {
+        "broj": "14", "naslov": "Lica u organima upravljanja i nadzora, komisijama i drugim telima, po polu, "
+                                "kvalifikacijama i starosnoj dobi",
+        "opis": f"Članovi na dan {na_dan}, osoba jednom i kad je u više organa; starost prema godini rođenja. "
+                "Unosi se na ekranu „Organi upravljanja”.",
+        "zaglavlje": ["Nivo kvalifikacija", "Ukupno", "Žene", "Muškarci"] + grupe,
+        "redovi": [[f"{r['rb']}. {r['naziv']}", _par(r, "ukupno", "udeo"), _par(r, "zene", "udeo_zena"),
+                    _par(r, "muski", "udeo_muski")] + [_po_polu(z, m) for z, m in r["starost"]] for r in o["redovi"]],
+        "zbir": ["Ukupno", o["ukupno"], o["zene"], o["muski"]] + [_po_polu(z, m) for z, m in o["starost"]],
+    }
+    rezultat = [tabela]
+    if o["po_organu"]:
+        rezultat.append({
+            "broj": "14", "naslov": "Članovi po organima", "opis": "Osoba u više organa navodi se uz svaki.",
+            "zaglavlje": ["Organ, komisija ili telo", "Ukupno", "Žene", "Muškarci"],
+            "redovi": [[r["naziv"], r["ukupno"], r["zene"], r["muski"]] for r in o["po_organu"]],
+        })
     return rezultat
 
 
@@ -170,7 +199,10 @@ def pdf(s):
         if t.get("zbir"):
             podaci.append([Paragraph(escape(tekst(v)), stil_u if i else ParagraphStyle("uz", parent=stil, fontName=podebljan))
                            for i, v in enumerate(t["zbir"])])
-        tabela = Table(podaci, colWidths=[sirina * 0.43] + [sirina * 0.19] * 3, repeatRows=1)
+        kolone = len(t["zaglavlje"])
+        sirine = ([sirina * 0.43] + [sirina * 0.19] * 3 if kolone == 4
+                  else [sirina * 0.2] + [sirina * 0.8 / (kolone - 1)] * (kolone - 1))
+        tabela = Table(podaci, colWidths=sirine, repeatRows=1)
         stilovi = [("BACKGROUND", (0, 0), (-1, 0), plava), ("GRID", (0, 0), (-1, -1), 0.3, linija),
                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("TOPPADDING", (0, 0), (-1, -1), 2.5),
                    ("BOTTOMPADDING", (0, 0), (-1, -1), 2.5)]

@@ -10,12 +10,18 @@ Pravila:
 - osoba se broji jednom (po JMBG-u), i kad ima zapis u oba preduzeća;
 - zaposlen na dan D = došao do D i nije otišao do D; neaktivan radnik bez datuma odlaska se ne broji;
 - D je 31.12. izabrane godine (za tekuću godinu — današnji dan); starost se računa na D;
-- prijem u godini: dolazak u godini, a osoba nije radila 31.12. prethodne godine;
+- prijem u godini: dolazak u godini; od 06.11.2026. računa se i ponovni prijem u istom preduzeću posle odlaska
+  (penzioner na novom ugovoru), a ne računa se prelazak iz drugog preduzeća u kome je osoba radila 31.12. prethodne
+  godine (van radnog odnosa → radni odnos);
 - prestanak u godini: odlazak u godini, a osoba ne radi 31.12. (nije samo prešla u drugo preduzeće);
 - stručna sprema i rukovodeće mesto su današnji podaci iz kadrovske baze (stari program ne čuva istoriju).
 
-Tačke obrasca kojih nema u bazi (plate, konkursi, pritužbe, sudski sporovi, obuke, organi upravljanja,
-pravna pomoć, nasilje i obrazloženja) navode se kao „popunjava se ručno”.
+Tačka 5 (plate) se ne prikazuje — poverljiv podatak (od 06.11.2026.).
+Tačka 14 (organi upravljanja i nadzora, komisije i druga tela) računa se od 06.11.2026. iz članova koje unosi lice
+zaduženo za rodnu ravnopravnost (`hr.ClanOrgana`): član na dan D, osoba jednom (po imenu), starost = godina D − godina
+rođenja.
+Tačke obrasca kojih nema u bazi (konkursi, pritužbe, sudski sporovi, obuke, pravna pomoć, nasilje i obrazloženja)
+navode se kao „popunjava se ručno”.
 """
 from collections import Counter
 from datetime import date, datetime
@@ -46,14 +52,13 @@ KVALIFIKACIJE = (
     ("8", "Doktor nauka", (80,)),
 )
 NEMA_ODLASKA = 3000
+# Tačka 5 (plate po polu) se namerno ne navodi ni ručno (od 06.11.2026.): podatak je poverljiv i ne ide u statistiku.
 RUCNO = (
-    ("5", "Plate i druge naknade (prosečan nominalni iznos) po polu, za izvršilačka mesta i položaje"),
     ("7, 8", "Razlozi zbog kojih na izvršilačka mesta, odnosno na položaje nisu raspoređena lica nedovoljno zastupljenog pola"),
     ("9", "Kandidati prijavljeni na konkurse, po polu i kvalifikacijama"),
     ("10, 11", "Pritužbe zbog uznemiravanja ili diskriminacije na osnovu pola i način postupanja"),
     ("12", "Sudski sporovi u vezi sa diskriminacijom na osnovu pola"),
     ("13", "Programi stručnog usavršavanja i obrazovanja, po polu"),
-    ("14", "Organi upravljanja i nadzora, komisije i druga tela, po polu, kvalifikacijama i starosti"),
     ("15", "Korisnici besplatne pravne pomoći, po polu"),
     ("16", "Prijavljeni slučajevi nasilja, po polu žrtve i izvršioca"),
 )
@@ -178,7 +183,53 @@ def _pregled_promene(lista, dan, razlozi=None):
     return rezultat
 
 
-def statistika(godina, radnici, razlozi, danas=None):
+def _grupa_godina(godine):
+    return next((naziv for naziv, od, do in STAROST if od <= godine <= do), "Bez datuma rođenja")
+
+
+def ucitaj_clanove_organa():
+    """Članovi organa iz aplikacije (tačka 14), kao rečnici za `statistika`."""
+    from hr.models import ClanOrgana
+
+    return [{"ime": c.ime_prezime, "organ": c.organ, "pol": c.pol, "sprema": c.sprema, "godina_rodjenja": c.godina_rodjenja,
+             "od": c.clan_od, "do": c.clan_do} for c in ClanOrgana.objects.all()]
+
+
+def _organi(clanovi, na_dan):
+    """Tačka 14: članovi na dan, po nivou kvalifikacija, polu i starosti (osoba jednom, i kad je u više organa)."""
+    na_dan_clanovi = [c for c in clanovi if c["od"] <= na_dan and (c["do"] is None or c["do"] >= na_dan)]
+    osobe = {}
+    for c in sorted(na_dan_clanovi, key=lambda c: (c["od"], c["ime"])):
+        osobe.setdefault(" ".join(c["ime"].lower().split()), c)
+    lista = list(osobe.values())
+    ukupno = len(lista)
+    for c in lista:
+        c["starost"] = _grupa_godina(na_dan.year - c["godina_rodjenja"])
+    # Starosne grupe iz obrasca (21–70) uvek, krajnje samo kad imaju člana.
+    grupe = [naziv for naziv, od, _ in STAROST if 21 <= od <= 61 or any(c["starost"] == naziv for c in lista)]
+
+    def po_starosti(cl):
+        return [(sum(1 for c in cl if c["starost"] == g and c["pol"] == ZENE),
+                 sum(1 for c in cl if c["starost"] == g and c["pol"] == MUSKI)) for g in grupe]
+
+    redovi = []
+    for rb, naziv, _ in KVALIFIKACIJE:
+        cl = [c for c in lista if c["sprema"] == rb]
+        z, m = _pol(cl)
+        redovi.append({"rb": rb, "naziv": naziv, "ukupno": len(cl), "udeo": _udeo(len(cl), ukupno),
+                       "zene": z, "udeo_zena": _udeo(z, ukupno), "muski": m, "udeo_muski": _udeo(m, ukupno),
+                       "starost": po_starosti(cl)})
+    zene, muski = _pol(lista)
+    po_organu = []
+    for organ in sorted({c["organ"] for c in na_dan_clanovi}):
+        cl = [c for c in na_dan_clanovi if c["organ"] == organ]
+        z, m = _pol(cl)
+        po_organu.append({"naziv": organ, "ukupno": len(cl), "zene": z, "muski": m})
+    return {"ukupno": ukupno, "zene": zene, "muski": muski, "grupe": grupe, "redovi": redovi,
+            "starost": po_starosti(lista), "po_organu": po_organu}
+
+
+def statistika(godina, radnici, razlozi, danas=None, clanovi_organa=None):
     danas = danas or timezone.localdate()
     na_dan = danas if godina >= danas.year else date(godina, 12, 31)
     kraj_prethodne = date(godina - 1, 12, 31)
@@ -204,10 +255,15 @@ def statistika(godina, radnici, razlozi, danas=None):
         polozaji.append({"naziv": naziv, "ukupno": len(clanovi), "udeo": _udeo(len(clanovi), ukupno),
                          "zene": z, "udeo_zena": _udeo(z, zene), "muski": m, "udeo_muski": _udeo(m, muski)})
 
-    bili = {_kljuc(r) for r in radnici if _radi(r, kraj_prethodne)}
+    # Prelazak iz drugog preduzeća nije prijem; ponovni prijem u istom preduzeću posle odlaska jeste.
+    presli = {(_kljuc(r), r["preduzece"]) for r in radnici if _radi(r, kraj_prethodne)}
     ostali = {_kljuc(r) for r in zaposleni}
+
+    def prijem(r):
+        return not any(k == _kljuc(r) and p != r["preduzece"] for k, p in presli)
+
     primljeni = _po_osobi([r for r in radnici if r["dolazak"] and r["dolazak"].year == godina
-                           and r["dolazak"] <= na_dan and _kljuc(r) not in bili])
+                           and r["dolazak"] <= na_dan and prijem(r)])
     otisli = _po_osobi([r for r in radnici if _odlazak(r) and _odlazak(r).year == godina
                         and _odlazak(r) <= na_dan and _kljuc(r) not in ostali])
 
@@ -219,6 +275,7 @@ def statistika(godina, radnici, razlozi, danas=None):
         "sprema": sprema, "polozaji": polozaji,
         "prijem": _pregled_promene(primljeni, na_dan),
         "prestanak": _pregled_promene(otisli, na_dan, razlozi),
+        "organi": _organi(clanovi_organa, na_dan) if clanovi_organa is not None else None,
         "rucno": RUCNO,
     }
 

@@ -1,0 +1,28 @@
+{% extends "hr/forms/base.html" %}
+{% comment %}Unos i izmena člana organa upravljanja — tačka 14 Obrasca 1 rodne ravnopravnosti (od 06.11.2026.).{% endcomment %}
+{% block ef_subtitle %}Rodna ravnopravnost · tačka 14 — organi upravljanja i nadzora, komisije i druga tela{% endblock %}
+
+{% block ef_intro %}
+<datalist id="rr-organi">{% for organ in organi %}<option value="{{ organ }}">{% endfor %}</datalist>
+{% endblock %}
+
+{% block ef_actions %}
+  {% if clan %}
+  <button type="submit" name="obrisi" value="1" class="btn btn-outline-danger me-auto" formnovalidate
+          onclick="return confirm('Obrisati člana? Brisanje ga uklanja i iz ranijih godina — za kraj članstva upišite „Član do”.');">
+    <i class="mdi mdi-delete"></i> Obriši</button>
+  {% endif %}
+  <a href="{{ cancel_url }}" class="btn btn-outline-secondary">Odustani</a>
+  <button type="submit" class="btn btn-primary"><i class="mdi mdi-content-save"></i> Sačuvaj</button>
+{% endblock %}
+
+{% block ef_manual %}
+<p>Članova organa upravljanja i nadzora, komisija i drugih tela nema u kadrovskoj bazi, pa se unose ovde.
+  Statistika rodne ravnopravnosti ih broji na dan izveštaja (31.12. izabrane godine) i pravi tabelu 14:
+  nivo kvalifikacija × pol × starosna dob.</p>
+<ul>
+  <li><strong>Zamena člana:</strong> postojećem članu upišite „Član do”, a novog unesite sa „Član od” narednog dana.</li>
+  <li><strong>Brisanje</strong> je samo za greške u unosu — obrisan član nestaje i iz ranijih godina.</li>
+  <li><strong>Ista osoba u više organa</strong> unosi se uz svaki organ, sa istim imenom; u tabeli 14 broji se jednom.</li>
+</ul>
+{% endblock %}

@@ -578,3 +578,48 @@ class SickLeave(models.Model):
 
     def __str__(self):
         return f"Bolovanje {self.rfzo_id} ({self.start_date:%d.%m.%Y})"
+
+
+class ClanOrgana(models.Model):
+    """Član organa upravljanja i nadzora, komisije ili drugog tela — tačka 14 Obrasca 1 rodne ravnopravnosti
+    (od 06.11.2026.). Nema ih u kadrovskoj bazi, pa ih unosi lice zaduženo za rodnu ravnopravnost; zamena člana je
+    kraj članstva jednog i početak drugog, da bi svaka godina imala svoj sastav."""
+
+    class Pol(models.TextChoices):
+        ZENSKI = "Z", _("Ženski")
+        MUSKI = "M", _("Muški")
+
+    # Nivoi kvalifikacija iz obrasca (isti kao u hr/services/rodna_ravnopravnost.py: KVALIFIKACIJE).
+    SPREMA = [
+        ("1", "1. Nekvalifikovani i polukvalifikovani radnik"), ("2", "2. Kvalifikovani radnik"),
+        ("3", "3. Srednja stručna sprema"), ("4", "4. Visokokvalifikovani radnik"), ("5", "5. Viša stručna sprema"),
+        ("6", "6. Visoka stručna sprema"), ("7", "7. Master (magistar)"), ("8", "8. Doktor nauka"),
+    ]
+
+    ime_prezime = models.CharField(max_length=150, verbose_name=_("Ime i prezime"))
+    organ = models.CharField(max_length=150, verbose_name=_("Organ, komisija ili telo"),
+                             help_text=_("Npr. Nadzorni odbor, Skupština, Komisija za …"))
+    pol = models.CharField(max_length=1, choices=Pol.choices, verbose_name=_("Pol"))
+    sprema = models.CharField(max_length=1, choices=SPREMA, verbose_name=_("Nivo kvalifikacija"))
+    godina_rodjenja = models.PositiveSmallIntegerField(validators=[MinValueValidator(1920), MaxValueValidator(2015)],
+                                                       verbose_name=_("Godina rođenja"))
+    clan_od = models.DateField(verbose_name=_("Član od"))
+    clan_do = models.DateField(null=True, blank=True, verbose_name=_("Član do"), help_text=_("Prazno — i dalje je član."))
+    napomena = models.CharField(max_length=255, blank=True, verbose_name=_("Napomena"))
+    izmenio = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name="+", verbose_name=_("Poslednji menjao"))
+    izmenjeno = models.DateTimeField(auto_now=True, verbose_name=_("Izmenjeno"))
+
+    class Meta:
+        ordering = ["organ", "ime_prezime", "clan_od"]
+        verbose_name = _("Član organa (rodna ravnopravnost)")
+        verbose_name_plural = _("Članovi organa (rodna ravnopravnost)")
+
+    def __str__(self):
+        return f"{self.ime_prezime} · {self.organ}"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        if self.clan_od and self.clan_do and self.clan_do < self.clan_od:
+            raise ValidationError({"clan_do": _("Kraj članstva je pre početka.")})

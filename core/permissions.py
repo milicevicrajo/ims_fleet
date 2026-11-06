@@ -147,7 +147,8 @@ def collect_permission_codes():
 
 
 # Pravna služba vidi analitiku zaposlenih cele firme (od 06.10.2026.) i statistiku rodne ravnopravnosti (07.10.2026.).
-PRAVNA_KADROVI_CODES = {'hr:analitika', 'hr:analitika_view_all', 'hr:rodna_ravnopravnost'}
+# Od 06.11.2026. i unos članova organa za tačku 14 (`hr:rodna_organi`).
+PRAVNA_KADROVI_CODES = {'hr:analitika', 'hr:analitika_view_all', 'hr:rodna_ravnopravnost', 'hr:rodna_organi'}
 
 # Rukovodilac (od 08.10.2026.): samo citanje Finansija, vozila, putnih naloga, zaposlenih i Potrazivanja.
 # Obuhvat nije u ulozi — daje ga odobrena dodela na cvor rukovodioca (Organizacija → Dodele uloga).
