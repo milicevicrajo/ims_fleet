@@ -4,7 +4,9 @@ OMV fakturiše po kartici (kupac 107248 = putnička, 107258 = teretna) i svojim 
 meseca); svaka transakcija nosi broj fakture, pa se poredi faktura po faktura. NIS fakturiše po polovinama
 meseca (1–15, 16–kraj) sa dve fakture, „Putničko“ i „Teretno“, po vrsti kartice; od 27.10.2026. se i one
 porede svaka posebno — kartice svake fakture su u specifikaciji uz nju (`nis_kartice.py`). Ako specifikacija
-neke fakture nije učitana, fakture te polovine se porede zajedno kao ranije.
+neke fakture nije učitana, poredi se sa transakcijama kojih nema na drugoj fakturi (ako je jedina takva), inače se
+prijavljuje da se ne može razdvojiti. Od 09.11.2026. **zbir obe fakture se nikad ne proverava**; kartice kojih nema
+ni na jednoj fakturi polovine su poseban red sa razlikom.
 
 Knjiženje (kako su knjižene fakture do sada): putnička vozila — bruto na 51300 po šifri posla, bez PDV-a
 (PDV na gorivo za putnička vozila se ne odbija); teretna — neto na 51300 po šifri posla i PDV na 27000.
@@ -21,7 +23,7 @@ from django.utils import timezone
 from ..models import TransactionNIS, TransactionOMV
 from .fuel import deduplicate_omv_transactions, filter_nis_fuel_queryset, nis_charged_gross_net_amounts, omv_charged_gross_net_amounts
 from .fuel_reports import OMV_KUPCI, _historical_job_code_subqueries
-from .nis_kartice import PUTNICKA, TERETNA, VrstaKartice
+from .nis_kartice import PUTNICKA, TERETNA, VrstaKartice, kartica, ucitaj_specifikacije
 
 OMV_PIB = "101987198"
 NIS_PIB = "104052135"
@@ -149,73 +151,123 @@ def _nis_fakture(od, do):
 
 
 def _vrste_faktura(fakture):
-    """{broj fakture: vrsta kartica} iz specifikacija; fakture bez učitane specifikacije nisu u rečniku."""
+    """{broj fakture: vrsta kartica} iz specifikacija ("" — vrsta nije utvrđena); fakture bez učitane specifikacije
+    nisu u rečniku."""
     from ..models import NisKarticaFakture
 
     return dict(NisKarticaFakture.objects.filter(faktura__in=[f.broj for f in fakture]).values_list("faktura", "tip")
                 .distinct())
 
 
+def _vrsta(tip):
+    return NIS_VRSTE.get(tip, "Vrsta nije utvrđena")
+
+
+def _razdvoji(fakture, transakcije):
+    """Transakcije polovine po NIS fakturama, po karticama iz specifikacije svake fakture (od 09.11.2026. uvek —
+    zbir obe fakture se ne proverava).
+
+    Vraća ({broj fakture: [transakcije] ili None}, [transakcije bez fakture], {broj: način}). Faktura bez učitane
+    specifikacije dobija transakcije kojih nema na drugoj fakturi ako je jedina takva u polovini (način „ostatak“);
+    ako ih je više, ne može se razdvojiti (None)."""
+    from finansije.sef_models import SefFaktura
+
+    from ..models import NisKarticaFakture
+
+    if fakture:
+        ucitaj_specifikacije(list(SefFaktura.objects.filter(pk__in=[f.pk for f in fakture]).prefetch_related("prilozi")))
+    kartica_fakture = {k: f for f, k in NisKarticaFakture.objects.filter(faktura__in=[f.broj for f in fakture])
+                       .values_list("faktura", "kartica")}
+    sa_specifikacijom = set(kartica_fakture.values())
+    po_fakturi = {f.broj: [] for f in fakture if f.broj in sa_specifikacijom}
+    ostale = []
+    for t in transakcije:
+        broj = kartica_fakture.get(kartica(t.broj_kartice))
+        (po_fakturi[broj] if broj else ostale).append(t)
+    bez = [f.broj for f in fakture if f.broj not in sa_specifikacijom]
+    nacin = {broj: "specifikacija" for broj in po_fakturi}
+    if len(bez) == 1:
+        po_fakturi[bez[0]], ostale, nacin[bez[0]] = ostale, [], "ostatak"
+    else:
+        for broj in bez:
+            po_fakturi[broj], nacin[broj] = None, "nema"
+    return po_fakturi, ostale, nacin
+
+
+def _bruto(transakcije):
+    return sum((nis_charged_gross_net_amounts(t.total)[0] or NULA for t in transakcije), NULA)
+
+
+NAPOMENE = {
+    "ostatak": "Specifikacija uz fakturu nije učitana — poređeno sa transakcijama kojih nema na drugoj fakturi.",
+    "nema": "Specifikacija uz fakturu nije učitana — faktura se ne može razdvojiti od ostalih.",
+}
+
+
 def nis_potvrda(godina, mesec, polovina):
     """Potvrda u izveštaju NIS po šifri posla: slaže li se **svaka** NIS faktura polovine sa SEF-a sa transakcijama
-    kartica sa te fakture (od 27.10.2026.; ranije zbir obe fakture). Putnička i teretna su podela po vrsti kartice."""
+    kartica sa te fakture. Od 09.11.2026. zbir obe fakture se ne proverava ni kad specifikacija nije učitana;
+    transakcije kartica kojih nema ni na jednoj fakturi polovine su posebna razlika."""
     od, do, transakcije = _nis_transakcije(godina, mesec, polovina)
     fakture, odobrenja = _nis_fakture(od, do)
     vrste = VrstaKartice()
     po_vrsti = {PUTNICKA: NULA, TERETNA: NULA}
-    van_specifikacije = NULA
     for t in transakcije:
-        tip, izvor = vrste.izvor(t)
-        bruto = nis_charged_gross_net_amounts(t.total)[0] or NULA
-        po_vrsti[tip] += bruto
-        if izvor != "faktura":
-            van_specifikacije += bruto
+        po_vrsti[vrste.tip(t)] += nis_charged_gross_net_amounts(t.total)[0] or NULA
+    po_fakturi, ostale, nacin = _razdvoji(fakture, transakcije)
     vrste_faktura = _vrste_faktura(fakture)
     redovi = []
-    if fakture and all(f.broj in vrste_faktura for f in fakture):
-        for f in fakture:
-            tip = vrste_faktura[f.broj]
-            sef_vrste = sum((g.iznos or NULA for g in fakture if vrste_faktura[g.broj] == tip), NULA)
-            razlika = po_vrsti[tip] - sef_vrste
-            redovi.append(dict(faktura=f, tip=tip, vrsta=NIS_VRSTE[tip], transakcije=po_vrsti[tip], razlika=razlika,
-                               poklapa=abs(razlika) <= TOLERANCIJA))
-    sef_bruto = sum((f.iznos or NULA for f in fakture), NULA)
-    ukupno = po_vrsti[PUTNICKA] + po_vrsti[TERETNA]
-    razlika = ukupno - sef_bruto
-    # Bez specifikacija (redovi prazni) fakture polovine se porede zajedno, kao pre 27.10.2026.
-    poklapa = all(r["poklapa"] for r in redovi) if redovi else bool(fakture) and abs(razlika) <= TOLERANCIJA
+    for f in fakture:
+        tip = vrste_faktura.get(f.broj, "")
+        svoje = po_fakturi.get(f.broj)
+        zbir = _bruto(svoje) if svoje is not None else None
+        razlika = zbir - (f.iznos or NULA) if zbir is not None else None
+        redovi.append(dict(faktura=f, tip=tip, vrsta=_vrsta(tip), transakcije=zbir, razlika=razlika,
+                           poklapa=razlika is not None and abs(razlika) <= TOLERANCIJA,
+                           napomena=NAPOMENE.get(nacin[f.broj], "")))
+    poklapa = bool(fakture) and all(r["poklapa"] for r in redovi) and not ostale
     return dict(od=od, do=do, fakture=fakture, redovi=redovi, odobrenja=odobrenja,
-                sef_bruto=sef_bruto, sef_neto=sum((f.osnovica or NULA for f in fakture), NULA),
-                sef_pdv=sum((f.pdv or NULA for f in fakture), NULA), putnicka=po_vrsti[PUTNICKA],
-                teretna=po_vrsti[TERETNA], transakcije_bruto=ukupno, razlika=razlika,
-                van_specifikacije=van_specifikacije if redovi else NULA, poklapa=poklapa)
+                sef_bruto=sum((f.iznos or NULA for f in fakture), NULA), putnicka=po_vrsti[PUTNICKA],
+                teretna=po_vrsti[TERETNA], transakcije_bruto=po_vrsti[PUTNICKA] + po_vrsti[TERETNA],
+                van_faktura=_bruto(ostale), van_faktura_broj=len(ostale), poklapa=poklapa)
 
 
 def _nis(polovina_fakture, godina, mesec, polovina):
-    """Redovi kontrole za NIS polovinu: faktura po faktura, sa transakcijama kartica sa te fakture."""
+    """Redovi kontrole za NIS polovinu: uvek faktura po faktura, sa transakcijama kartica sa te fakture; kartice
+    kojih nema ni na jednoj fakturi — poseban red (od 09.11.2026. bez poređenja zbira obe fakture)."""
     from django.urls import reverse
 
     od, do, transakcije = _nis_transakcije(godina, mesec, polovina)
     vrste = VrstaKartice()
+    po_fakturi, ostale, nacin = _razdvoji(polovina_fakture, transakcije)
     vrste_faktura = _vrste_faktura(polovina_fakture)
-    if not polovina_fakture or any(f.broj not in vrste_faktura for f in polovina_fakture):
-        # Specifikacija bar jedne fakture nije učitana: obe fakture zajedno, kao pre 27.10.2026.
-        ocek = _po_sifri(transakcije, datum_polje="datum_transakcije",
-                         iznosi=lambda t: nis_charged_gross_net_amounts(t.total), teretna=lambda t: vrste.tip(t) == TERETNA)
-        red = _red("NIS", f"{od:%d.%m.}–{do:%d.%m.%Y.}", polovina_fakture, (od, do), "Putničko + Teretno", ocek,
-                   _knjizenje([f.broj for f in polovina_fakture]))
-        red["status"].insert(0, ("warning", "Specifikacija uz fakturu nije učitana — fakture polovine se porede zajedno"))
-        return [red]
+
+    def iznosi(t):
+        return nis_charged_gross_net_amounts(t.total)
+
     redovi = []
-    tipovi = {t.pk: vrste.tip(t) for t in transakcije}
     for f in polovina_fakture:
-        tip = vrste_faktura[f.broj]
-        svoje = transakcije.filter(pk__in=[pk for pk, v in tipovi.items() if v == tip])
-        ocek = _po_sifri(svoje, datum_polje="datum_transakcije", iznosi=lambda t: nis_charged_gross_net_amounts(t.total),
-                         teretna=lambda t, tip=tip: tip == TERETNA)
+        tip = vrste_faktura.get(f.broj, "")
+        svoje = po_fakturi.get(f.broj)
+        teretna = (lambda t, tip=tip: tip == TERETNA) if tip else (lambda t: vrste.tip(t) == TERETNA)
+        ocek = _po_sifri(transakcije.filter(pk__in=[t.pk for t in svoje or []]), datum_polje="datum_transakcije",
+                         iznosi=iznosi, teretna=teretna)
         ruta = "fuel_job_code_nis_teretna" if tip == TERETNA else "fuel_job_code_nis_putnicka"
-        redovi.append(_red("NIS", f.broj, [f], (od, do), NIS_VRSTE[tip], ocek, _knjizenje([f.broj]),
-                           url=f"{reverse(ruta)}?godina={godina}&mesec={mesec}&polovina={polovina}"))
+        red = _red("NIS", f.broj, [f], (od, do), _vrsta(tip), ocek, _knjizenje([f.broj]),
+                   url=f"{reverse(ruta)}?godina={godina}&mesec={mesec}&polovina={polovina}")
+        if nacin[f.broj] == "nema":
+            red.update(transakcije_bruto=None, transakcije_neto=None, razlika_transakcija=None)
+            red["status"] = [("danger", NAPOMENE["nema"])] + [p for p in red["status"] if "Transakcije" not in p[1]]
+        elif nacin[f.broj] == "ostatak":
+            red["status"].insert(0, ("warning", NAPOMENE["ostatak"]))
+        redovi.append(red)
+    if ostale:
+        ocek = _po_sifri(transakcije.filter(pk__in=[t.pk for t in ostale]), datum_polje="datum_transakcije",
+                         iznosi=iznosi, teretna=lambda t: vrste.tip(t) == TERETNA)
+        red = _red("NIS", "Bez fakture", [], (od, do), "Kartice kojih nema na fakturama polovine", ocek, ({}, NULA, 0))
+        red["status"] = [("danger", f"Transakcije kartica kojih nema ni na jednoj fakturi polovine "
+                                    f"({len(ostale)}, {sr_iznos(red['transakcije_bruto'])})")]
+        redovi.append(red)
     return redovi
 
 

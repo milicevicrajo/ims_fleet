@@ -115,18 +115,19 @@ def _export_secondary_report(*, form, query, filter_query, export_spec):
 
 
 FUEL_JOB_CODE_EXPORT_HEADERS = [
-    "Dobavljac",
+    "Dobavljač",
     "Tip vozila",
-    "Sifra posla",
-    "Naziv sifre posla",
+    "Šifra posla",
+    "Naziv šifre posla",
     "Godina",
     "Mesec",
     "Polovina",
     "Broj transakcija",
-    "Kolicina",
+    "Količina (l)",
     "Bruto",
     "Neto",
 ]
+FUEL_JOB_CODE_IZNOSI = (8, 9, 10)
 
 
 def _fuel_job_code_export_rows(rows):
@@ -141,7 +142,7 @@ def _fuel_job_code_export_data(rows):
         yield [
             row["supplier"],
             row["tipvozila"],
-            row["sifpos"],
+            str(row["sifpos"] or "").strip(),
             row["naziv_sifre_posla"],
             row["godina"],
             row["mesec"],
@@ -151,6 +152,24 @@ def _fuel_job_code_export_data(rows):
             row["bruto"],
             row["neto"],
         ]
+
+
+def _fuel_job_code_podnaslov(form, faktura, nis_kontrola):
+    """Period i poređenje sa fakturama za Excel izvoz (od 09.11.2026.)."""
+    from ..support.fuel_invoices import sr_iznos
+
+    delovi = [f"Faktura {faktura}"] if faktura else []
+    delovi += [f"{form.fields[k].label}: {form.data.get(k)}" for k in ("godina", "mesec", "polovina") if form.data.get(k)]
+    if nis_kontrola:
+        for r in nis_kontrola["redovi"]:
+            if r["razlika"] is None:
+                stanje = "ne može se uporediti"
+            else:
+                stanje = "poklapa se" if r["poklapa"] else f"razlika {sr_iznos(r['razlika'], True)}"
+            delovi.append(f"NIS {r['faktura'].broj} ({r['vrsta']}) SEF {sr_iznos(r['faktura'].iznos or 0)} — {stanje}")
+        if nis_kontrola["van_faktura_broj"]:
+            delovi.append(f"bez fakture: {nis_kontrola['van_faktura_broj']} transakcija, {sr_iznos(nis_kontrola['van_faktura'])}")
+    return " · ".join(delovi)
 
 
 def _omv_poredjenje(redovi):
@@ -207,12 +226,14 @@ def _render_fuel_job_code_report(request, *, supplier, vehicle_type):
         return tabela_pdf_response(f"{supplier}_{vehicle_type}_gorivo_po_sifri_posla.pdf", title, FUEL_JOB_CODE_EXPORT_HEADERS,
                                    redovi[:-1], ukupno=redovi[-1], podnaslov=opis, sekcija="Vozni park · Gorivo")
     if "export" in request.GET:
-        return rows_to_xlsx_response(
-            f"{supplier}_{vehicle_type}_gorivo_po_sifri_posla.xlsx",
-            "Gorivo po sifri posla",
-            FUEL_JOB_CODE_EXPORT_HEADERS,
-            _fuel_job_code_export_rows(data),
-        )
+        from core.exporting import tabela_xlsx_response
+
+        redovi = list(_fuel_job_code_export_rows(data))
+        return tabela_xlsx_response(
+            f"{supplier}_{vehicle_type}_gorivo_po_sifri_posla.xlsx", "Gorivo po šifri posla",
+            FUEL_JOB_CODE_EXPORT_HEADERS, redovi[:-1], ukupno=redovi[-1], iznosi=FUEL_JOB_CODE_IZNOSI,
+            naslov=f"{supplier_label(supplier)} {vehicle_type_label(vehicle_type)} — gorivo po šifri posla",
+            podnaslov=_fuel_job_code_podnaslov(form, faktura, nis_kontrola))
 
     return render(
         request,
@@ -258,7 +279,7 @@ def fuel_invoice_control_view(request):
     if form.is_valid() and form.cleaned_data.get("godina") and form.cleaned_data.get("mesec"):
         godina, mesec = int(form.cleaned_data["godina"]), int(form.cleaned_data["mesec"])
     redovi = kontrola_faktura(godina, mesec)
-    ukupno = {k: sum((r[k] for r in redovi), Decimal("0.00"))
+    ukupno = {k: sum((r[k] or Decimal("0.00") for r in redovi), Decimal("0.00"))
               for k in ("sef_bruto", "transakcije_bruto", "razlika_transakcija", "knjizeno_trosak", "knjizeno_pdv")}
     if request.GET.get("export") in ("xlsx", "pdf"):
         zaglavlje = ["Dobavljač", "Faktura / period", "Fakture", "Kartica", "SEF bruto", "Transakcije bruto", "Razlika",
@@ -279,7 +300,12 @@ def fuel_invoice_control_view(request):
             return tabela_pdf_response(f"{naziv}.pdf", f"Kontrola faktura goriva — {mesec:02d}/{godina}", zaglavlje, tabela,
                                        ukupno=zbir, podnaslov="SEF ↔ transakcije ↔ knjiženje (51300 / 27000) po šifri posla",
                                        sekcija="Vozni park · Gorivo")
-        return rows_to_xlsx_response(f"{naziv}.xlsx", "Kontrola faktura", zaglavlje, tabela + [zbir])
+        from core.exporting import tabela_xlsx_response
+
+        return tabela_xlsx_response(f"{naziv}.xlsx", "Kontrola faktura", zaglavlje, tabela, ukupno=zbir,
+                                    iznosi=(4, 5, 6, 7, 8), naslov=f"Kontrola faktura goriva — {mesec:02d}/{godina}",
+                                    podnaslov="SEF ↔ transakcije ↔ knjiženje (51300 / 27000) po šifri posla",
+                                    podredovi=lambda red: not red[0])
     return render(request, "fleet/reports/fuel_invoice_control.html", {
         "form": form, "redovi": redovi, "ukupno": ukupno,
         "title": f"Kontrola faktura goriva — {mesec:02d}/{godina}",

@@ -103,3 +103,61 @@ def dataframe_xlsx_response(data, filename, sheet_name, quoted=False, engine="op
     with pd.ExcelWriter(response, engine=engine) as writer:
         dataframe.to_excel(writer, index=False, sheet_name=sheet_name)
     return response
+
+
+def tabela_xlsx_response(filename, sheet_title, headers, rows, *, naslov=None, podnaslov=None, iznosi=(), ukupno=None,
+                         podredovi=None, quoted=True):
+    """Uređena Excel tabela (od 09.11.2026.): naslov i podnaslov, podebljano zaglavlje sa bojom, zamrznuto zaglavlje,
+    filter, iznosi sa dve decimale i razdvajanjem hiljada, širine kolona i podebljan red UKUPNO.
+
+    `iznosi` su indeksi kolona (od 0) sa brojevima u formatu 1.234,56; `podredovi(red)` vraća True za red koji je
+    pojašnjenje prethodnog (sivo, kurziv)."""
+    from openpyxl.styles import Alignment, Border, PatternFill, Side
+
+    plava, linija = "14395B", Side(style="thin", color="D7DCE5")
+    okvir = Border(left=linija, right=linija, top=linija, bottom=linija)
+    workbook, ws = create_xlsx_workbook(sheet_title)
+    red = 1
+    if naslov:
+        ws.cell(red, 1, naslov).font = Font(bold=True, size=13, color=plava)
+        red += 1
+    if podnaslov:
+        ws.cell(red, 1, podnaslov).font = Font(italic=True, size=9, color="475569")
+        red += 1
+    if red > 1:
+        red += 1
+    zaglavlje = red
+    for k, naziv in enumerate(headers, start=1):
+        c = ws.cell(red, k, naziv)
+        c.font, c.fill, c.border = Font(bold=True, color="FFFFFF"), PatternFill("solid", fgColor=plava), okvir
+        c.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    iznosi = set(iznosi)
+
+    def upisi(vrednosti, stil=None):
+        nonlocal red
+        red += 1
+        for k, v in enumerate(vrednosti, start=1):
+            c = ws.cell(red, k, float(v) if k - 1 in iznosi and v is not None and not isinstance(v, str) else v)
+            c.border = okvir
+            if k - 1 in iznosi:
+                c.number_format = "#,##0.00"
+            if stil == "ukupno":
+                c.font, c.fill = Font(bold=True), PatternFill("solid", fgColor="E8F0FB")
+            elif stil == "pod":
+                c.font = Font(italic=True, color="64748B")
+
+    for vrednosti in rows:
+        upisi(vrednosti, "pod" if podredovi and podredovi(vrednosti) else None)
+    poslednji_podatak = red
+    if ukupno is not None:
+        upisi(ukupno, "ukupno")
+    ws.freeze_panes = ws.cell(zaglavlje + 1, 1)
+    if poslednji_podatak > zaglavlje:
+        ws.auto_filter.ref = f"A{zaglavlje}:{get_column_letter(len(headers))}{poslednji_podatak}"
+    for k, naziv in enumerate(headers, start=1):
+        duzine = [len(str(naziv))] + [len(f"{c.value:,.2f}") if isinstance(c.value, float) else len(str(c.value or ""))
+                                      for c in ws[get_column_letter(k)][zaglavlje:]]
+        ws.column_dimensions[get_column_letter(k)].width = min(max(max(duzine) + 2, 9), 60)
+    ws.page_setup.orientation = "landscape"
+    ws.page_setup.fitToWidth = 1
+    return workbook_response(workbook, filename, quoted=quoted)

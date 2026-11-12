@@ -881,11 +881,24 @@ Do 27.10.2026. podela je bila po kategoriji vozila i odstupala je od faktura (1�
 vozila BG826-VJ i BG1975-VO su na teretnoj fakturi, a vozila su u Floti putnička); po kartici se svih šest faktura
 od 01.09. do 15.10.2026. slaže u dinar.
 
+**Specifikacija bez vrste** (od 09.11.2026.): od faktura za 16–31.10.2026. (štampa 02.11.2026.) NIS je promenio
+specifikaciju — zaglavlje je „Izveštaj o obavljenoj kupovini u skladu sa fakturom <broj>“, bez „Putničko“ /
+„Teretno“, a vrste nema ni u UBL-u fakture. Stari parser takvu specifikaciju nije prepoznao, nijedna kartica se nije
+upisala i kontrola je delila transakcije po ranijim fakturama i kategoriji vozila, pa su se obe fakture razlikovale
+iako im se zbir slagao u dinar. Sada se novi format čita, a vrsta fakture zaključuje po karticama
+(`nis_kartice.vrsta_po_karticama`): kartica glasa vrstom svoje poslednje ranije fakture, nova kartica vrstom vozila koje
+je njome točilo; vrsta mora imati bar 67% iznosa fakture, inače se kartice fakture pamte bez vrste („Vrsta nije
+utvrđena“) i faktura se i dalje poredi sa svojim karticama. Za 16–31.10.2026.: 9006777083 — 98% iznosa na ranije putničkim karticama, 9006777125 — 93%
+na teretnim, ostatak su nove kartice; obe fakture se slažu u dinar (1.119.844,14 i 331.024,95).
+
 **Potvrda za NIS** (od 08.10.2026., kao kod OMV fakture; `fuel_invoices.nis_potvrda`): iznad tabele izveštaja NIS
 putnička i NIS teretna stoji, **za svaku fakturu polovine posebno** (od 27.10.2026.), da li se njen iznos na SEF-u
 slaže sa transakcijama kartica sa te fakture (tolerancija 1,00 din). Zbir obe fakture nije dovoljan — 1.000 din na
-pogrešnoj fakturi daje tačan zbir. Ako specifikacija neke fakture nije učitana (nema priloga ili nije instaliran
-`pypdf`), porede se obe fakture zajedno kao ranije, uz upozorenje. Knjižna odobrenja i zaduženja u periodu se samo navode.
+pogrešnoj fakturi daje tačan zbir — i **od 09.11.2026. se nikad ne proverava**. Transakcije se dele po karticama iz
+specifikacije svake fakture; ako specifikacija jedne fakture nije učitana, ona dobija transakcije kojih nema na drugoj
+fakturi (uz napomenu), a ako nije učitana ni jedna, fakture se ne mogu razdvojiti i to se prijavljuje kao greška
+(nema potvrde). Transakcije kartica kojih nema ni na jednoj fakturi polovine su posebna razlika („Bez fakture“).
+Knjižna odobrenja i zaduženja u periodu se samo navode.
 
 **Kontrola faktura goriva** (`/izvestaji/gorivo-fakture/`, dozvola `fuel_invoice_control`, od 07.10.2026.;
 `fleet/support/fuel_invoices.py`): za mesec po datumu prometa svaka OMV faktura sa SEF-a (i NIS po polovini —
@@ -893,7 +906,9 @@ obe fakture zajedno) poredi se sa zbirom transakcija i sa knjiženjem pronađeni
 (51300 po šifri posla, 27000 PDV). Statusi: transakcije se ne poklapaju; nije proknjiženo; proknjižen samo
 dobavljač; trošak i PDV se razlikuju od fakture; raspodela po šiframa posla se razlikuje (sa tabelom šifara).
 NIS se od 27.10.2026. takođe poredi faktura po faktura (mesečno četiri reda: dve polovine × putničko / teretno),
-sa transakcijama kartica iz specifikacije; bez učitane specifikacije — obe fakture polovine zajedno.
+sa transakcijama kartica iz specifikacije. Od 09.11.2026. bez poređenja zbira: faktura bez specifikacije dobija ostatak
+transakcija (ako je jedina takva) ili crveni status „ne može se razdvojiti“, a kartice kojih nema ni na jednoj fakturi
+su red „Bez fakture“ sa razlikom.
 
 **OMV uvoz — stavke istog računa** (od 07.10.2026.): dve stavke sa istim vozilom, vremenom, proizvodom,
 vaučerom i količinom (dva AdBlue kanistera različite cene, dve izrade kartice za različite kartice) ranije

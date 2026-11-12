@@ -106,22 +106,21 @@
 <div class="alert {% if k.poklapa %}alert-success{% else %}alert-warning{% endif %} mb-3">
   <strong>NIS fakture {{ k.od|date:"d.m." }}–{{ k.do|date:"d.m.Y." }}</strong>
   {% if k.redovi %}
-    — svaka faktura se poredi sa transakcijama kartica sa te fakture:
+    — svaka faktura se poredi posebno, sa transakcijama kartica sa te fakture (zbir obe fakture se ne proverava):
     <ul class="mb-1 mt-1">
       {% for r in k.redovi %}
         <li>
-          <strong>{{ r.faktura.broj }}</strong> ({{ r.vrsta }}): SEF {{ r.faktura.iznos|floatformat:2|intcomma }}{% if r.tip %},
+          <strong>{{ r.faktura.broj }}</strong> ({{ r.vrsta }}): SEF {{ r.faktura.iznos|floatformat:2|intcomma }}{% if r.transakcije is not None %},
           transakcije {{ r.transakcije|floatformat:2|intcomma }} —
-          {% if r.poklapa %}<span class="text-success fw-semibold">poklapa se</span>{% else %}<strong class="text-danger">ne poklapa se</strong> (razlika {{ r.razlika|floatformat:2|intcomma }}){% endif %}{% else %} — specifikacija uz fakturu nije učitana{% endif %}
+          {% if r.poklapa %}<span class="text-success fw-semibold">poklapa se</span>{% else %}<strong class="text-danger">ne poklapa se</strong> (razlika {{ r.razlika|floatformat:2|intcomma }}){% endif %}{% else %} — <strong class="text-danger">ne može se uporediti</strong>{% endif %}
+          {% if r.napomena %}<div class="small">{{ r.napomena }}</div>{% endif %}
         </li>
       {% endfor %}
+      {% if k.van_faktura_broj %}
+        <li><strong class="text-danger">Bez fakture</strong>: {{ k.van_faktura_broj }} transakcija sa karticama kojih nema ni na jednoj fakturi ove polovine — razlika {{ k.van_faktura|floatformat:2|intcomma }}.</li>
+      {% endif %}
     </ul>
-    {% if k.poklapa %}Poklapa se — raspodela ispod može da se knjiži.{% else %}<strong>Ne poklapa se</strong> — proveriti pre knjiženja.{% endif %}
-    {% if k.van_specifikacije %}<div class="small mt-1">Transakcije sa karticama kojih nema na fakturama ove polovine: {{ k.van_specifikacije|floatformat:2|intcomma }} (vrsta po ranijoj fakturi ili po vozilu).</div>{% endif %}
-  {% elif k.fakture %} — na SEF-u: {% for f in k.fakture %}{{ f.broj }} ({{ f.iznos|floatformat:2|intcomma }}){% if not forloop.last %} + {% endif %}{% endfor %}
-    = bruto <strong>{{ k.sef_bruto|floatformat:2|intcomma }}</strong>, obračun iz transakcija: <strong>{{ k.transakcije_bruto|floatformat:2|intcomma }}</strong>.
-    {% if k.poklapa %}Poklapa se zbir obe fakture{% else %}<strong>Ne poklapa se</strong> (razlika {{ k.razlika|floatformat:2|intcomma }}){% endif %}.
-    <div class="small mt-1">Specifikacija uz fakture nije učitana, pa se fakture ne mogu porediti pojedinačno — proveriti pre knjiženja.</div>
+    {% if k.poklapa %}Svaka faktura se poklapa — raspodela ispod može da se knjiži.{% else %}<strong>Ne poklapa se</strong> — proveriti pre knjiženja.{% endif %}
   {% else %} — fakture za ovu polovinu još nisu na SEF-u; obračun iz transakcija: <strong>{{ k.transakcije_bruto|floatformat:2|intcomma }}</strong>
     (putnička {{ k.putnicka|floatformat:2|intcomma }} + teretna {{ k.teretna|floatformat:2|intcomma }}).{% endif %}
   {% if k.odobrenja %}<div class="small mt-1">Knjižna odobrenja / zaduženja u periodu (proveriti ručno): {% for f in k.odobrenja %}{{ f.broj }} ({{ f.iznos|floatformat:2|intcomma }}){% if not forloop.last %}, {% endif %}{% endfor %}.</div>{% endif %}

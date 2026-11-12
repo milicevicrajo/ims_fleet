@@ -1225,7 +1225,9 @@ class NisKarticaFakture(models.Model):
 
     faktura = models.CharField(max_length=40, db_index=True, verbose_name=_("Faktura"))
     datum_prometa = models.DateField(verbose_name=_("Datum prometa"))
-    tip = models.CharField(max_length=10, choices=TIP_CHOICES, verbose_name=_("Vrsta kartice"))
+    # Prazno (od 09.11.2026.): specifikacija bez oznake vrste, a kartice ne odlučuju — kartice fakture se ipak pamte,
+    # da se faktura poredi sa svojim transakcijama.
+    tip = models.CharField(max_length=10, choices=TIP_CHOICES, blank=True, verbose_name=_("Vrsta kartice"))
     kartica = models.CharField(max_length=32, db_index=True, verbose_name=_("Kartica"))
     iznos = models.DecimalField(max_digits=14, decimal_places=2, verbose_name=_("Iznos na specifikaciji"))
 

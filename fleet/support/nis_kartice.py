@@ -8,6 +8,11 @@ kojoj fakturi (`NisKarticaFakture`), pa se transakcije dele tačno kao na faktur
 
 Septembar i 1–15. oktobar 2026: svih šest faktura se slaže sa transakcijama u dinar; podela po kategoriji
 vozila je odstupala do 21.430,20 din po fakturi.
+
+Od faktura za 16–31.10.2026. (štampa 02.11.2026.) NIS je promenio specifikaciju: zaglavlje je „Izveštaj o obavljenoj
+kupovini u skladu sa fakturom <broj>“, bez „Putničko“ / „Teretno“, a vrste nema ni u UBL-u fakture. Takvoj fakturi se
+vrsta zaključuje po karticama (`vrsta_po_karticama`): kartice su na ranijim fakturama poznate vrste
+(16–31.10.: 98% i 93% iznosa jasno na jednoj strani), nove kartice po vozilu koje je njima točilo.
 """
 import io
 import logging
@@ -17,7 +22,7 @@ from decimal import Decimal
 from django.db import transaction
 from django.utils import timezone
 
-from ..models import NisKarticaFakture, Vehicle
+from ..models import NisKarticaFakture, TransactionNIS, Vehicle
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +30,9 @@ NIS_PIB = "104052135"
 PUTNICKA, TERETNA = NisKarticaFakture.TIP_PUTNICKA, NisKarticaFakture.TIP_TERETNA
 
 _ZAGLAVLJE = re.compile(r"(\d{8,})\s+(Teretno|Putni\w*)")
+_ZAGLAVLJE_BEZ_VRSTE = re.compile(r"u skladu sa fakturom\s+(\d{8,})")
+# Faktura bez oznake vrste: bar ovoliki deo iznosa mora biti na karticama jedne vrste.
+PRAG_VRSTE = Decimal("0.67")
 _KARTICA = re.compile(r"Ukupno za karticu\s*:\s*(\d+)\s+[\d.,]+\s+([\d,]+\.\d{2})")
 
 
@@ -39,15 +47,49 @@ def kartica(vrednost):
 
 
 def iz_teksta(tekst):
-    """(broj fakture, vrsta, {kartica: iznos}) iz teksta specifikacije; None ako tekst nije specifikacija."""
+    """(broj fakture, vrsta, {kartica: iznos}) iz teksta specifikacije; None ako tekst nije specifikacija.
+
+    Vrsta je None u specifikaciji bez oznake (format od 02.11.2026.) — tada je zaključuje `vrsta_po_karticama`."""
     zaglavlje = _ZAGLAVLJE.search(tekst or "")
-    if not zaglavlje:
-        return None
+    if zaglavlje:
+        broj, tip = zaglavlje.group(1), TERETNA if zaglavlje.group(2) == "Teretno" else PUTNICKA
+    else:
+        bez_vrste = _ZAGLAVLJE_BEZ_VRSTE.search(tekst or "")
+        if not bez_vrste:
+            return None
+        broj, tip = bez_vrste.group(1), None
     kartice = {}
-    for broj, iznos in _KARTICA.findall(tekst):
-        kartice[broj] = kartice.get(broj, Decimal("0.00")) + Decimal(iznos.replace(",", ""))
-    tip = TERETNA if zaglavlje.group(2) == "Teretno" else PUTNICKA
-    return zaglavlje.group(1), tip, kartice
+    for k, iznos in _KARTICA.findall(tekst):
+        kartice[k] = kartice.get(k, Decimal("0.00")) + Decimal(iznos.replace(",", ""))
+    return broj, tip, kartice
+
+
+def _vrsta_vozila_kartice(k):
+    """Vrsta po vozilu koje je poslednje točilo karticom (nova kartica, još ni na jednoj fakturi)."""
+    t = (TransactionNIS.objects.filter(broj_kartice__startswith=k, vehicle__isnull=False).select_related("vehicle")
+         .order_by("-datum_transakcije").first())
+    if t is None or kartica(t.broj_kartice) != k:
+        return None
+    return TERETNA if t.vehicle.category == Vehicle.Category.CARGO else PUTNICKA
+
+
+def vrsta_po_karticama(kartice, faktura=None):
+    """Vrsta fakture bez oznake: vrsta kojoj pripada većina iznosa (bar `PRAG_VRSTE`) po karticama.
+
+    Kartica glasa vrstom svoje poslednje ranije fakture, a nova kartica vrstom vozila koje je njome točilo.
+    None ako nijedna vrsta nema dovoljno — kartice fakture se tada pamte bez vrste."""
+    poznate = {}
+    for k, tip in (NisKarticaFakture.objects.exclude(faktura=faktura).filter(kartica__in=list(kartice))
+                   .order_by("datum_prometa", "pk").values_list("kartica", "tip")):
+        poznate[k] = tip
+    glasovi = {PUTNICKA: Decimal("0.00"), TERETNA: Decimal("0.00")}
+    for k, iznos in kartice.items():
+        tip = poznate.get(k) or _vrsta_vozila_kartice(k)
+        if tip:
+            glasovi[tip] += iznos
+    ukupno = sum(kartice.values(), Decimal("0.00"))
+    vrsta = max(glasovi, key=glasovi.get)
+    return vrsta if ukupno > 0 and glasovi[vrsta] >= ukupno * PRAG_VRSTE else None
 
 
 def tekst_pdf(sadrzaj):
@@ -103,6 +145,14 @@ def ucitaj_specifikacije(fakture):
             logger.warning("NIS specifikacija fakture %s nema ocekivano zaglavlje ili kartice", faktura.broj)
             continue
         _, tip, kartice = procitano
+        if tip is None:
+            tip = vrsta_po_karticama(kartice, faktura.broj)
+            if tip is None:
+                # Kartice se ipak pamte: kontrola poredi fakturu sa njenim karticama i bez vrste.
+                logger.warning("NIS specifikacija fakture %s nema vrstu, a kartice ne odlučuju", faktura.broj)
+                tip = ""
+            else:
+                logger.info("NIS faktura %s: vrsta %s zaključena po karticama", faktura.broj, tip)
         with transaction.atomic():
             NisKarticaFakture.objects.bulk_create([
                 NisKarticaFakture(faktura=faktura.broj, datum_prometa=faktura.datum_prometa, tip=tip, kartica=k, iznos=i)

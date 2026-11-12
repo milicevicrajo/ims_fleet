@@ -236,16 +236,24 @@ class NISPotvrdaTests(TestCase):
                                       datum_prometa=datetime.date(2026, 9, 15), sinhronizovano=timezone.now())
         self.client.force_login(get_user_model().objects.create_superuser("nis-potvrda", password="x"))
         filter_ = {"godina": "2026", "mesec": "9", "polovina": "1"}
+        # Od 09.11.2026. zbir obe fakture (10.000 = 10.000) nije potvrda: bez specifikacija fakture se ne mogu razdvojiti.
         for ruta in ("fuel_job_code_nis_putnicka", "fuel_job_code_nis_teretna"):
             odgovor = self.client.get(reverse(ruta), filter_)
             k = odgovor.context["nis_kontrola"]
-            self.assertEqual((k["sef_bruto"], k["transakcije_bruto"], k["poklapa"]), (Decimal("10000.00"), Decimal("10000.00"), True))
-            self.assertContains(odgovor, "Poklapa se")
+            self.assertEqual((k["sef_bruto"], k["transakcije_bruto"], k["poklapa"]), (Decimal("10000.00"), Decimal("10000.00"), False))
+            self.assertContains(odgovor, "ne može se uporediti")
             self.assertContains(odgovor, "9006720949")
-        druga.delete()
+        # Sa specifikacijama: svaka faktura svoju razliku.
+        from fleet.models import NisKarticaFakture
+
+        NisKarticaFakture.objects.create(faktura="9006720949", datum_prometa=datetime.date(2026, 9, 15), tip="putnicka",
+                                         kartica="123", iznos=Decimal("7000.00"))
+        NisKarticaFakture.objects.create(faktura="9006720950", datum_prometa=datetime.date(2026, 9, 15), tip="teretna",
+                                         kartica="456", iznos=Decimal("3000.00"))
         odgovor = self.client.get(reverse("fuel_job_code_nis_putnicka"), filter_)
-        self.assertFalse(odgovor.context["nis_kontrola"]["poklapa"])
+        self.assertEqual([r["razlika"] for r in odgovor.context["nis_kontrola"]["redovi"]], [Decimal("3000.00"), Decimal("-3000.00")])
         self.assertContains(odgovor, "Ne poklapa se")
+        druga.delete()
         self.assertIsNone(self.client.get(reverse("fuel_job_code_omv_putnicka"), filter_).context["nis_kontrola"])
 
 
@@ -373,6 +381,47 @@ class NISFakturaPoKarticiTests(TestCase):
         self.assertEqual(set(NisKarticaFakture.objects.values_list("kartica", "tip")),
                          {("7824723061569717", "teretna"), ("7824723063178053", "teretna")})
 
+    # Format od 02.11.2026. (fakture za 16–31.10.2026.): bez „Putničko“ / „Teretno“ u zaglavlju.
+    SPECIFIKACIJA_BEZ_VRSTE = (
+        "NIS a.d. Novi Sad\nIzveštaj o obavljenoj kupovini u skladu sa fakturom {broj}\n"
+        "Komitent : Faktura :2205247 - INSTITUT IMS AD BEOGRAD\n \n{broj}\n"
+        "11003 EVRO DIZEL 236.016.10.2026 10:47 JY8 BS Vladičin Han 43.58 10,284.88 3211532BG 1461 DX\n"
+        "Ukupno za karticu : 7824723061569717 43.58 10,284.88\n"
+        "11028 EVRO PREMIJUM BMB-95 207.025.10.2026 17:55 GYJ BS Adaševci 5.00 1,000.00 703612BG 826 VJ\n"
+        "Ukupno za karticu : 3333 5.00 1,000.00\n"
+        "Ukupno za FAKTURU : 48.58 11,284.88{broj}\n")
+
+    def test_specifikacija_bez_vrste_vrsta_po_karticama(self):
+        from fleet.models import NisKarticaFakture
+        from fleet.support.nis_kartice import PUTNICKA, TERETNA, iz_teksta, ucitaj_specifikacije, vrsta_po_karticama
+
+        broj, tip, kartice = iz_teksta(self.SPECIFIKACIJA_BEZ_VRSTE.format(broj="9006777125"))
+        self.assertEqual((broj, tip), ("9006777125", None))
+        self.assertEqual(kartice, {"7824723061569717": Decimal("10284.88"), "3333": Decimal("1000.00")})
+        # Nijedna kartica još nije bila ni na jednoj fakturi, a vozila nema — ne odlučuje se.
+        self.assertIsNone(vrsta_po_karticama(kartice))
+        # Veća kartica je ranije bila na teretnoj fakturi; nova kartica (3333) je točila putničko vozilo.
+        self.kartice("9006720950", TERETNA, "7824723061569717")
+        self.tocenje("9", "3333.0", "1000.00", 20, vozilo=self.putnicko)
+        self.assertEqual(vrsta_po_karticama(kartice), TERETNA)  # 10.284,88 od 11.284,88
+        self.assertEqual(vrsta_po_karticama({"3333": Decimal("1000.00")}), PUTNICKA)
+
+        from unittest.mock import patch
+
+        from finansije.sef_models import SefPrilog
+
+        f = self.faktura(3, "9006777125", "11284.88")
+        SefPrilog.objects.create(faktura=f, redni=1, naziv="/mft_sef/0002205247-9006777125-specifikacija_uz_fakturu.pdf",
+                                 fajl="finansije/sef/prilozi/nema.pdf")
+        tekst = self.SPECIFIKACIJA_BEZ_VRSTE.format(broj="9006777125")
+        with patch("finansije.services.sef.Klijent"), \
+                patch("finansije.services.sef.prilozi_iz_ubl",
+                      return_value=[{"naziv": "0002205247-9006777125-specifikacija_uz_fakturu.pdf", "sadrzaj": b"%PDF"}]), \
+                patch("fleet.support.nis_kartice.tekst_pdf", return_value=tekst):
+            self.assertEqual(ucitaj_specifikacije([f]), 1)
+        self.assertEqual(set(NisKarticaFakture.objects.filter(faktura="9006777125").values_list("kartica", "tip")),
+                         {("7824723061569717", TERETNA), ("3333", TERETNA)})
+
     def test_bez_fajla_priloga_specifikacija_se_cita_sa_sef_a(self):
         from unittest.mock import patch
 
@@ -432,9 +481,79 @@ class NISFakturaPoKarticiTests(TestCase):
         self.kartice("9006720950", "teretna", "2222")
 
         k = nis_potvrda(2026, 9, 1)
-        self.assertEqual(k["razlika"], Decimal("0.00"))
+        self.assertNotIn("razlika", k)  # od 09.11.2026. zbir obe fakture se ne proverava
         self.assertFalse(k["poklapa"])
         self.assertEqual([r["razlika"] for r in k["redovi"]], [Decimal("1000.00"), Decimal("-1000.00")])
         self.client.force_login(get_user_model().objects.create_superuser("nis-kartice", password="x"))
         odgovor = self.client.get(reverse("fuel_job_code_nis_putnicka"), {"godina": "2026", "mesec": "9", "polovina": "1"})
         self.assertContains(odgovor, "ne poklapa se")
+
+    def test_bez_specifikacije_razlika_po_fakturi_a_ne_zbir(self):
+        """Od 09.11.2026.: fakture se uvek razdvajaju; zbir obe fakture se ne proverava ni bez specifikacije."""
+        from fleet.support.fuel_invoices import kontrola_faktura, nis_potvrda
+
+        self.tocenje("1", "1111.0", "6000.00", 5, vozilo=self.putnicko)
+        self.tocenje("2", "2222.0", "1000.00", 7, vozilo=self.putnicko)
+        self.faktura(1, "9006720949", "5000.00")
+        self.faktura(2, "9006720950", "2000.00")
+
+        # Nijedna specifikacija nije učitana: zbir se slaže (7000), ali se fakture ne mogu razdvojiti — nije potvrda.
+        k = nis_potvrda(2026, 9, 1)
+        self.assertFalse(k["poklapa"])
+        self.assertEqual([(r["transakcije"], r["razlika"]) for r in k["redovi"]], [(None, None), (None, None)])
+        self.assertEqual((k["van_faktura_broj"], k["van_faktura"]), (2, Decimal("7000.00")))
+        nis = [r for r in kontrola_faktura(2026, 9) if r["dobavljac"] == "NIS"]
+        self.assertEqual([r["oznaka"] for r in nis], ["9006720949", "9006720950", "Bez fakture"])
+        self.assertIsNone(nis[0]["razlika_transakcija"])
+        self.assertIn("ne može razdvojiti", nis[0]["status"][0][1])
+        self.assertEqual(nis[2]["razlika_transakcija"], Decimal("7000.00"))
+
+        # Učitana je samo jedna: druga dobija transakcije kojih nema na prvoj — razlika svake posebno.
+        self.kartice("9006720949", "putnicka", "1111")
+        k = nis_potvrda(2026, 9, 1)
+        self.assertEqual([r["razlika"] for r in k["redovi"]], [Decimal("1000.00"), Decimal("-1000.00")])
+        self.assertIn("nije učitana", k["redovi"][1]["napomena"])
+        self.assertEqual(k["van_faktura_broj"], 0)
+
+    def test_kartica_koje_nema_na_fakturama_je_razlika(self):
+        from fleet.support.fuel_invoices import kontrola_faktura, nis_potvrda
+
+        self.tocenje("1", "1111.0", "6000.00", 5, vozilo=self.putnicko)
+        self.tocenje("2", "9999.0", "500.00", 6, vozilo=self.putnicko)  # kartice nema ni na jednoj fakturi
+        self.faktura(1, "9006720949", "6000.00")
+        self.faktura(2, "9006720950", "0.00")
+        self.kartice("9006720949", "putnicka", "1111")
+        self.kartice("9006720950", "teretna", "2222")
+        k = nis_potvrda(2026, 9, 1)
+        self.assertEqual([r["poklapa"] for r in k["redovi"]], [True, True])
+        self.assertFalse(k["poklapa"])
+        self.assertEqual(k["van_faktura"], Decimal("500.00"))
+        bez = next(r for r in kontrola_faktura(2026, 9) if r["oznaka"] == "Bez fakture")
+        self.assertEqual(bez["status"][0][0], "danger")
+
+    def test_excel_nis_izvestaja_i_kontrole(self):
+        """Od 09.11.2026.: Excel izvoza goriva ima naslov, poređenje sa fakturama, formate iznosa i UKUPNO."""
+        import io
+
+        import openpyxl
+
+        self.tocenje("1", "1111.0", "6000.00", 5, vozilo=self.putnicko)
+        self.faktura(1, "9006720949", "6000.00")
+        self.kartice("9006720949", "putnicka", "1111")
+        self.client.force_login(get_user_model().objects.create_superuser("izvoz-goriva", password="x"))
+
+        odgovor = self.client.get(reverse("fuel_job_code_nis_putnicka"),
+                                  {"godina": "2026", "mesec": "9", "polovina": "1", "export": "xlsx"})
+        ws = openpyxl.load_workbook(io.BytesIO(odgovor.content)).active
+        self.assertIn("gorivo po šifri posla", ws["A1"].value)
+        self.assertIn("9006720949", ws["A2"].value)
+        self.assertIn("poklapa se", ws["A2"].value)
+        self.assertEqual(ws["C4"].value, "Šifra posla")
+        self.assertEqual(ws.freeze_panes, "A5")
+        self.assertEqual(ws.cell(ws.max_row, 1).value, "UKUPNO")
+        self.assertEqual(ws.cell(ws.max_row, 10).number_format, "#,##0.00")
+
+        odgovor = self.client.get(reverse("fuel_invoice_control"), {"godina": "2026", "mesec": "9", "export": "xlsx"})
+        ws = openpyxl.load_workbook(io.BytesIO(odgovor.content)).active
+        self.assertIn("Kontrola faktura goriva", ws["A1"].value)
+        self.assertEqual(ws["B5"].value, "9006720949")
